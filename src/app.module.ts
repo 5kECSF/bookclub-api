@@ -5,7 +5,7 @@ import { UsersModule } from './app/users/users.module';
 import { DatabaseModule } from './providers/database/databaseModule';
 import { AuthModule } from './app/auth/auth.module';
 import { ProfileModule } from './app/profile/profile.module';
-import { GenreModule } from './app/genre/genre.module';
+import { GenreModule } from './app/genres/genre.module';
 import { CategoryModule } from './app/category/category.module';
 import { BookModule } from './app/book/book.module';
 import { DonationModule } from './app/donation/donation.module';

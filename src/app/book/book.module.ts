@@ -3,11 +3,11 @@ import { BookService } from './book.service';
 import { BookController } from './book.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Book, BookSchema } from './entities/book.entity';
-import { User, UserSchema, UsersModule } from '../auth/dependencies.auth';
+import { UsersModule } from '../auth/dependencies.auth';
 
 import { GuardsModule } from '../../providers/guards/guards.module';
 import { CategoryModule } from '../category/category.module';
-import { GenreModule } from '../genre/genre.module';
+import { GenreModule } from '../genres/genre.module';
 
 @Module({
   imports: [

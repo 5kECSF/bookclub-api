@@ -1,37 +1,37 @@
 import * as request from 'supertest';
 import { IntegrationTestManager } from '../../../../../test/setup/IntegrationTestManager';
 
-import { mockTag, mockUpdateTag } from './tag.stub';
+import { mockGenre, mockUpdateGenre } from './genre.stub';
 // import { logTrace } from '../../../../common/logger';
 import { Endpoint } from '../../../../common/constants/modelConsts';
 
-describe('tags Controller (e2e)', () => {
+describe('genres Controller (e2e)', () => {
   // let app;
   let userToken;
   /**
-   * this is integration test manager class that setups things like
+   * this is integration test manager class that setups things like tokens
    */
   const iTM = new IntegrationTestManager();
   const app = iTM.app;
 
   beforeAll(async () => {
-    await iTM.beforeAll('tags');
+    await iTM.beforeAll('genres');
   });
 
   afterAll(async () => {
-    await iTM.afterAll('tags');
+    await iTM.afterAll('genres');
   });
 
-  it('tags-T01: FetchMany /tags (GET) to be empty', async () => {
-    const response = await request(iTM.httpServer).get('/tags');
+  it('genres-T01: FetchMany /genres (GET) to be empty', async () => {
+    const response = await request(iTM.httpServer).get('/genres');
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });
 
-  it('tags-T02: CreateOne /tags (POST) UnAuthorized return 403', async () => {
+  it('genres-T02: CreateOne /genres (POST) UnAuthorized return 403', async () => {
     const response = await request(iTM.httpServer)
-      .post('/tags')
-      .send(mockTag)
+      .post('/genres')
+      .send(mockGenre)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(403);
@@ -40,50 +40,50 @@ describe('tags Controller (e2e)', () => {
 
   let createdTag;
 
-  it('tags-T03: CreateOne /tags (POST) Authorized -> 201', async () => {
+  it('genres-T03: CreateOne /genres (POST) Authorized -> 201', async () => {
     const response = await request(iTM.httpServer)
       .post(`/${Endpoint.Genre}`)
-      .send(mockTag)
+      .send(mockGenre)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
       .expect(201);
     // logTrace('response', response.body);
     expect(response.status).toBe(201);
-    expect(response.body.name).toBe(mockTag.name);
+    expect(response.body.name).toBe(mockGenre.name);
     createdTag = response.body;
   });
-  it('tags-T04: FetchMany /tags (GET) to have one tag', async () => {
+  it('genres-T04: FetchMany /genres (GET) to have one genre', async () => {
     const response = await request(iTM.httpServer).get(`/${Endpoint.Genre}`).expect(200);
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.count).toEqual(1);
   });
 
-  it('tags-T05: GetOne /tags (GET) to be same tag', async () => {
+  it('genres-T05: GetOne /genres (GET) to be same genre', async () => {
     const response = await request(iTM.httpServer)
       .get(`/${Endpoint.Genre}/${createdTag._id}`)
       .expect(200);
 
     // expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockTag.name);
+    expect(response.body.name).toBe(mockGenre.name);
   });
 
-  it('tags-T06: UpdateOne /tags/:id (PATCH) -> 200', async () => {
+  it('genres-T06: UpdateOne /genres/:id (PATCH) -> 200', async () => {
     const response = await request(iTM.httpServer)
       .patch(`/${Endpoint.Genre}/${createdTag._id}`)
-      .send(mockUpdateTag)
+      .send(mockUpdateGenre)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
       .expect(200);
     // logTrace('response', response.body);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockUpdateTag.name);
+    expect(response.body.name).toBe(mockUpdateGenre.name);
     // createdTag = response.body;
   });
-  it('tags-T07: Delete /tags/:id (Delete) 200', async () => {
+  it('genres-T07: Delete /genres/:id (Delete) 200', async () => {
     const response = await request(iTM.httpServer)
       .delete(`/${Endpoint.Genre}/${createdTag._id}`)
       .set('Accept', 'application/json')
@@ -96,8 +96,8 @@ describe('tags Controller (e2e)', () => {
     // createdTag = response.body;
   });
 
-  it('tags-T08: FetchMany /tags (GET) to be empty, Verify Delete', async () => {
-    const response = await request(iTM.httpServer).get('/tags');
+  it('genres-T08: FetchMany /genres (GET) to be empty, Verify Delete', async () => {
+    const response = await request(iTM.httpServer).get('/genres');
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });

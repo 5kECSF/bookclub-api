@@ -13,19 +13,16 @@ import {
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookQuery, CreateBookInput, UpdateBookDto } from './dto/book.dto';
-import { pagiKeys, PaginatedRes, RoleType } from '../../common/common.types.dto';
+import {  PaginatedRes, RoleType } from '../../common/common.types.dto';
 
-import { pickKeys, removeKeys } from '../../common/util/util';
 import { Book } from './entities/book.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { UserFromToken } from '../../common/common.types.dto';
 import { Request } from 'express';
 import { Roles } from '../../providers/guards/roles.decorators';
-import { GenreService } from '../genre/genre.service';
+import { GenreService } from '../genres/genre.service';
 import { CategoryService } from '../category/category.service';
-import { ColorEnums, logTrace } from '../../common/logger';
-import { UserService } from '../users';
-import { errCode } from '../../common/constants/error.constants';
+
 import { generateSlug } from '../../common/util/functions';
 
 @Controller('book')
@@ -51,8 +48,8 @@ export class BookController {
       { $inc: { count: 1 } },
     );
     const tag = await this.genreService.updateMany(
-      { name: { $in: createDto.genre } },
-      { $inc: { count: 1 } },
+      { userId: { $in: createDto.genre } },
+      { $inc: { instanceNo: 1 } },
     );
     return resp.val;
   }
@@ -78,8 +75,8 @@ export class BookController {
       { $inc: { count: -1 } },
     );
     const tag = await this.genreService.updateMany(
-      { name: { $in: res.val.genres } },
-      { $inc: { count: -1 } },
+      { userId: { $in: res.val.genres } },
+      { $inc: { instanceNo: -1 } },
     );
 
     return res.val;

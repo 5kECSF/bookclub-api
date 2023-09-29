@@ -6,17 +6,16 @@ import { Donation, DonationSchema } from './entities/donation.entity';
 import { User, UserSchema, UsersModule } from '../auth/dependencies.auth';
 
 import { GuardsModule } from '../../providers/guards/guards.module';
-import { CategoryModule } from '../category/category.module';
-import { GenreModule } from '../genre/genre.module';
+import { BookModule } from '../book/book.module';
+
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Donation.name, schema: DonationSchema }]),
-    // MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     UsersModule,
     GuardsModule,
-    CategoryModule,
-    GenreModule,
+    BookModule,
   ],
   controllers: [DonationController],
   providers: [DonationService],

@@ -6,7 +6,7 @@ export const defaultAdmin: CreateUser = {
   active: true,
   role: RoleType.ADMIN,
   avatar: 'admin-avatar1.jpg',
-  dateOfBirth: '22',
+
   email: 'testDefaultAdmin1@gmail.com',
   firstName: 'tafn',
   lastName: 'taln',
@@ -17,7 +17,7 @@ export const defaultUser1: CreateUser = {
   active: true,
   role: RoleType.USER,
   avatar: 'user-avatar1.jpg',
-  dateOfBirth: '22',
+
   email: 'testDefaultUser1@gmail.com',
   firstName: 'tufn',
   lastName: 'tuln',
@@ -36,7 +36,7 @@ export const testUser1: CreateUser = {
   active: true,
   role: RoleType.USER,
   avatar: 'test-user-avatar1.jpg',
-  dateOfBirth: '22',
+
   email: 'testUser1@gmail.com',
   firstName: 'test fn',
   lastName: 'test ln',
@@ -47,7 +47,7 @@ export const testAdmin1: CreateUser = {
   active: true,
   role: RoleType.ADMIN,
   avatar: 'admin-avatar1.jpg',
-  dateOfBirth: '22',
+
   email: 'testDefaultAdmin1@gmail.com',
   firstName: 'test fn ',
   lastName: 'test ln',

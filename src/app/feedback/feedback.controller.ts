@@ -15,7 +15,6 @@ import { FeedbackService } from './feedback.service';
 import { CreateFeedbackInput, FeedbackQuery, UpdateFeedbackDto } from './dto/feedback.dto';
 import { pagiKeys, PaginatedRes, RoleType, UserFromToken } from '../../common/common.types.dto';
 
-import { pickKeys, removeKeys } from '../../common/util/util';
 import { FeedBack } from './entities/feedback.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
