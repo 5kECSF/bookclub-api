@@ -21,7 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:users": "jest --config src/app/users/test/e2e/jest-e2e.json",
     "test:signup": "jest --config src/app/auth/test/e2e/jest-e2e.json",
-    "test:tag": "jest --config src/app/genre/test/e2e/jest-e2e.json",
+    "test:genre": "jest --config src/app/genre/test/e2e/jest-e2e.json",
     "test:login": "jest --config src/app/auth/test/login/jest-e2e.json"
   },
   "dependencies": {
