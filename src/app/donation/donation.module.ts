@@ -1,0 +1,25 @@
+import { Module } from '@nestjs/common';
+import { DonationService } from './donation.service';
+import { DonationController } from './donation.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Donation, DonationSchema } from './entities/donation.entity';
+import { User, UserSchema, UsersModule } from '../auth/dependencies.auth';
+
+import { GuardsModule } from '../../providers/guards/guards.module';
+import { CategoryModule } from '../category/category.module';
+import { GenreModule } from '../genre/genre.module';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: Donation.name, schema: DonationSchema }]),
+    // MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    UsersModule,
+    GuardsModule,
+    CategoryModule,
+    GenreModule,
+  ],
+  controllers: [DonationController],
+  providers: [DonationService],
+  exports: [DonationService],
+})
+export class DonationModule {}

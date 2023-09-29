@@ -1,0 +1,69 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { GenreService } from './genre.service';
+import { CreateGenreInput, GenreQuery, UpdateDto } from './dto/genres.dto';
+import { PaginatedRes, RoleType } from '../../common/common.types.dto';
+
+import { Genre } from './entities/genre.entity';
+import { JwtGuard } from '../../providers/guards/guard.rest';
+import { Roles } from '../../providers/guards/roles.decorators';
+import { generateSlug } from '../../common/util/functions';
+import { Endpoint } from '../../common/constants/modelConsts';
+
+@Controller(Endpoint.Genre)
+export class GenreController {
+  constructor(private readonly tagsService: GenreService) {}
+
+  @Post()
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
+  async createOne(@Body() createDto: CreateGenreInput): Promise<Genre> {
+    createDto.slug = generateSlug(createDto.name);
+    const resp = await this.tagsService.createOne(createDto);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    return resp.val;
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  async update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
+    const res = await this.tagsService.updateById(id, updateDto);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.val;
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  async remove(@Param('id') id: string) {
+    const res = await this.tagsService.findByIdAndDelete(id);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.val;
+  }
+
+  // == below queries dont need authentication
+  @Get()
+  async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<PaginatedRes<Genre>> {
+    const res = await this.tagsService.searchManyAndPaginate(['title'], inputQuery);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.val;
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const res = await this.tagsService.findById(id);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.val;
+  }
+}

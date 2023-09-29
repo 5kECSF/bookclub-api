@@ -1,0 +1,166 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  BadRequestException,
+  Headers,
+  UseGuards,
+  Req,
+  Res,
+  HttpException,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import { AuthService } from './auth.service';
+import { RegisterUserInput } from '../users';
+import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import {
+  ChangePasswordInput,
+  EmailInput,
+  LoginUserInput,
+  ResetPasswordInput,
+  TokenInput,
+  VerifyCodeInput,
+} from './dto/auth.input.dto';
+import { AuthTokenResponse } from './dto/auth.response.dto';
+import { JwtGuard, UserFromToken, UserService } from './dependencies.auth';
+import { SystemConst } from '../../common/constants/error.constants';
+import { EnvVar } from '../../common/config/config.instances';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService, private usersService: UserService) {}
+
+  //Au.C-1 RegisterAndSendCode
+  @Post('signup')
+  async registerAndSendCode(@Body() input: RegisterUserInput) {
+    const resp = await this.authService.registerWithEmailCode(input);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    return { message: resp.val };
+  }
+
+  //Au.C-2 AcivateRegistration
+  @Post('activate')
+  async activateWithCode(@Body() input: VerifyCodeInput) {
+    const userResponse = await this.authService.activateAccountByCode(
+      input.phoneOrEmail,
+      input.code,
+    );
+    if (!userResponse.ok) throw new BadRequestException(userResponse.errMessage);
+    return userResponse.val;
+  }
+
+  //Au.C-3 Login
+  @Post('login')
+  async login(
+    @Res({ passthrough: true }) response: Response,
+    @Body() input: LoginUserInput,
+  ): Promise<AuthTokenResponse> {
+    const res = await this.authService.login(input);
+    if (!res.ok) throw new BadRequestException(res.errMessage);
+    //setting tokens
+    const options = {
+      httpOnly: true,
+      secure: EnvVar.getInstance.NODE_ENV == 'production',
+    };
+    response.cookie(SystemConst.REFRESH_COOKIE, res.val.authToken.refreshToken, options);
+    return res.val;
+  }
+
+  //Au.C-4 Logout
+  @Post('logout')
+  async logOut(
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+    @Body() input: TokenInput,
+  ): Promise<boolean> {
+    let token;
+    if (input.isMobile) {
+      token = input.refreshToken;
+    } else {
+      token = request.cookies[SystemConst.REFRESH_COOKIE];
+    }
+    const resp = await this.authService.logOut(token);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    response.cookie(SystemConst.REFRESH_COOKIE, '');
+    return resp.val;
+  }
+
+  //Au.C-5 resetTokens
+  @Post('resetTokens')
+  async resetTokens(
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+    @Body() input: TokenInput,
+  ): Promise<AuthTokenResponse> {
+    let token;
+    if (input.isMobile) {
+      token = input.refreshToken;
+    } else {
+      token = request.cookies[SystemConst.REFRESH_COOKIE];
+    }
+    const resp = await this.authService.resetTokens(token);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    const options = {
+      httpOnly: true,
+      secure: EnvVar.getInstance.NODE_ENV == 'production',
+    };
+    response.cookie(SystemConst.REFRESH_COOKIE, resp.val.refreshToken, options);
+    return { authToken: resp.val };
+  }
+
+  //Au.C-6 forgotPassword
+  @Post('forgotPassword')
+  async forgotPassword(@Body() input: EmailInput): Promise<boolean> {
+    const res = await this.authService.sendResetCode(input.email);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.ok;
+  }
+
+  //Au.C-7 resetPassword
+  @Post('resetPassword')
+  async resetPassword(@Body() input: ResetPasswordInput): Promise<boolean> {
+    const resp = await this.authService.resetPassword(input);
+    return resp.ok;
+  }
+
+  //AuC-8 change password
+  @Patch('changePassword')
+  @UseGuards(JwtGuard)
+  async ChangePassword(@Req() req: Request, @Body() input: ChangePasswordInput) {
+    const user: UserFromToken = req['user'];
+
+    const ans = await this.usersService.changePassword(user._id, input);
+    if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
+    return ans.val;
+    // return this.profileService.update(user._id, input);
+  }
+
+  //AuC-9 change Email
+  @Patch('requestEmailChange')
+  @UseGuards(JwtGuard)
+  // @Roles(RoleType.ADMIN)
+  async requestEmailChange(@Req() req: Request, @Body() input: UpdateEmailInput) {
+    const user: UserFromToken = req['user'];
+
+    const ans = await this.authService.requestEmailChange(user._id, input);
+    if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
+    return ans.val;
+    // return this.profileService.update(user._id, input);
+  }
+
+  //AuC-10 verify the code and update the email
+  @Patch('verifyUpdateEmail')
+  @UseGuards(JwtGuard)
+  // @Roles(RoleType.ADMIN)
+  async verifyUpdateEmail(@Req() req: Request, @Body() input: VerifyCodeInput) {
+    const user: UserFromToken = req['user'];
+
+    const ans = await this.authService.verifyUpdateEmail(user._id, input);
+    if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
+    return ans.val;
+    // return this.profileService.update(user._id, input);
+  }
+}
