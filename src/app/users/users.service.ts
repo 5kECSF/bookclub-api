@@ -42,7 +42,7 @@ export class UserService extends MongoGenericRepository<User> {
     if (isEmail) {
       user = await this.findOneWithPwd({ email: phoneOrEmail });
     } else {
-      user = await this.findOneWithPwd({ userName: phoneOrEmail });
+      user = await this.findOneWithPwd({ phone: phoneOrEmail });
     }
     if (!user) return null;
     return user;
@@ -54,7 +54,7 @@ export class UserService extends MongoGenericRepository<User> {
     if (isEmail) {
       user = await this.findOneWithPwd({ email: phoneOrEmail, active: true });
     } else {
-      user = await this.findOneWithPwd({ userName: phoneOrEmail, active: true });
+      user = await this.findOneWithPwd({ phone: phoneOrEmail, active: true });
     }
     if (!user) return null;
     return user;

@@ -58,9 +58,12 @@ export class AuthService {
         }
         // if user is not Verified yet and waiting for verification dont do any thing
         // TODO :make him wait some minutes before re assigning (verificationExpires > date.now + (VerExp - allowed Reset))
-        if (user.verificationCodeExpires > Date.now()) {
-          return FAIL(RespConst.VERIFICATION_PENDING);
-        }
+        /**
+         * the email sending might have failed so go with the flow
+         */
+        // if (user.verificationCodeExpires > Date.now()) {
+        //   return FAIL(RespConst.VERIFICATION_PENDING);
+        // }
         // else {
         //   return FAIL(ErrConst.VERIFICATION_FAILED);
         // }
@@ -74,7 +77,7 @@ export class AuthService {
 
   // AuS-1.1: sendCodeAndUpdateHash
   async sendCodeAndUpdateHash(addressedEmail, input): Promise<Resp<string>> {
-    //---  generate random code & update the verification hash
+    /** ---  generate random code & update the verification hash */
     const code = '0000';
     // const code = this.cryptoService.randomCode();
     const codeHash = await this.cryptoService.createHash(code);

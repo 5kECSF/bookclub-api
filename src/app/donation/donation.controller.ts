@@ -35,9 +35,9 @@ export class DonationController {
 
   @Post()
   @UseGuards(JwtGuard)
-  @Roles(RoleType.USER)
+  @Roles(RoleType.ADMIN)
   async createOne(@Req() req: Request, @Body() createDto: CreateDonationInput): Promise<Donation> {
-    const user: UserFromToken = req['user'];
+    // const user: UserFromToken = req['user'];
     // createDto.userName=user.f
     const usr = await this.userService.findById(createDto.donorId);
     if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
@@ -45,7 +45,7 @@ export class DonationController {
     const book = await this.bookService.findById(createDto.bookId);
     if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
 
-    createDto.donorId = user._id;
+    createDto.donorId = usr.val._id;
     createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
 
     const resp = await this.donationService.createOne(createDto);

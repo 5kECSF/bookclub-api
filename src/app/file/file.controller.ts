@@ -19,8 +19,6 @@ import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express
 import { Express } from 'express';
 
 import { FileService } from './file.service';
-import { EmailService } from '../../providers/email';
-import { logTrace } from '../../common/logger';
 
 export class SampleDto {
   name?: string;

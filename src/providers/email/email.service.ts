@@ -68,15 +68,7 @@ export class EmailService implements VerificationServiceInterface {
   }
 
   /**
-   * @returns Promise<SmtpTransport> if the specified tag is surrounded with `{`
-   * and `}` characters.
-   *
-   * @example
-   * Prints "true" for `{@link}` but "false" for `@internal`:
-   * ```ts
-   * console.log(isInlineTag('{@link}'));
-   * console.log(isInlineTag('@internal'));
-   * ```
+   * this sends email,
    */
   async send(templateName, subject, to, context) {
     try {
@@ -90,7 +82,7 @@ export class EmailService implements VerificationServiceInterface {
         context,
         // text: htmlToText.fromString(html),
       };
-      //TODO the second on looks better since it dont need to be initialized every time
+      //TODO the second one looks better since it dont need to be initialized every time
       // const transporter = await this.createOAuthTransport();
       const transporter = this.transporter;
 
@@ -127,10 +119,11 @@ export class EmailService implements VerificationServiceInterface {
    */
   async sendVerificationCode(email: string, token: string): Promise<Resp<any>> {
     try {
+      logTrace('sending email', email);
       const message = await this.send('confirmation', 'Confirm to activate your account', email, {
         code: token,
       });
-      logTrace('sending email', message);
+      logTrace('email response', message);
 
       return Succeed(message);
     } catch (e) {
