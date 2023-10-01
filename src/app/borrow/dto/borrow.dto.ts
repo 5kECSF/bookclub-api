@@ -1,5 +1,5 @@
 import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
-import { PaginationInput, RoleType } from '../imports.genre';
+import { PaginationInput } from '../imports.borrow';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { BorrowStatus } from '../entities/borrow.entity';
 

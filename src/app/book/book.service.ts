@@ -4,9 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { Book, BookDocument } from './entities/book.entity';
-import { logTrace, MongoGenericRepository } from './dependencies.book';
+import { logTrace, MongoGenericRepository } from './imports.book';
 
-import { UserService } from './dependencies.book';
+import { UserService } from './imports.book';
 import { UpdateResponse } from '../../common/base/mongo.entity';
 
 @Injectable()

@@ -48,7 +48,7 @@ export class Book {
    * the books we have(instances) & count of books available
    */
   @Prop({ type: Number, required: false, default: 0 })
-  donatedCount: number;
+  instanceCount: number;
 
   @Prop({ type: Number, required: false, default: 0 })
   availableCnt: number;

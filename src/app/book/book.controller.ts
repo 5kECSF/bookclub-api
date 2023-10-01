@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookQuery, CreateBookInput, UpdateBookDto } from './dto/book.dto';
-import {  PaginatedRes, RoleType } from '../../common/common.types.dto';
+import { PaginatedRes, RoleType } from '../../common/common.types.dto';
 
 import { Book } from './entities/book.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';

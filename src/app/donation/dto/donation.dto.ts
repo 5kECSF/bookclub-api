@@ -1,37 +1,17 @@
-import { ApiHideProperty, ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '../../../common/common.types.dto';
 
-import { bookStatus } from '../entities/donation.entity';
+import { bookStatus, Donation } from '../entities/donation.entity';
 
-export class CreateDonationInput {
-  @IsNotEmpty()
-  @IsString()
-  donorId: string;
-
-  @IsString()
-  @IsOptional()
-  donorName?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  bookId: string;
-
-  @IsString()
-  @IsOptional()
-  bookName?: string;
-
-  /**
-   * the count of this specific book
-   */
-  @IsNumber()
-  @IsOptional()
-  bookNum: number;
-
-  @IsOptional()
-  status: bookStatus;
-}
+export class CreateDonationInput extends PickType(Donation, [
+  'donorId',
+  'donorName',
+  'bookId',
+  'instanceNo',
+  'status',
+]) {}
 
 export class UpdateDonationDto extends PartialType(CreateDonationInput) {}
 
