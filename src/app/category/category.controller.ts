@@ -19,8 +19,9 @@ import { Category } from './entities/category.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { generateSlug } from '../../common/util/functions';
+import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller('category')
+@Controller(Endpoint.Category)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

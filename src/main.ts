@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { EnvVar } from './common/config/config.instances';
 import * as cookieParser from 'cookie-parser';
+import { CustomExceptionFilter } from './common/custom-exception.filter';
 
 // import express from 'express';
 async function bootstrap() {
@@ -11,6 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.use(cookieParser());
+  app.useGlobalFilters(new CustomExceptionFilter());
   // app.use(express.json());
   // app.use(express.urlencoded({ extended: true }));
 
@@ -20,8 +22,8 @@ async function bootstrap() {
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('EDit API')
-    .setDescription('this is the documentation for the EDit API')
+    .setTitle('Book club API')
+    .setDescription('this is the documentation for the Book Club API')
     .setVersion('1.0')
     .addTag('version one')
     .build();

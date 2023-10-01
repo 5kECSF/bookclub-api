@@ -19,12 +19,13 @@ import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express
 import { Express } from 'express';
 
 import { FileService } from './file.service';
+import { Endpoint } from '../../common/constants/modelConsts';
 
 export class SampleDto {
   name?: string;
 }
 
-@Controller('file')
+@Controller(Endpoint.File)
 export class FileController {
   constructor(private fileService: FileService) {}
 

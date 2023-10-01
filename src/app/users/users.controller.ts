@@ -14,12 +14,13 @@ import { UserService } from './users.service';
 import { CreateUser, FilterUser, UpdateUserWithRole } from './dto/user.mut.dto';
 import { User } from './entities/user.entity';
 import { PaginatedRes } from '../../common/common.types.dto';
+import { Endpoint } from '../../common/constants/modelConsts';
 
 // import { Roles } from '../../providers/guards/roles.decorators';
 // import { RoleType } from '../../common/common.types.dto';
 // import { JwtGuard } from '../../providers/guards/guard.rest';
 
-@Controller('users')
+@Controller(Endpoint.Users)
 export class UsersController {
   constructor(private readonly usersService: UserService) {}
 

@@ -24,8 +24,9 @@ import { BookService } from '../book/book.service';
 import { UserService } from '../users';
 
 import { errCode } from '../../common/constants/error.constants';
+import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller('question')
+@Controller(Endpoint.Donation)
 export class DonationController {
   constructor(
     private readonly donationService: DonationService,

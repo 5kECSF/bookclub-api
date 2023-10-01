@@ -19,7 +19,7 @@ import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller(Endpoint.Genre)
+@Controller(Endpoint.Borrow)
 export class BorrowController {
   constructor(private readonly service: BorrowService) {}
 

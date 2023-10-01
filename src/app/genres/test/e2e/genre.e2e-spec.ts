@@ -8,6 +8,7 @@ import { Endpoint } from '../../../../common/constants/modelConsts';
 describe('genres Controller (e2e)', () => {
   // let app;
   let userToken;
+  const endPoint = Endpoint.Genre;
   /**
    * this is integration test manager class that setups things like tokens
    */
@@ -23,14 +24,14 @@ describe('genres Controller (e2e)', () => {
   });
 
   it('genres-T01: FetchMany /genres (GET) to be empty', async () => {
-    const response = await request(iTM.httpServer).get('/genres');
+    const response = await request(iTM.httpServer).get(`/${endPoint}`);
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });
 
   it('genres-T02: CreateOne /genres (POST) UnAuthorized return 403', async () => {
     const response = await request(iTM.httpServer)
-      .post('/genres')
+      .post(`/${endPoint}`)
       .send(mockGenre)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -42,7 +43,7 @@ describe('genres Controller (e2e)', () => {
 
   it('genres-T03: CreateOne /genres (POST) Authorized -> 201', async () => {
     const response = await request(iTM.httpServer)
-      .post(`/${Endpoint.Genre}`)
+      .post(`/${endPoint}`)
       .send(mockGenre)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
@@ -54,7 +55,7 @@ describe('genres Controller (e2e)', () => {
     createdTag = response.body;
   });
   it('genres-T04: FetchMany /genres (GET) to have one genre', async () => {
-    const response = await request(iTM.httpServer).get(`/${Endpoint.Genre}`).expect(200);
+    const response = await request(iTM.httpServer).get(`/${endPoint}`).expect(200);
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.count).toEqual(1);
@@ -62,7 +63,7 @@ describe('genres Controller (e2e)', () => {
 
   it('genres-T05: GetOne /genres (GET) to be same genre', async () => {
     const response = await request(iTM.httpServer)
-      .get(`/${Endpoint.Genre}/${createdTag._id}`)
+      .get(`/${endPoint}/${createdTag._id}`)
       .expect(200);
 
     // expect(Array.isArray(response.body.data)).toBe(true);
@@ -72,7 +73,7 @@ describe('genres Controller (e2e)', () => {
 
   it('genres-T06: UpdateOne /genres/:id (PATCH) -> 200', async () => {
     const response = await request(iTM.httpServer)
-      .patch(`/${Endpoint.Genre}/${createdTag._id}`)
+      .patch(`/${endPoint}/${createdTag._id}`)
       .send(mockUpdateGenre)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
@@ -85,7 +86,7 @@ describe('genres Controller (e2e)', () => {
   });
   it('genres-T07: Delete /genres/:id (Delete) 200', async () => {
     const response = await request(iTM.httpServer)
-      .delete(`/${Endpoint.Genre}/${createdTag._id}`)
+      .delete(`/${endPoint}/${createdTag._id}`)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
@@ -97,7 +98,7 @@ describe('genres Controller (e2e)', () => {
   });
 
   it('genres-T08: FetchMany /genres (GET) to be empty, Verify Delete', async () => {
-    const response = await request(iTM.httpServer).get('/genres');
+    const response = await request(iTM.httpServer).get(`/${endPoint}`);
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });

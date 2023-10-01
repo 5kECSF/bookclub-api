@@ -42,7 +42,10 @@ export class AuthService {
     private verificationService: VerificationServiceAuth, //TODO initialize ConfigTypes here
   ) {}
 
-  //AS-1.1:registerWithEmailCode - check user exist, - generate code & create user with that code, - send verification via email
+  /**
+     *   AS-1.1:registerWithEmailCode - check user exist, - generate code & create user with that code, - send verification via email
+
+     */
   public async registerWithEmailCode(input: RegisterUserInput): Promise<Resp<string>> {
     try {
       const user = await this.usersService.findOneWithPwd({
@@ -75,14 +78,18 @@ export class AuthService {
     }
   }
 
-  // AuS-1.1: sendCodeAndUpdateHash
+  /**
+     AuS-1.1: sendCodeAndUpdateHash
+     */
   async sendCodeAndUpdateHash(addressedEmail, input): Promise<Resp<string>> {
     /** ---  generate random code & update the verification hash */
     const code = '0000';
     // const code = this.cryptoService.randomCode();
     const codeHash = await this.cryptoService.createHash(code);
 
-    // save the hashed value of the Code and set its expire time now + 30 min
+    /**
+         save the hashed value of the Code and set its expire time now + 30 min
+         */
     const usr = await this.usersService.upsertOne(
       { email: input.email },
       {
@@ -96,6 +103,9 @@ export class AuthService {
       // logTrace('update op=', usr);
       return FAIL(ErrConst.COULD_NOT_CREATE_USER);
     }
+    /**
+     * send verification email
+     */
     const emRes = await this.verificationService.sendVerificationCode(addressedEmail, code);
 
     return Succeed(RespConst.VERIFICATION_SENT);
@@ -103,7 +113,9 @@ export class AuthService {
 
   //===============  Verifying & activating user by code
 
-  //AuSr-2: - checks user exists, - check if the hash of codes matches & is not expired, - activates user
+  /**
+     AuSr-2: - checks user exists, - check if the hash of codes matches & is not expired, - activates user
+     */
   public async activateAccountByCode(phoneOrEmail: string, code: string): Promise<Resp<UserRes>> {
     /**
      * verify the code, user is not active
@@ -124,7 +136,9 @@ export class AuthService {
     return Succeed({ error: '', user: updatedUser.val });
   }
 
-  //Au.S-2.1
+  /**
+     Au.S-2.1
+     */
   async verifyCode(phoneOrEmail: string, code: string): Promise<User> {
     //1. check that a user exists with this email or phone number
     const userToVerify = await this.usersService.anyUserExists(phoneOrEmail);
@@ -145,23 +159,25 @@ export class AuthService {
     return userToVerify;
   }
 
-  //AuSr-3
+  /**
+     AuSr-3
+     */
   async login(input: LoginUserInput): Promise<Resp<AuthTokenResponse>> {
     // 3.1 validate user
     const user: User = await this.loginValidateUser(input);
     if (!user) return FAIL(ErrConst.INVALID_CREDENTIALS);
 
     // 3.2: generate authentication Tokens
-    const authToken: AuthToken = await this.generateAuthToken({
+    const loginAuthToken: AuthToken = await this.generateAuthToken({
       _id: user._id,
       role: user.role,
     });
-    if (!authToken) return FAIL(ErrConst.INTERNAL_ERROR);
+    if (!loginAuthToken) return FAIL(ErrConst.INTERNAL_ERROR);
     // 3.3: update users hashed token
-    const updated = await this.updateHashedToken(user._id, authToken.refreshToken);
-    if (!updated) return FAIL(ErrConst.INTERNAL_ERROR);
+    const loginUpdate = await this.updateHashedToken(user._id, loginAuthToken.refreshToken);
+    if (!loginUpdate) return FAIL(ErrConst.INTERNAL_ERROR);
 
-    return Succeed({ authToken, user });
+    return Succeed({ authToken: loginAuthToken, user });
   }
 
   //Au.S-3.1
@@ -177,18 +193,26 @@ export class AuthService {
     return userToLogin;
   }
 
-  //AuS-3.2:  generate access & refresh tokens: for [login & resetToken]
+  /**
+   *   AuS-3.2:  generate access & refresh tokens: for [login & resetToken]
+   */
   public async generateAuthToken(payload: UserFromToken, update = false): Promise<AuthToken> {
-    // 1. create random session id When user first logins
+    /*
+     * 1. create random session id When user first logins
+     */
     const sessionId = this.cryptoService.randomCode();
 
-    // 2. create a payload for the user, on resetTokens old session id is used
+    /*
+     * 2. create a payload for the user, on resetTokens old session id is used
+     */
     const newPayload: UserFromToken = {
       _id: payload._id,
       sessionId: update ? payload.sessionId : sessionId,
       role: payload.role,
     };
-    // 3. generate refresh and access tokens
+    /*
+     * 3. generate refresh and access tokens
+     */
     const accessToken = await this.jwtService.signAccessToken(newPayload);
     const refreshToken = await this.jwtService.signRefreshToken(newPayload);
 
@@ -201,7 +225,9 @@ export class AuthService {
     return authToken;
   }
 
-  // AuS-3.3: update users hashed token
+  /*
+   * AuS-3.3: update users hashed token
+   */
   async updateHashedToken(id, refreshToken) {
     const hashedRefreshToken = await this.cryptoService.createHash(refreshToken);
     //Update users hashed tokens: this is bad for half life tokens
@@ -231,18 +257,26 @@ export class AuthService {
     }
   }
 
-  //AuSr-5.1:
+  /*
+   * AuSr-5.1:
+   */
   async resetTokens(resetToken: string): Promise<Resp<AuthToken>> {
     //  1. verify the refresh token
     const user = await this.getUserFromRefreshToken(resetToken);
     if (!user.ok) return user;
 
     //  2. generate new refresh token
-    const authToken = await this.generateAuthToken(user.val, true);
-    // 3. update the users hashed refresh token // here you can implement half life logic
-    const updated = await this.updateHashedToken(user.val._id, authToken.refreshToken);
-    if (!updated) return FAIL(ErrConst.INTERNAL_ERROR);
-    return Succeed(authToken);
+    const refreshAuthToken = await this.generateAuthToken(user.val, true);
+    /*
+     * 3. update the users hashed refresh token
+     *  here you can implement half life logic, if half life not reached skip this
+     */
+    const refreshUpdated = await this.updateHashedToken(
+      user.val._id,
+      refreshAuthToken.refreshToken,
+    );
+    if (!refreshUpdated) return FAIL(ErrConst.INTERNAL_ERROR);
+    return Succeed(refreshAuthToken);
   }
 
   // when users access token experis, verifies users refresh token & returns the refresh token

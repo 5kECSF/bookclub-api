@@ -18,8 +18,9 @@ import { pickKeys, removeKeys } from '../../common/util/util';
 import { Notification } from './entities/notification.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
+import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller('notification')
+@Controller(Endpoint.Notification)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 

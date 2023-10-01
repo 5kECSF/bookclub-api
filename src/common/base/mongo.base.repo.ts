@@ -55,10 +55,11 @@ export abstract class MongoGenericRepository<T> {
     fieldsToSearch: string[],
     filter: FilterQuery<T>,
     _pagination?: any,
-    keysToRemove?: string[],
+    keysToRemove: string[] = [],
   ): Promise<Resp<PaginatedResponse<T>>> {
     try {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
+      logTrace('keys to remove', keysToRemove);
       const query = removeKeys(filter, [...pagiKeys, ...keysToRemove, 'searchText']);
 
       let mainQuery: Record<string, any> = {};

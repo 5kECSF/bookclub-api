@@ -21,8 +21,9 @@ import { Roles } from '../../providers/guards/roles.decorators';
 import { errCode } from '../../common/constants/error.constants';
 import { UserService } from '../users';
 import { Request } from 'express';
+import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller('feedback')
+@Controller(Endpoint.Feedback)
 export class FeedbackController {
   constructor(
     private readonly feedbackService: FeedbackService,

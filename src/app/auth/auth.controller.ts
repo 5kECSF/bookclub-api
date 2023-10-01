@@ -27,8 +27,9 @@ import { AuthTokenResponse } from './dto/auth.response.dto';
 import { JwtGuard, UserFromToken, UserService } from './dependencies.auth';
 import { SystemConst } from '../../common/constants/error.constants';
 import { EnvVar } from '../../common/config/config.instances';
+import { Endpoint } from '../../common/constants/modelConsts';
 
-@Controller('auth')
+@Controller(Endpoint.Auth)
 export class AuthController {
   constructor(private readonly authService: AuthService, private usersService: UserService) {}
 
