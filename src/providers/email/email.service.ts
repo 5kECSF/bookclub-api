@@ -23,7 +23,7 @@ export class EmailService implements VerificationServiceInterface {
   private readonly from: string;
 
   constructor() {
-    this.from = `EDit Education <${process.env.EMAIL_FROM}>`;
+    this.from = `5kilo Fellowship BookClub <${process.env.EMAIL_FROM}>`;
     this.createAppPwdTransport();
   }
 
