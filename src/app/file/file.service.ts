@@ -44,7 +44,7 @@ export class FileService {
           const result = await this.IUploadSingleImage(file.buffer, filename);
           if (!result.ok) return FAIL('failed uploading multi images, in a loop');
 
-          names.push(result.val.imageName);
+          names.push(result.val.fullImg);
         }),
       );
       return Succeed(names);
@@ -62,7 +62,8 @@ export class FileService {
       // Perform compression using Sharp
       const compressedImageBuffer = await sharp(file)
         // .resize({ width: 500, height: 500 }) // Adjust dimensions as needed
-        .jpeg({ quality: 70 })
+        // .jpeg({ quality: 70, mozjpeg: true })
+        .webp({ quality: 70 })
         .toBuffer();
       logTrace('after', Buffer.byteLength(compressedImageBuffer), ColorEnums.BgYellow);
       return Succeed(compressedImageBuffer);

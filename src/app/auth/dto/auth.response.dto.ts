@@ -4,10 +4,9 @@ import { User } from '../dependencies.auth';
 
 export class AuthToken {
   accessToken?: string;
-
   refreshToken?: string;
-
   sessionId?: string;
+  expiresIn?: number;
 }
 
 export class AuthTokenResponse {

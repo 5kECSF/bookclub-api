@@ -1,37 +1,30 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 // import { Request } from 'express';
 //-common
 //providers
+//providers
+// import { EnvConfigs } from './auth.dependencies';
+//- users
 import {
   CryptoService,
+  CustomJwtService,
   ErrConst,
   logTrace,
+  RegisterUserInput,
   User,
   UserFromToken,
   UserRes,
+  UserService,
   VerificationServiceAuth,
 } from './dependencies.auth';
 
 //--self
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
-import {
-  ChangePasswordInput,
-  LoginUserInput,
-  ResetPasswordInput,
-  VerifyCodeInput,
-} from './dto/auth.input.dto';
-
-//providers
-import { CustomJwtService } from './dependencies.auth';
-// import { EnvConfigs } from './auth.dependencies';
-
-//- users
-import { UserService } from './dependencies.auth';
-
-import { RegisterUserInput } from './dependencies.auth';
+import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
 import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
 import { RespConst, SystemConst } from 'src/common/constants/error.constants';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import { EnvVar } from '../../common/config/config.instances';
 
 @Injectable()
 export class AuthService {
@@ -216,13 +209,12 @@ export class AuthService {
     const accessToken = await this.jwtService.signAccessToken(newPayload);
     const refreshToken = await this.jwtService.signRefreshToken(newPayload);
 
-    const authToken: AuthToken = {
+    return {
       accessToken,
       refreshToken,
       sessionId: newPayload.sessionId,
+      expiresIn: Date.now() + EnvVar.getInstance.JWT_EXPIRY_TIME,
     };
-
-    return authToken;
   }
 
   /*

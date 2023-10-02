@@ -52,3 +52,5 @@ export class MessageError {
   message: string;
   code: string;
 }
+
+export const imageFileRegex = /^image\/(jpeg|jpg|png|gif|bmp)/;

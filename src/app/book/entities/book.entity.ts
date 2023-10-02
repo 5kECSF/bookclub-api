@@ -6,6 +6,7 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { User } from '../../users';
 import { ImageObj } from '../../file/file.dto';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 @Schema({ timestamps: true })
 export class Book {
@@ -15,34 +16,49 @@ export class Book {
   @Prop({ type: String, unique: true, sparse: true })
   slug: string;
 
+  @IsNotEmpty()
+  @IsString()
   @Prop({ type: String })
   title: string;
 
+  @IsNotEmpty()
+  @IsString()
   @Prop({ type: String })
   desc: string;
 
+  @IsString()
+  @IsOptional()
   @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   authorId: User['_id'];
 
+  @IsOptional()
+  @IsString()
   @Prop({ type: String })
   authorName: string;
 
+  @IsNotEmpty()
+  @IsString()
   @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
   categoryId: string;
 
+  @IsNotEmpty()
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
   genres: string[];
 
-  image?: ImageObj;
+  @Prop({ type: ImageObj })
+  img?: ImageObj;
 
   @Prop({ type: String })
   coverImage?: string;
 
+  @IsOptional()
+  @IsString()
   @Prop({ required: false })
   language?: string;
 
+  @IsOptional()
   @Prop({ type: Number, required: false })
-  pageNo: number;
+  pageNo?: number;
 
   /**
    * the books we have(instances) & count of books available
@@ -50,6 +66,8 @@ export class Book {
   @Prop({ type: Number, required: false, default: 0 })
   instanceCount: number;
 
+  @IsOptional()
+  @IsString()
   @Prop({ type: Number, required: false, default: 0 })
   availableCnt: number;
 

@@ -1,23 +1,19 @@
-import { ApiHideProperty, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, PartialType, PickType } from '@nestjs/swagger';
 import { PaginationInput, RoleType } from '../category.dependencies';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { OmitType } from '@nestjs/swagger';
+import { Category } from '../entities/category.entity';
 
-export class CategoryInput {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
+export class CategoryInput extends PickType(Category, [
+  'name',
+  'desc',
+  'coverImage',
+  'restricted',
+]) {
   @IsString()
   @IsOptional()
   @ApiHideProperty()
   slug?: string;
-
-  @IsOptional()
-  coverImage?: string;
-
-  @IsOptional()
-  restricted?: boolean;
 }
 
 export class UpdateCategoryDto extends PartialType(OmitType(CategoryInput, ['slug'])) {}

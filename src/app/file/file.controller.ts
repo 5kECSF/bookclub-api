@@ -1,16 +1,14 @@
 import {
+  applyDecorators,
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
-  Get,
   HttpException,
   HttpStatus,
-  MaxFileSizeValidator,
   Param,
-  ParseFilePipe,
   ParseFilePipeBuilder,
   Post,
+  SetMetadata,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
@@ -20,10 +18,35 @@ import { Express } from 'express';
 
 import { FileService } from './file.service';
 import { Endpoint } from '../../common/constants/modelConsts';
+import { ColorEnums, logTrace } from '../../common/logger';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { imageFileRegex } from '../../common/common.types.dto';
+import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 
 export class SampleDto {
+  @IsNotEmpty()
+  @IsString()
   name?: string;
+
+  @IsNotEmpty()
+  @IsString()
+  id: string;
 }
+
+const imageFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  callback: (error: Error, acceptFile: boolean) => void,
+) => {
+  if (!Boolean(file.mimetype.match(/(jpg|jpeg|png|gif)/))) callback(null, false);
+  callback(null, true);
+};
+
+export const imageOptions: MulterOptions = {
+  limits: { fileSize: 5242880 },
+  fileFilter: imageFilter,
+};
 
 @Controller(Endpoint.File)
 export class FileController {
@@ -36,13 +59,13 @@ export class FileController {
     return resp.val;
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @ApiFile()
   @Post('single')
   async uploadSingle(
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
-          fileType: 'image/jpeg',
+          fileType: imageFileRegex,
         })
         .addMaxSizeValidator({
           maxSize: 1000 * 1000 * 10, //10 mb
@@ -51,8 +74,11 @@ export class FileController {
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         }),
     )
-    file?: Express.Multer.File,
+    file: // @UploadeDecorator(1000 * 1000 * 10)
+    Express.Multer.File,
+    @Body() users: SampleDto,
   ) {
+    logTrace('id is', users);
     const imgName = this.fileService.generateUniqName(file.originalname);
     const uploaded = await this.fileService.IUploadSingleImage(file.buffer, imgName.name);
     if (!uploaded.ok) return 'uploading failed';
@@ -60,35 +86,66 @@ export class FileController {
     return uploaded.val;
   }
 
-  @Post('mulit')
+  @Post('multi')
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'cover', maxCount: 1 },
-      { name: 'images', maxCount: 3 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'cover', maxCount: 1 },
+        { name: 'images', maxCount: 3 },
+      ],
+      imageOptions,
+    ),
   )
   async uploadMultiple(
     @Body() body: SampleDto,
-    @UploadedFiles(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: 'image/jpeg',
-        })
-        .addMaxSizeValidator({
-          maxSize: 10000,
-        })
-        .build({
-          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        }),
-    )
+    @UploadedFiles()
     files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
   ) {
-    const imgName = this.fileService.generateUniqName(files.cover[0].originalname);
-    const uploaded = await this.fileService.IUploadSingleImage(files[0].buffer, imgName.name);
-    if (!uploaded.ok) return 'uploading failed';
-
-    const images = await this.fileService.uploadManyWithNewNames(files.images, imgName.uid);
-    if (!images.ok) throw new HttpException(images.errMessage, images.code);
-    return { ...uploaded.val, images: images.val };
+    const keys = Object.keys(files.cover[0]);
+    // logTrace('files', files.images[1].originalname, ColorEnums.BgGreen);
+    logTrace('files', files.images.length, ColorEnums.BgGreen);
+    logTrace('files', keys, ColorEnums.BgGreen);
+    // logTrace('files', files.images[0].filename, ColorEnums.BgGreen);
+    //
+    // const imgName = this.fileService.generateUniqName(files.cover[0].originalname);
+    // const uploaded = await this.fileService.IUploadSingleImage(files[0].buffer, imgName.name);
+    // if (!uploaded.ok) return 'uploading failed';
+    //
+    // const images = await this.fileService.uploadManyWithNewNames(files.images, imgName.uid);
+    // if (!images.ok) throw new HttpException(images.errMessage, images.code);
+    // return { ...uploaded.val, images: images.val };
   }
+}
+
+export const UploadeDecorator = (maxSize: number) => {
+  const parseFilePipe = new ParseFilePipeBuilder()
+    .addFileTypeValidator({
+      fileType: imageFileRegex,
+    })
+    .addMaxSizeValidator({
+      maxSize: maxSize,
+    })
+    .build({
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+    });
+
+  return SetMetadata('uploadedFile', parseFilePipe);
+};
+
+export function ApiFile() {
+  return applyDecorators(
+    UseInterceptors(FileInterceptor('file')),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    }),
+  );
 }

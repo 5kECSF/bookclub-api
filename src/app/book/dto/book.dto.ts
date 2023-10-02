@@ -1,49 +1,24 @@
-import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '../../../common/common.types.dto';
+import { Book } from '../entities/book.entity';
+import { ImageObj } from '../../file/file.dto';
 
-export class CreateBookInput {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
-
-  @IsNotEmpty()
-  @IsString()
-  desc: string;
-
-  @IsString()
-  @IsOptional()
-  @ApiHideProperty()
-  authorId: string;
-
-  @IsOptional()
-  @IsString()
-  authorName: string;
-
-  @IsNotEmpty()
-  @IsString()
-  categoryId: string;
-
-  @IsNotEmpty()
-  genre: string[];
-
+export class CreateBookInput extends PickType(Book, [
+  'title',
+  'desc',
+  'categoryId',
+  'genres',
+  'authorId',
+  'authorName',
+  'language',
+  'pageNo',
+  'availableCnt',
+]) {
   // @IsOptional()
   // coverImage?: string;
-
   // image?: ImageObj;
-
-  @IsOptional()
-  @IsString()
-  language?: string;
-
-  @IsOptional()
-  pageNo?: number;
-
-  @IsOptional()
-  @IsString()
-  availableCnt?: number;
-
   /**
    * back end only fields ===============
    */
@@ -51,6 +26,10 @@ export class CreateBookInput {
   @IsOptional()
   @ApiHideProperty()
   slug?: string;
+
+  @IsOptional()
+  @ApiHideProperty()
+  img?: ImageObj;
 }
 
 export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {}

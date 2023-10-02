@@ -8,6 +8,7 @@ import { UsersModule } from '../auth/dependencies.auth';
 import { GuardsModule } from '../../providers/guards/guards.module';
 import { CategoryModule } from '../category/category.module';
 import { GenreModule } from '../genres/genre.module';
+import { FileModule } from '../file/file.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { GenreModule } from '../genres/genre.module';
     GuardsModule,
     CategoryModule,
     GenreModule,
+    FileModule,
   ],
   controllers: [BookController],
   providers: [BookService],

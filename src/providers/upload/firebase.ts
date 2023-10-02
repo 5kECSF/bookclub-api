@@ -48,10 +48,10 @@ export class FirebaseService implements FileServiceInterface {
       publicUrl.replace(`${toBeRemoved}`, '');
       // log_func("public url is", publicUrl, "BgMagenta", 2)
       return Succeed({
-        imageName: fName,
-        suffix: '?alt=media',
-        imagePath: ToBeAdded,
-        image: ToBeAdded + fName + '?alt=media',
+        fullImg: ToBeAdded + fName + '?alt=media',
+        // suffix: '?alt=media',
+        // imagePath: ToBeAdded,
+        image: fName,
       });
     } catch (e) {
       return FAIL('uploading to firebase failed', e.code);

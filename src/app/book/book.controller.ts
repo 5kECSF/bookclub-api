@@ -10,20 +10,26 @@ import {
   UseGuards,
   Req,
   HttpException,
+  UseInterceptors,
+  UploadedFiles,
+  ParseFilePipeBuilder,
+  HttpStatus,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookQuery, CreateBookInput, UpdateBookDto } from './dto/book.dto';
-import { PaginatedRes, RoleType } from '../../common/common.types.dto';
+import { imageFileRegex, PaginatedRes, RoleType } from '../../common/common.types.dto';
 
 import { Book } from './entities/book.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { UserFromToken } from '../../common/common.types.dto';
-import { Request } from 'express';
+import { Express, Request } from 'express';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { GenreService } from '../genres/genre.service';
 import { CategoryService } from '../category/category.service';
 
 import { generateSlug } from '../../common/util/functions';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileService } from '../file/file.service';
 
 @Controller('book')
 export class BookController {
@@ -31,15 +37,46 @@ export class BookController {
     private readonly bookService: BookService,
     private readonly genreService: GenreService,
     private readonly categoryService: CategoryService,
+    private fileService: FileService,
   ) {}
 
   @Post()
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  @Roles(RoleType.ADMIN)
-  @Roles(RoleType.ADMIN)
-  async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
-    createDto.slug = generateSlug(createDto.title);
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'cover', maxCount: 1 },
+      { name: 'images', maxCount: 3 },
+    ]),
+  )
+  async createOne(
+    @UploadedFiles(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: 'image/jpeg',
+        })
+        .addMaxSizeValidator({
+          maxSize: 1000 * 1000 * 10, //10 mb,
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
+    @Req() req: Request,
+    @Body() createDto: CreateBookInput,
+  ): Promise<Book> {
+    const imgName = this.fileService.generateUniqName(files.cover[0].originalname);
+    const uploaded = await this.fileService.IUploadSingleImage(files[0].buffer, imgName.name);
+    if (!uploaded.ok) throw new HttpException(uploaded.errMessage, uploaded.code);
 
+    const images = await this.fileService.uploadManyWithNewNames(files.images, imgName.uid);
+    if (!images.ok) throw new HttpException(images.errMessage, images.code);
+
+    createDto.img.images = images.val;
+    createDto.img.image = uploaded.val.image;
+    createDto.img.imageId = imgName.uid;
+    createDto.slug = generateSlug(createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
@@ -48,7 +85,7 @@ export class BookController {
       { $inc: { count: 1 } },
     );
     const tag = await this.genreService.updateMany(
-      { userId: { $in: createDto.genre } },
+      { userId: { $in: createDto.genres } },
       { $inc: { instanceNo: 1 } },
     );
     return resp.val;

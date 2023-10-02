@@ -9,13 +9,20 @@ export class ImageObj {
   @Prop({ type: String })
   image?: string;
 
+  @IsOptional()
+  @Prop({ type: [{ type: String }] })
+  images?: string[];
+
   @Prop({ type: String })
   @IsString()
   imageId?: string;
 
+  /**
+   * depricated names
+   */
   @Prop({ type: String })
   @IsString()
-  imageName: string;
+  fullImg?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -24,5 +31,5 @@ export class ImageObj {
   @IsString()
   @IsOptional()
   @ApiHideProperty()
-  suffix: string;
+  suffix?: string;
 }
