@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 // import { deleteFirebaseImageById, FUploadToFirebaseFunc } from '../../providers/firebase';
-import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
+import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import * as sharp from 'sharp';
 import * as crypto from 'crypto';
 import { ColorEnums, logTrace } from '../../common/logger';
@@ -16,6 +16,41 @@ interface Img {
 @Injectable()
 export class FileService {
   constructor(private fileUploadProvider: FileUploadProvider) {}
+
+  public async UploadSingle(file: Express.Multer.File): Promise<Resp<ImageObj>> {
+    if (!file) return FAIL('Image Must not be empty', 400);
+    const imgName = this.generateUniqName(file.originalname);
+    const uploaded = await this.IUploadSingleImage(file.buffer, imgName.name);
+    if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+    uploaded.val.uid = imgName.uid;
+    return Succeed(uploaded.val);
+  }
+
+  /**
+   * this is used by model one that uploads an image & multiple images
+   * @param files
+   */
+  public async ControllerUploadCoverAndImages(files: {
+    cover?: Express.Multer.File[];
+    images?: Express.Multer.File[];
+  }): Promise<Resp<ImageObj>> {
+    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
+
+    /**
+     * generating uniqe id for image
+     */
+    const imgName = this.generateUniqName(files.cover[0].originalname);
+    const uploaded = await this.IUploadSingleImage(files.cover[0].buffer, imgName.name);
+    if (!uploaded.ok) return uploaded;
+    uploaded.val.uid = imgName.uid;
+
+    if (files.images) {
+      const images = await this.uploadManyWithNewNames(files.images, imgName.uid);
+      if (!images.ok) return FAIL(images.errMessage, images.code);
+      uploaded.val.images = images.val;
+    }
+    return Succeed(uploaded.val);
+  }
 
   public generateUniqName(fileName: string, uid = '', ctr = 0): Img {
     const length = 16;

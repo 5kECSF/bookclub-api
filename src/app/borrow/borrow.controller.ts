@@ -17,7 +17,7 @@ import { PaginatedRes, RoleType } from '../../common/common.types.dto';
 import { Borrow } from './entities/borrow.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 @Controller(Endpoint.Borrow)
 export class BorrowController {

@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
@@ -19,16 +20,30 @@ import { Category } from './entities/category.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { generateSlug } from '../../common/util/functions';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
+import { ApiSingleFiltered, ParseFile } from '../file/fileParser';
+import { MaxImageSize } from '../../common/constants/system.consts';
+import { Express } from 'express';
+import { FileService } from '../file/file.service';
 
 @Controller(Endpoint.Category)
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private fileService: FileService,
+  ) {}
 
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  async createOne(@Body() createDto: CategoryInput) {
+  @ApiSingleFiltered('file', true, MaxImageSize)
+  async createOne(
+    @UploadedFile(ParseFile) file: Express.Multer.File,
+    @Body() createDto: CategoryInput,
+  ) {
+    const img = await this.fileService.UploadSingle(file);
+    if (!img.ok) throw new HttpException(img.errMessage, img.code);
+    createDto.coverImage = img.val.fullImg;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.categoryService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);

@@ -1,6 +1,6 @@
 import { HttpCodes } from './http.codes';
 
-export enum ErrorConstants {
+export enum ResponseConsts {
   INTERNAL_ERROR = 'Internal Error',
   INVALID_INPUT = 'Your input is invalid',
   USER_EXISTS = 'USER_EXISTS',
@@ -20,28 +20,24 @@ export enum RespConst {
   VERIFICATION_PENDING = 'verification is pending please wait few minutes',
 }
 
-export const SystemConst = {
-  VERIFICATION_CODE_EXP: 1000 * 60 * 30, // 45 minutes
-  REFRESH_COOKIE: 'REFRESH_TOKEN',
-};
 type ErrorConstantMap = {
-  [key in ErrorConstants]: number;
+  [key in ResponseConsts]: number;
 };
 export const errCode: ErrorConstantMap = {
   //500
-  [ErrorConstants.COULD_NOT_CREATE_USER]: HttpCodes.INTERNAL_SERVER_ERROR,
-  [ErrorConstants.INTERNAL_ERROR]: HttpCodes.INTERNAL_SERVER_ERROR,
+  [ResponseConsts.COULD_NOT_CREATE_USER]: HttpCodes.INTERNAL_SERVER_ERROR,
+  [ResponseConsts.INTERNAL_ERROR]: HttpCodes.INTERNAL_SERVER_ERROR,
   //400
-  [ErrorConstants.INVALID_INPUT]: HttpCodes.BAD_REQUEST,
+  [ResponseConsts.INVALID_INPUT]: HttpCodes.BAD_REQUEST,
   //409
-  [ErrorConstants.USER_EXISTS]: HttpCodes.CONFLICT,
+  [ResponseConsts.USER_EXISTS]: HttpCodes.CONFLICT,
   //404
-  [ErrorConstants.USER_NOT_FOUND]: HttpCodes.NOT_FOUND,
-  [ErrorConstants.NOT_FOUND]: HttpCodes.NOT_FOUND,
+  [ResponseConsts.USER_NOT_FOUND]: HttpCodes.NOT_FOUND,
+  [ResponseConsts.NOT_FOUND]: HttpCodes.NOT_FOUND,
   //401
-  [ErrorConstants.UNAUTHORIZED]: HttpCodes.UNAUTHORIZED,
-  [ErrorConstants.TOKEN_NOT_VALID]: HttpCodes.UNAUTHORIZED,
-  [ErrorConstants.INVALID_CODE]: HttpCodes.UNAUTHORIZED,
-  [ErrorConstants.INVALID_CREDENTIALS]: HttpCodes.UNAUTHORIZED,
-  [ErrorConstants.VERIFICATION_FAILED]: HttpCodes.UNAUTHORIZED,
+  [ResponseConsts.UNAUTHORIZED]: HttpCodes.UNAUTHORIZED,
+  [ResponseConsts.TOKEN_NOT_VALID]: HttpCodes.UNAUTHORIZED,
+  [ResponseConsts.INVALID_CODE]: HttpCodes.UNAUTHORIZED,
+  [ResponseConsts.INVALID_CREDENTIALS]: HttpCodes.UNAUTHORIZED,
+  [ResponseConsts.VERIFICATION_FAILED]: HttpCodes.UNAUTHORIZED,
 };

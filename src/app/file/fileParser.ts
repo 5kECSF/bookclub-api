@@ -26,6 +26,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 export type UploadFields = MulterField & { required?: boolean };
 import { UnsupportedMediaTypeException } from '@nestjs/common';
+import { MaxImageSize } from '../../common/constants/system.consts';
 
 @Injectable()
 export class ParseFile implements PipeTransform {
@@ -79,7 +80,7 @@ export const imageFilter = (
   }
   callback(null, true);
 };
-export const imageOptions = (size): MulterOptions => {
+export const imageOptions = (size = MaxImageSize): MulterOptions => {
   const options = {
     limits: { fileSize: size },
     fileFilter: imageFilter,
@@ -87,6 +88,12 @@ export const imageOptions = (size): MulterOptions => {
   return options;
 };
 
+/**
+ *  =====================================  Multiple Files upload decorators
+ * @param uploadFields
+ * @param localOptions
+ * @constructor
+ */
 export function ApiFileFields(uploadFields: UploadFields[], localOptions?: MulterOptions) {
   const bodyProperties: Record<string, SchemaObject | ReferenceObject> = Object.assign(
     {},
@@ -109,7 +116,7 @@ export function ApiFileFields(uploadFields: UploadFields[], localOptions?: Multe
   );
 }
 
-export function ApiManyFiltered(file1, file2, maxCount2, size) {
+export function ApiManyFiltered(file1, file2, maxCount2, size = MaxImageSize) {
   return ApiFileFields(
     [
       { name: file1, maxCount: 1 },
@@ -119,6 +126,13 @@ export function ApiManyFiltered(file1, file2, maxCount2, size) {
   );
 }
 
+/**
+ * =================================   For single file upload decorator
+ * @param fieldName
+ * @param required
+ * @param localOptions
+ * @constructor
+ */
 export function ApiFile(fieldName = 'file', required = false, localOptions?: MulterOptions) {
   return applyDecorators(
     UseInterceptors(FileInterceptor(fieldName, localOptions)),
@@ -138,12 +152,12 @@ export function ApiFile(fieldName = 'file', required = false, localOptions?: Mul
   );
 }
 
-export function ApiSingleFiltered(name, required, size = 1000000) {
-  return ApiFile(name, required, imageOptions(50000));
+export function ApiSingleFiltered(name, required, size = MaxImageSize) {
+  return ApiFile(name, required, imageOptions(size));
 }
 
 /**
- * depricated ones   ===============================================
+ * =================================  Deprecated ones   ===============================================
  * @constructor
  */
 

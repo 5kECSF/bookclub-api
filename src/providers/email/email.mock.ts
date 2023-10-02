@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { VerificationServiceInterface } from '../verification/verification.interface';
-import { Resp } from '../../common/constants/response.const';
+import { Resp } from '../../common/constants/return.consts';
 
 @Injectable()
 export class EmailMockService implements VerificationServiceInterface {

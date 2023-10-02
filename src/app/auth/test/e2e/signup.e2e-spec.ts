@@ -4,7 +4,7 @@ import * as request from 'supertest';
 import { regUsr, verifyInput } from './auth.stub';
 
 import { IntegrationTestManager } from '../../../../../test/setup/IntegrationTestManager';
-import { RespConst } from '../../../../common/constants/error.constants';
+import { RespConst } from '../../../../common/constants/response.consts';
 
 describe('Signup Controller (e2e)', () => {
   // let app;

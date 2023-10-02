@@ -1,1 +1,1 @@
-export { ErrorConstants as ErrConst } from './error.constants';
+export { ResponseConsts as ErrConst } from './response.consts';

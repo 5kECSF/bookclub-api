@@ -21,10 +21,11 @@ import {
 //--self
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
 import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
-import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
-import { RespConst, SystemConst } from 'src/common/constants/error.constants';
+import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
+import { RespConst } from 'src/common/constants/response.consts';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
 import { EnvVar } from '../../common/config/config.instances';
+import { SystemConst } from '../../common/constants/system.consts';
 
 @Injectable()
 export class AuthService {

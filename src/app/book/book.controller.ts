@@ -32,6 +32,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FileService } from '../file/file.service';
 import { ApiManyFiltered } from '../file/fileParser';
 import { ColorEnums, logTrace } from '../../common/logger';
+import { MaxImageSize } from '../../common/constants/system.consts';
 
 @Controller('book')
 export class BookController {
@@ -45,29 +46,18 @@ export class BookController {
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  @ApiManyFiltered('cover', 'images', 3, 1000 * 1000 * 10)
+  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async createOne(
     @Req() req: Request,
     @Body() createDto: CreateBookInput,
     @UploadedFiles() files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
   ): Promise<Book> {
-    const keys = Object.keys(files);
-    logTrace('files', keys, ColorEnums.BgGreen);
-    const keys2 = Object.keys(files.images[0]);
-    const keys3 = Object.keys(files.cover[0]);
-    logTrace('files2', keys2, ColorEnums.BgGreen);
-    logTrace('files3', keys3, ColorEnums.BgGreen);
-    const imgName = this.fileService.generateUniqName(files.cover[0].originalname);
-    const uploaded = await this.fileService.IUploadSingleImage(files.cover[0].buffer, imgName.name);
-    if (!uploaded.ok) throw new HttpException(uploaded.errMessage, uploaded.code);
+    const imageObj = await this.fileService.ControllerUploadCoverAndImages(files);
+    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
 
-    const images = await this.fileService.uploadManyWithNewNames(files.images, imgName.uid);
-    if (!images.ok) throw new HttpException(images.errMessage, images.code);
-
-    createDto.img.images = images.val;
-    createDto.img.image = uploaded.val.image;
-    createDto.img.imageId = imgName.uid;
+    createDto.img = imageObj.val;
     createDto.slug = generateSlug(createDto.title);
+    logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 

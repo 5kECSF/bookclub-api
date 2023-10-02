@@ -15,7 +15,7 @@ import { JwtGuardPr, UserServicePr } from './dependencies.profile';
 import { Request } from 'express';
 import { User } from '../users';
 import { UserFromToken } from '../../common/common.types.dto';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 @Controller(Endpoint.Profile)
 export class ProfileController {

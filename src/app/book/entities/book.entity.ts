@@ -26,16 +26,6 @@ export class Book {
   @Prop({ type: String })
   desc: string;
 
-  @IsString()
-  @IsOptional()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
-  authorId: User['_id'];
-
-  @IsOptional()
-  @IsString()
-  @Prop({ type: String })
-  authorName: string;
-
   @IsNotEmpty()
   @IsString()
   @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
@@ -48,9 +38,6 @@ export class Book {
   @Prop({ type: ImageObj })
   img?: ImageObj;
 
-  @Prop({ type: String })
-  coverImage?: string;
-
   @IsOptional()
   @IsString()
   @Prop({ required: false })
@@ -59,6 +46,16 @@ export class Book {
   @IsOptional()
   @Prop({ type: Number, required: false })
   pageNo?: number;
+
+  @IsString()
+  @IsOptional()
+  @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
+  authorId: User['_id'];
+
+  @IsOptional()
+  @IsString()
+  @Prop({ type: String })
+  authorName: string;
 
   /**
    * the books we have(instances) & count of books available

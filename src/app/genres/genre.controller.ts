@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import { GenreService } from './genre.service';
@@ -18,16 +19,27 @@ import { Genre } from './entities/genre.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { generateSlug } from '../../common/util/functions';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
+import { ApiSingleFiltered, ParseFile } from '../file/fileParser';
+import { MaxImageSize } from '../../common/constants/system.consts';
+import { Express } from 'express';
+import { FileService } from '../file/file.service';
 
 @Controller(Endpoint.Genre)
 export class GenreController {
-  constructor(private readonly tagsService: GenreService) {}
+  constructor(private readonly tagsService: GenreService, private fileService: FileService) {}
 
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  async createOne(@Body() createDto: CreateGenreInput): Promise<Genre> {
+  @ApiSingleFiltered('file', true, MaxImageSize)
+  async createOne(
+    @UploadedFile(ParseFile) file: Express.Multer.File,
+    @Body() createDto: CreateGenreInput,
+  ): Promise<Genre> {
+    const img = await this.fileService.UploadSingle(file);
+    if (!img.ok) throw new HttpException(img.errMessage, img.code);
+    createDto.coverImage = img.val.fullImg;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.tagsService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);

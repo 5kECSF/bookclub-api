@@ -18,10 +18,10 @@ import { pagiKeys, PaginatedRes, RoleType, UserFromToken } from '../../common/co
 import { FeedBack } from './entities/feedback.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
-import { errCode } from '../../common/constants/error.constants';
+import { errCode } from '../../common/constants/response.consts';
 import { UserService } from '../users';
 import { Request } from 'express';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 @Controller(Endpoint.Feedback)
 export class FeedbackController {

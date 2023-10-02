@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import { EnvVar } from '../../common/config/config.instances';
-import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
+import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
 import { ImageObj } from '../../app/file/file.dto';
 import { Injectable } from '@nestjs/common';

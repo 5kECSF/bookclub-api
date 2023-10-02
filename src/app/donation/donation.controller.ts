@@ -23,8 +23,8 @@ import { BookService } from '../book/book.service';
 
 import { UserService } from '../users';
 
-import { errCode } from '../../common/constants/error.constants';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { errCode } from '../../common/constants/response.consts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 @Controller(Endpoint.Donation)
 export class DonationController {

@@ -3,7 +3,7 @@ import { IntegrationTestManager } from '../../../../../test/setup/IntegrationTes
 
 import { mockGenre, mockUpdateGenre } from './genre.stub';
 // import { logTrace } from '../../../../common/logger';
-import { Endpoint } from '../../../../common/constants/modelConsts';
+import { Endpoint } from '../../../../common/constants/model.consts';
 
 describe('genres Controller (e2e)', () => {
   // let app;

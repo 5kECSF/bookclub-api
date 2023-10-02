@@ -6,7 +6,7 @@ import * as nodemailer from 'nodemailer';
 
 import { google } from 'googleapis';
 import * as path from 'path';
-import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
+import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { EnvVar } from '../../common/config/config.instances';
 
 const OAuth2 = google.auth.OAuth2;

@@ -9,7 +9,7 @@ import { FilterQuery, Model } from 'mongoose';
 import { CreateUser } from './dto/user.mut.dto';
 import { CryptoService } from '../../providers/crypto/crypto.service';
 import { ChangePasswordInput } from '../auth/dto/auth.input.dto';
-import { FAIL, Resp, Succeed } from '../../common/constants/response.const';
+import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ErrConst } from '../auth/dependencies.auth';
 
 @Injectable()

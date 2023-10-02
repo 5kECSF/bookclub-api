@@ -14,7 +14,7 @@ import { UserService } from './users.service';
 import { CreateUser, FilterUser, UpdateUserWithRole } from './dto/user.mut.dto';
 import { User } from './entities/user.entity';
 import { PaginatedRes } from '../../common/common.types.dto';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 // import { Roles } from '../../providers/guards/roles.decorators';
 // import { RoleType } from '../../common/common.types.dto';

@@ -15,7 +15,7 @@ export class ImageObj {
 
   @Prop({ type: String })
   @IsString()
-  imageId?: string;
+  uid?: string;
 
   /**
    * depricated names

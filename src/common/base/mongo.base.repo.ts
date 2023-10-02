@@ -4,7 +4,7 @@ import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { pagiKeys, PaginationInputs } from '../common.types.dto';
 import { ColorEnums, logTrace } from '../logger';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
-import { FAIL, Resp, Succeed } from '../constants/response.const';
+import { FAIL, Resp, Succeed } from '../constants/return.consts';
 import { ErrConst } from '../constants';
 import { pickKeys, removeKeys } from '../util/util';
 

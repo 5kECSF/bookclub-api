@@ -7,11 +7,11 @@ export class CreateGenreInput {
   @IsString()
   name: string;
 
-  @IsString()
   @IsOptional()
   @ApiHideProperty()
   slug?: string;
 
+  @ApiHideProperty()
   @IsOptional()
   coverImage?: string;
 

@@ -18,7 +18,7 @@ import { pickKeys, removeKeys } from '../../common/util/util';
 import { Notification } from './entities/notification.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
-import { Endpoint } from '../../common/constants/modelConsts';
+import { Endpoint } from '../../common/constants/model.consts';
 
 @Controller(Endpoint.Notification)
 export class NotificationController {
