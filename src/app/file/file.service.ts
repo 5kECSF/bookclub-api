@@ -26,9 +26,9 @@ export class FileService {
         .slice(0, length);
 
     const names = fileName.split('.');
-    const name = names[0].trim();
+    // const name = names[0].trim();
     const ext = names[names.length - 1];
-    return { name: `${uid}-${name}-${Date.now()}-${ctr}.${ext}`, uid: uid };
+    return { name: `${uid}-${Date.now()}-${ctr}.${ext}`, uid: uid };
   }
 
   public async uploadManyWithNewNames(
@@ -44,7 +44,7 @@ export class FileService {
           const result = await this.IUploadSingleImage(file.buffer, filename);
           if (!result.ok) return FAIL('failed uploading multi images, in a loop');
 
-          names.push(result.val.fullImg);
+          names.push(result.val.image);
         }),
       );
       return Succeed(names);

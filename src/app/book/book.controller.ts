@@ -30,6 +30,8 @@ import { CategoryService } from '../category/category.service';
 import { generateSlug } from '../../common/util/functions';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FileService } from '../file/file.service';
+import { ApiManyFiltered } from '../file/fileParser';
+import { ColorEnums, logTrace } from '../../common/logger';
 
 @Controller('book')
 export class BookController {
@@ -43,31 +45,20 @@ export class BookController {
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'cover', maxCount: 1 },
-      { name: 'images', maxCount: 3 },
-    ]),
-  )
+  @ApiManyFiltered('cover', 'images', 3, 1000 * 1000 * 10)
   async createOne(
-    @UploadedFiles(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: 'image/jpeg',
-        })
-        .addMaxSizeValidator({
-          maxSize: 1000 * 1000 * 10, //10 mb,
-        })
-        .build({
-          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        }),
-    )
-    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
     @Req() req: Request,
     @Body() createDto: CreateBookInput,
+    @UploadedFiles() files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
   ): Promise<Book> {
+    const keys = Object.keys(files);
+    logTrace('files', keys, ColorEnums.BgGreen);
+    const keys2 = Object.keys(files.images[0]);
+    const keys3 = Object.keys(files.cover[0]);
+    logTrace('files2', keys2, ColorEnums.BgGreen);
+    logTrace('files3', keys3, ColorEnums.BgGreen);
     const imgName = this.fileService.generateUniqName(files.cover[0].originalname);
-    const uploaded = await this.fileService.IUploadSingleImage(files[0].buffer, imgName.name);
+    const uploaded = await this.fileService.IUploadSingleImage(files.cover[0].buffer, imgName.name);
     if (!uploaded.ok) throw new HttpException(uploaded.errMessage, uploaded.code);
 
     const images = await this.fileService.uploadManyWithNewNames(files.images, imgName.uid);
