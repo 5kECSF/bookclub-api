@@ -217,6 +217,7 @@ export abstract class MongoGenericRepository<T> {
   // ====================  Delete QUERIES
   public async findByIdAndDelete(_id: string): Promise<Resp<T>> {
     try {
+      if(!_id) return FAIL("Id Is Required", 400)
       const deleted: T = await this._repository.findByIdAndDelete(_id).lean();
       if (!deleted) return FAIL(ErrConst.NOT_FOUND, 404);
       // logTrace('Deleted ONE >===>> ', deleted, ColorEnums.BgMagenta);

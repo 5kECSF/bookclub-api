@@ -44,8 +44,8 @@ export class BookController {
   ) {}
 
   @Post()
-  @Roles(RoleType.ADMIN)
-  @UseGuards(JwtGuard)
+  // @Roles(RoleType.ADMIN)
+  // @UseGuards(JwtGuard)
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async createOne(
     @Req() req: Request,

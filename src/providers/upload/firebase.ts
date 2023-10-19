@@ -50,7 +50,7 @@ export class FirebaseService implements FileServiceInterface {
       return Succeed({
         fullImg: ToBeAdded + fName + '?alt=media',
         // suffix: '?alt=media',
-        // imagePath: ToBeAdded,
+        path: 'p1',
         image: fName,
       });
     } catch (e) {

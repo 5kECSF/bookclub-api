@@ -24,7 +24,7 @@ import {
   VerifyCodeInput,
 } from './dto/auth.input.dto';
 import { AuthTokenResponse } from './dto/auth.response.dto';
-import { JwtGuard, UserFromToken, UserService } from './dependencies.auth';
+import { ColorEnums, JwtGuard, UserFromToken, UserService, logTrace } from './dependencies.auth';
 import { EnvVar } from '../../common/config/config.instances';
 import { Endpoint } from '../../common/constants/model.consts';
 import { SystemConst } from '../../common/constants/system.consts';
@@ -66,6 +66,7 @@ export class AuthController {
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
     response.cookie(SystemConst.REFRESH_COOKIE, res.val.authToken.refreshToken, options);
+    logTrace("user Login", res.val.authToken.expiresIn)
     return res.val;
   }
 
@@ -77,10 +78,11 @@ export class AuthController {
     @Body() input: TokenInput,
   ): Promise<boolean> {
     let token;
-    if (input.isMobile) {
-      token = input.refreshToken;
-    } else {
+    if (input.isCookie) {
+      
       token = request.cookies[SystemConst.REFRESH_COOKIE];
+    } else {
+      token = input.refreshToken;
     }
     const resp = await this.authService.logOut(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
@@ -97,11 +99,14 @@ export class AuthController {
     @Body() input: TokenInput,
   ): Promise<AuthTokenResponse> {
     let token;
-    if (input.isMobile) {
-      token = input.refreshToken;
-    } else {
+    logTrace("input", input, ColorEnums.BgBlue)
+    if (input.isCookie) { 
+      console.log('it is cookie')     
       token = request.cookies[SystemConst.REFRESH_COOKIE];
+    } else {
+      token = input.refreshToken;
     }
+    if (!token) throw new HttpException("NO Token Found", 400);
     const resp = await this.authService.resetTokens(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const options = {
@@ -109,6 +114,7 @@ export class AuthController {
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
     response.cookie(SystemConst.REFRESH_COOKIE, resp.val.refreshToken, options);
+    console.log("reset tokens", resp.val.expiresIn)
     return { authToken: resp.val };
   }
 

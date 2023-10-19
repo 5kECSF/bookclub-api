@@ -20,6 +20,7 @@ export class BookService extends MongoGenericRepository<Book> {
 
   public async Like(bookId: string, userId) {
     try {
+      // TODO if user already liked the book unlike it
       // const session = await this.connection.startSession();
       // const session = await mongoose.startSession();
       // session.startTransaction();

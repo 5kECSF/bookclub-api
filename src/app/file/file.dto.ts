@@ -10,26 +10,22 @@ export class ImageObj {
   image?: string;
 
   @IsOptional()
-  @Prop({ type: [{ type: String }] })
+  @Prop({ type: [{ type: String }], default: undefined })
   images?: string[];
 
   @Prop({ type: String })
   @IsString()
   uid?: string;
 
+  @IsNotEmpty()
+  @IsString()
+  @Prop({ type: String })
+  path?: string;
+
   /**
    * depricated names
    */
-  @Prop({ type: String })
+
   @IsString()
   fullImg?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  imagePath?: string;
-
-  @IsString()
-  @IsOptional()
-  @ApiHideProperty()
-  suffix?: string;
 }

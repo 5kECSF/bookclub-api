@@ -15,7 +15,6 @@ async function bootstrap() {
   app.useGlobalFilters(new CustomExceptionFilter());
   // app.use(express.json());
   // app.use(express.urlencoded({ extended: true }));
-
   app.enableCors({
     origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

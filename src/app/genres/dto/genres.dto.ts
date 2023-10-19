@@ -1,11 +1,11 @@
-import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { PaginationInput, RoleType } from '../imports.genre';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ImageObj } from '../../file/file.dto';
+import { Prop } from '@nestjs/mongoose';
+import { Genre } from '../entities/genre.entity';
 
-export class CreateGenreInput {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+export class CreateGenreInput extends PickType(Genre, ['name','desc', 'restricted']) {
 
   @IsOptional()
   @ApiHideProperty()
@@ -13,13 +13,10 @@ export class CreateGenreInput {
 
   @ApiHideProperty()
   @IsOptional()
-  coverImage?: string;
-
-  @IsOptional()
-  restricted?: boolean;
+  img?: ImageObj;
 }
 
-export class UpdateDto extends PartialType(CreateGenreInput) {}
+export class UpdateDto extends PartialType(PickType(Genre, ['name','desc', 'restricted'])) {}
 
 export class GenreQuery extends PaginationInput {
   @IsOptional()

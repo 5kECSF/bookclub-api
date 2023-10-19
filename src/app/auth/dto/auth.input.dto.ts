@@ -14,8 +14,9 @@ export class TokenInput {
   @IsOptional()
   refreshToken: string;
 
+  @IsOptional()
   @IsBoolean()
-  isMobile: boolean;
+  isCookie: boolean;
 }
 
 export class EmailInput {
