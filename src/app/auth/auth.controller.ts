@@ -106,7 +106,8 @@ export class AuthController {
     } else {
       token = input.refreshToken;
     }
-    if (!token) throw new HttpException("NO Token Found", 400);
+    // logTrace("token is", token, ColorEnums.BgCyan)
+    if (!token || token=='undefined') throw new HttpException("NO Token Found", 400);
     const resp = await this.authService.resetTokens(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const options = {

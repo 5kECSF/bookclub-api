@@ -2,6 +2,7 @@ import mongoose, { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ImageObj } from '../../file/file.dto';
 
 @Schema()
 export class Category {
@@ -13,9 +14,9 @@ export class Category {
   @Prop({ type: String, unique: true })
   name: string;
 
-  @IsOptional()
-  @Prop({ type: String, required: false })
-  coverImage: string;
+
+  @Prop({ type: ImageObj, _id: false })
+  img: ImageObj;
 
   @Prop({ type: String, unique: true, sparse: true })
   slug: string;

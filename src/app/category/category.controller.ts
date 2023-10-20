@@ -43,17 +43,25 @@ export class CategoryController {
   ) {
     const img = await this.fileService.UploadSingle(file);
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    createDto.coverImage = img.val.fullImg;
+    createDto.img = img.val;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.categoryService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    resp.val.img.fullImg= img.val.fullImg
     return resp.val;
   }
 
   @Patch(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async update(@Param('id') id: string, @Body() updateDto: UpdateCategoryDto) {
+  @ApiSingleFiltered('file', false, MaxImageSize)
+  async update(@UploadedFile() file: Express.Multer.File, @Param('id') id: string, @Body() updateDto: UpdateCategoryDto) {
+    const ctg = await this.categoryService.findById(id);
+    if (!ctg.ok) throw new HttpException(ctg.errMessage, ctg.code);
+    if(file && file.buffer){
+      const update = await this.fileService.IUploadSingleImage(file.buffer, ctg.val.img.image)
+    }
+    
     const res = await this.categoryService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;

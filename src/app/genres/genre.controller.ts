@@ -47,6 +47,7 @@ export class GenreController {
 
     const resp = await this.tagsService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    resp.val.img.fullImg= img.val.fullImg
     return resp.val;
   }
 

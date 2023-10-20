@@ -7,7 +7,7 @@ import { Category } from '../entities/category.entity';
 export class CategoryInput extends PickType(Category, [
   'name',
   'desc',
-  'coverImage',
+  'img',
   'restricted',
 ]) {
   @IsString()
