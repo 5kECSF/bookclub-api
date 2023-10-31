@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { RoleType } from '../imports.user';
 import {
   IsEmail,
@@ -9,6 +9,7 @@ import {
   MinLength,
   IsBoolean,
 } from 'class-validator';
+import { ImageObj } from '../../file/file.dto';
 
 export class RegisterUserInput {
   @IsNotEmpty()
@@ -28,9 +29,9 @@ export class RegisterUserInput {
   @IsString()
   lastName?: string;
 
+  @ApiHideProperty()
   @IsOptional()
-  @IsString()
-  avatar?: string;
+  avatar?: ImageObj;
 }
 
 export class UpdateMeDto extends PartialType(OmitType(RegisterUserInput, ['email', 'password'])) {}

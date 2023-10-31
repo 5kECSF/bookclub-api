@@ -1,49 +1,50 @@
 import { Document } from 'mongoose';
 
-import { Prop, Prop as MProp, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ApiHideProperty } from '@nestjs/swagger';
 
 import { RoleType } from '../imports.user';
 
 import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
+import { ImageObj } from '../../file/file.dto';
 
 export const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 
 @Schema({ timestamps: true })
 export class User {
-  // @MProp({
+  // @Prop({
   //   get: (id: string) => {
   //     return id
   //   },
   // })
   readonly _id: string;
 
-  @MProp({ type: String, unique: true, sparse: true })
+  @Prop({ type: String, unique: true, sparse: true })
   email: string;
 
-  @MProp({ type: String, unique: true, sparse: true })
+  @Prop({ type: String, unique: true, sparse: true })
   phone: string;
 
-  @MProp({ type: String, unique: true, sparse: true })
+  @Prop({ type: String, unique: true, sparse: true })
   userName: string;
 
-  @MProp({ type: String })
+  @Prop({ type: String })
   firstName: string;
 
-  @MProp({ type: String })
+  @Prop({ type: String })
   lastName: string;
 
   fullName?: string;
 
-  @MProp({ type: String, select: false })
+  @Prop({ type: String, select: false })
   @ApiHideProperty()
   password: string;
 
-  @MProp({ required: false })
-  avatar?: string;
+  @Prop({ type: ImageObj, _id: false })
+  avatar: ImageObj;
 
-  @MProp({
+  @Prop({
     type: String,
     enum: Object.values(RoleType),
     default: RoleType.USER,
@@ -51,14 +52,14 @@ export class User {
   role: RoleType = RoleType.USER;
 
   @ApiHideProperty()
-  @MProp({ type: String, select: false })
+  @Prop({ type: String, select: false })
   hashedRefreshToken: string;
 
-  @MProp({ type: String, select: false, required: false })
+  @Prop({ type: String, select: false, required: false })
   @ApiHideProperty()
   verificationCodeHash: string;
 
-  @MProp({ select: false, required: false })
+  @Prop({ select: false, required: false })
   @ApiHideProperty()
   verificationCodeExpires: number;
 
@@ -69,33 +70,33 @@ export class User {
   @Prop({ type: [{ type: String, ref: 'Book._id' }] })
   dislikedBooks: string[];
 
-  @MProp({ required: false })
+  @Prop({ required: false })
   donatedCount: number;
 
   /**
    * used when updating old email
    */
   @ApiHideProperty()
-  @MProp({ required: false })
+  @Prop({ required: false })
   newEmail: string;
 
-  @MProp({ type: String, required: false })
+  @Prop({ type: String, required: false })
   active: boolean;
 
   /**
    * These are properties for account setup
    */
 
-  @MProp({ required: false })
+  @Prop({ required: false })
   idImage?: string;
 
-  @MProp({
+  @Prop({
     type: String,
     enum: Object.values(ACCOUNT_STATUS),
   })
   accountStatus: ACCOUNT_STATUS;
 
-  @MProp({
+  @Prop({
     type: String,
     enum: Object.values(GENDER),
   })

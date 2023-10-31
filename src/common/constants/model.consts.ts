@@ -9,4 +9,5 @@ export enum Endpoint {
   Feedback = 'feedback',
   File = 'file',
   Notification = 'notification',
+  Author = 'author',
 }

@@ -2,7 +2,7 @@ import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagge
 
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '../../../common/common.types.dto';
-import { Book } from '../entities/book.entity';
+import { Book, BookLanguage } from '../entities/book.entity';
 import { ImageObj } from '../../file/file.dto';
 
 export class CreateBookInput extends PickType(Book, [
@@ -14,7 +14,7 @@ export class CreateBookInput extends PickType(Book, [
   'authorName',
   'language',
   'pageNo',
-  'availableCnt',
+  // 'availableCnt',
 ]) {
   // @IsOptional()
   // coverImage?: string;
@@ -32,12 +32,12 @@ export class CreateBookInput extends PickType(Book, [
   img?: ImageObj;
 }
 
-export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {}
+export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {
+  @IsOptional()
+  removedImages?: string[];
+}
 
 export class BookQuery extends PaginationInputs {
-  @IsOptional()
-  searchText?: string;
-
   @IsOptional()
   genres?: string[];
 
@@ -45,7 +45,7 @@ export class BookQuery extends PaginationInputs {
   categoryId?: string;
 
   @IsOptional()
-  language?: string;
+  language?: BookLanguage;
 
   @IsOptional()
   authorId?: string;

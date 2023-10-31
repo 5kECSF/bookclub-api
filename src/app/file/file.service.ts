@@ -39,17 +39,19 @@ export class FileService {
     /**
      * generating uniqe id for image
      */
-    const imgName = this.generateUniqName(files.cover[0].originalname);
-    const uploaded = await this.IUploadSingleImage(files.cover[0].buffer, imgName.name);
-    if (!uploaded.ok) return uploaded;
-    uploaded.val.uid = imgName.uid;
+    const single = await this.UploadSingle(files.cover[0]);
+    if (!single.ok) return single;
+    // const imgName = this.generateUniqName(files.cover[0].originalname);
+    // const uploaded = await this.IUploadSingleImage(files.cover[0].buffer, imgName.name);
+    // if (!uploaded.ok) return uploaded;
+    // uploaded.val.uid = imgName.uid;
 
     if (files.images) {
-      const images = await this.uploadManyWithNewNames(files.images, imgName.uid);
+      const images = await this.uploadManyWithNewNames(files.images, single.val.uid);
       if (!images.ok) return FAIL(images.errMessage, images.code);
-      uploaded.val.images = images.val;
+      single.val.images = images.val;
     }
-    return Succeed(uploaded.val);
+    return Succeed(single.val);
   }
 
   public generateUniqName(fileName: string, uid = '', ctr = 0): Img {

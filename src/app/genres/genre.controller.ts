@@ -25,12 +25,10 @@ import { MaxImageSize } from '../../common/constants/system.consts';
 import { Express } from 'express';
 import { FileService } from '../file/file.service';
 import { ReqParamPipe } from 'src/common/lib/pipes';
-import { logTrace } from './imports.genre';
-import { ColorEnums } from '../auth/dependencies.auth';
 
 @Controller(Endpoint.Genre)
 export class GenreController {
-  constructor(private readonly tagsService: GenreService, private fileService: FileService) {}
+  constructor(private readonly genreService: GenreService, private fileService: FileService) {}
 
   @Post()
   // @Roles(RoleType.ADMIN)
@@ -45,9 +43,9 @@ export class GenreController {
     createDto.img = img.val;
     createDto.slug = generateSlug(createDto.name);
 
-    const resp = await this.tagsService.createOne(createDto);
+    const resp = await this.genreService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    resp.val.img.fullImg= img.val.fullImg
+    resp.val.img.fullImg = img.val.fullImg;
     return resp.val;
   }
 
@@ -55,13 +53,17 @@ export class GenreController {
   // @UseGuards(JwtGuard)
   // @Roles(RoleType.ADMIN)
   @ApiSingleFiltered('file', true, MaxImageSize)
-  async update(@UploadedFile() file: Express.Multer.File, @Param('id') id: string, @Body() updateDto: UpdateDto) {
-    const genre = await this.tagsService.findById(id);
+  async update(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateDto,
+  ) {
+    const genre = await this.genreService.findById(id);
     if (!genre.ok) throw new HttpException(genre.errMessage, genre.code);
-    if(file && file.buffer){
-      const update = await this.fileService.IUploadSingleImage(file.buffer, genre.val.img.image)
+    if (file && file.buffer) {
+      const update = await this.fileService.IUploadSingleImage(file.buffer, genre.val.img.image);
     }
-    const res = await this.tagsService.updateById(id, updateDto);
+    const res = await this.genreService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }
@@ -70,22 +72,24 @@ export class GenreController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id', ReqParamPipe) id: string) {
-    const res = await this.tagsService.findByIdAndDelete(id);
+    const res = await this.genreService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    const result = await this.fileService.IDeleteImageById(res.val.img.uid);
+    if (!result.ok) throw new HttpException(result.errMessage, result.code);
     return res.val;
   }
 
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<GenreResponse> {
-    const res = await this.tagsService.searchManyAndPaginate(['title'], inputQuery);
+    const res = await this.genreService.searchManyAndPaginate(['title'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const res = await this.tagsService.findById(id);
+    const res = await this.genreService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }

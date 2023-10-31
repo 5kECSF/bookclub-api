@@ -1,4 +1,11 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, InternalServerErrorException } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { ColorEnums, logTrace } from './logger';
 import { stat } from 'fs';
@@ -10,22 +17,19 @@ export class CustomExceptionFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
     const errorMessage = 'An internal server error occurred. Please try again later.';
 
-    try{      
-      
+    try {
       const status = exception.getStatus();
-      const respMessage= exception.getResponse()
-      logTrace(status, exception.getResponse(), ColorEnums.BgRed)
+      const respMessage = exception.getResponse();
+      logTrace(status, exception.getResponse(), ColorEnums.BgRed);
       if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
         // Customize your error message here
-        
         response.status(status).json({ message: errorMessage });
       } else {
         // For other error statuses, you can handle them differently if needed
         response.status(status).json(respMessage);
       }
-    }catch(error){
+    } catch (error) {
       response.status(500).json({ message: errorMessage });
     }
-    
   }
 }

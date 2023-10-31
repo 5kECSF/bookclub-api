@@ -5,7 +5,6 @@ import { LoginUserInput } from '../../../auth/dto/auth.input.dto';
 export const defaultAdmin: CreateUser = {
   active: true,
   role: RoleType.ADMIN,
-  avatar: 'admin-avatar1.jpg',
 
   email: 'testDefaultAdmin1@gmail.com',
   firstName: 'tafn',
@@ -16,7 +15,6 @@ export const defaultAdmin: CreateUser = {
 export const defaultUser1: CreateUser = {
   active: true,
   role: RoleType.USER,
-  avatar: 'user-avatar1.jpg',
 
   email: 'testDefaultUser1@gmail.com',
   firstName: 'tufn',
@@ -35,7 +33,6 @@ export const userLogin: LoginUserInput = {
 export const testUser1: CreateUser = {
   active: true,
   role: RoleType.USER,
-  avatar: 'test-user-avatar1.jpg',
 
   email: 'testUser1@gmail.com',
   firstName: 'test fn',
@@ -46,7 +43,6 @@ export const testUser1: CreateUser = {
 export const testAdmin1: CreateUser = {
   active: true,
   role: RoleType.ADMIN,
-  avatar: 'admin-avatar1.jpg',
 
   email: 'testDefaultAdmin1@gmail.com',
   firstName: 'test fn ',

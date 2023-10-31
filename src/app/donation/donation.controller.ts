@@ -48,14 +48,14 @@ export class DonationController {
 
     createDto.donorId = usr.val._id;
     createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
-    createDto.instanceNo = book.val.instanceCount + 1;
+    createDto.instanceNo = book.val.donatedCnt + 1;
 
     const resp = await this.donationService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
     const ctg = await this.bookService.updateOneAndReturnCount(
       { _id: createDto.bookId },
-      { $inc: { instanceCount: 1 } },
+      { $inc: { donatedCnt: 1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
       { _id: createDto.bookId },
@@ -86,7 +86,7 @@ export class DonationController {
 
     const ctg = await this.bookService.updateOneAndReturnCount(
       { _id: res.val.bookId },
-      { $inc: { instanceCount: -1 } },
+      { $inc: { donatedCnt: -1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
       { _id: res.val.donorId },

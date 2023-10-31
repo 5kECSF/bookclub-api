@@ -27,12 +27,14 @@ import { Roles } from '../../providers/guards/roles.decorators';
 import { GenreService } from '../genres/genre.service';
 import { CategoryService } from '../category/category.service';
 
-import { generateSlug } from '../../common/util/functions';
+import { generateSlug, removeSubArr } from '../../common/util/functions';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FileService } from '../file/file.service';
 import { ApiManyFiltered } from '../file/fileParser';
 import { ColorEnums, logTrace } from '../../common/logger';
 import { MaxImageSize } from '../../common/constants/system.consts';
+import { removeKeys } from '../../common/util/util';
+import { FAIL } from '../../common/constants/return.consts';
 
 @Controller('book')
 export class BookController {
@@ -44,8 +46,8 @@ export class BookController {
   ) {}
 
   @Post()
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async createOne(
     @Req() req: Request,
@@ -57,25 +59,71 @@ export class BookController {
 
     createDto.img = imageObj.val;
     createDto.slug = generateSlug(createDto.title);
-    logTrace('creating book', createDto.title);
+    // logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
-    const ctg = await this.categoryService.updateOneAndReturnCount(
-      { _id: createDto.categoryId },
-      { $inc: { count: 1 } },
-    );
-    const tag = await this.genreService.updateMany(
-      { userId: { $in: createDto.genres } },
-      { $inc: { instanceNo: 1 } },
-    );
+    await Promise.all([
+      this.categoryService.updateOneAndReturnCount(
+        { _id: createDto.categoryId },
+        { $inc: { count: 1 } },
+      ),
+      this.genreService.updateMany({ name: { $in: createDto.genres } }, { $inc: { count: 1 } }),
+    ]);
+
     return resp.val;
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async update(@Req() req: Request, @Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
+  @UseGuards(JwtGuard)
+  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
+  async update(
+    @UploadedFiles() files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() updateBookDto: UpdateBookDto,
+  ) {
+    const book = await this.bookService.findById(id);
+    if (!book.ok) throw new HttpException(book.errMessage, book.code);
+    /**
+     * if the cover image has changed
+     */
+
+    if (files.cover && files.cover.length > 0) {
+      logTrace('Updating Cover', files.cover.length);
+      const result = await this.fileService.IUploadSingleImage(
+        files.cover[0].buffer,
+        book.val.img.image,
+      );
+    }
+    /**
+     * if images have been removed
+     */
+    if (updateBookDto.removedImages) {
+      if (!Array.isArray(updateBookDto.removedImages))
+        updateBookDto.removedImages = [updateBookDto.removedImages];
+      await Promise.all(
+        updateBookDto.removedImages.map(async (fileName, i) => {
+          if (book.val.img.images.includes(fileName)) {
+            const result = await this.fileService.IDeleteImageById(fileName);
+            if (!result.ok) throw new HttpException(result.errMessage, result.code);
+          }
+        }),
+      );
+      book.val.img.images = removeSubArr(book.val.img.images, updateBookDto.removedImages);
+    }
+    /**
+     * If Images have been added
+     */
+    if (files.images && files.images.length > 0) {
+      const tot = files.images.length + book.val.img.images.length;
+      if (tot > 3) throw new HttpException('Image Numbers Exceeded', 400);
+      const images = await this.fileService.uploadManyWithNewNames(files.images, book.val.img.uid);
+      if (!images.ok) return FAIL(images.errMessage, images.code);
+      book.val.img.images = [...book.val.img.images, ...images.val];
+    }
+    updateBookDto.img = book.val.img;
     const res = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
@@ -88,14 +136,15 @@ export class BookController {
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
 
-    const ctg = await this.categoryService.updateOneAndReturnCount(
-      { _id: res.val.categoryId },
-      { $inc: { count: -1 } },
-    );
-    const tag = await this.genreService.updateMany(
-      { userId: { $in: res.val.genres } },
-      { $inc: { instanceNo: -1 } },
-    );
+    const result = await this.fileService.IDeleteImageById(res.val.img.uid);
+    if (!result.ok) throw new HttpException(result.errMessage, result.code);
+    await Promise.all([
+      this.categoryService.updateOneAndReturnCount(
+        { _id: res.val.categoryId },
+        { $inc: { count: -1 } },
+      ),
+      this.genreService.updateMany({ name: { $in: res.val.genres } }, { $inc: { count: -1 } }),
+    ]);
 
     return res.val;
   }
@@ -119,12 +168,17 @@ export class BookController {
 
   @Get()
   async filterManyAndPaginate(@Query() inputQuery: BookQuery): Promise<PaginatedRes<Book>> {
-    // const query = removeKeys(inputQuery, ['genre', 'searchText']);
-    const genres = inputQuery.genres;
-
-    if (inputQuery?.genres && inputQuery.genres.length > 0) {
-      inputQuery['genre'] = { $in: genres };
+    let genres = inputQuery.genres;
+    if (genres && !Array.isArray(genres)) {
+      // If `tags` is not an array, convert it to a single-element array.
+      genres = [genres];
     }
+    logTrace('query', inputQuery);
+    const query = removeKeys(inputQuery, ['genres', 'searchText']);
+    if (inputQuery?.genres && inputQuery.genres.length > 0) {
+      query['genres'] = { $in: genres };
+    }
+    logTrace('input q', query);
 
     const res = await this.bookService.searchManyAndPaginate(['title', 'desc'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);

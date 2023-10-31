@@ -9,6 +9,12 @@ export const generateSlug = (title: string) => {
   return `${baseSlug}-${randomPart}-${timestamp}`;
 };
 
+export const removeSubArr = (mainArr: string[], arrToBeRemoved: string[]) => {
+  return mainArr.filter((name) => {
+    return !arrToBeRemoved.includes(name);
+  });
+};
+
 /**
  * a function to generate a random string of length len
  * @param len

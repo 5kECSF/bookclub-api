@@ -10,7 +10,7 @@ import { ColorEnums, logTrace } from '../../common/logger';
     MongooseModule.forRootAsync({
       useFactory: async () => {
         const mongoUri = EnvVar.getInstance.MONGODB_URI;
-        logTrace('monogUri', mongoUri, ColorEnums.BgGreen);
+        logTrace('monogUri', mongoUri.substring(0, 20), ColorEnums.BgGreen);
         try {
           const mongooseOptions = {
             uri: mongoUri,

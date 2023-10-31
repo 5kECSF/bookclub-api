@@ -15,6 +15,7 @@ import { FeedbackModule } from './app/feedback/feedback.module';
 import { FileModule } from './app/file/file.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuthorModule } from './app/writer/author.module';
 
 @Module({
   imports: [
@@ -26,10 +27,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     CategoryModule,
     BookModule,
     DonationModule,
-
     NotificationModule,
     FeedbackModule,
     FileModule,
+    AuthorModule,
     // ThrottlerModule.forRoot([
     //   {
     //     ttl: 60000,

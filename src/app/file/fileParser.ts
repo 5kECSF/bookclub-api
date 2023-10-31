@@ -35,7 +35,7 @@ export class ParseFile implements PipeTransform {
     metadata: ArgumentMetadata,
   ): Express.Multer.File | Express.Multer.File[] {
     if (files === undefined || files === null) {
-      console.log('files===>', files)
+      // console.log('files===>', files)
       throw new BadRequestException('Validation failed (file expected)');
     }
     if (Array.isArray(files) && files.length === 0) {
@@ -113,7 +113,7 @@ export function ApiFileFields(uploadFields: UploadFields[], localOptions?: Multe
   return applyDecorators(
     UseInterceptors(FileFieldsInterceptor(uploadFields, localOptions)),
     ApiConsumes('multipart/form-data'),
-    apiBody,
+    // apiBody,
   );
 }
 

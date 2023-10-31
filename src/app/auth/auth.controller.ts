@@ -66,7 +66,7 @@ export class AuthController {
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
     response.cookie(SystemConst.REFRESH_COOKIE, res.val.authToken.refreshToken, options);
-    logTrace("user Login", res.val.authToken.expiresIn)
+    // logTrace("user Login", res.val.authToken.expiresIn)
     return res.val;
   }
 
@@ -79,7 +79,6 @@ export class AuthController {
   ): Promise<boolean> {
     let token;
     if (input.isCookie) {
-      
       token = request.cookies[SystemConst.REFRESH_COOKIE];
     } else {
       token = input.refreshToken;
@@ -99,15 +98,15 @@ export class AuthController {
     @Body() input: TokenInput,
   ): Promise<AuthTokenResponse> {
     let token;
-    logTrace("input", input, ColorEnums.BgBlue)
-    if (input.isCookie) { 
-      console.log('it is cookie')     
+    logTrace('input', input, ColorEnums.BgBlue);
+    if (input.isCookie) {
+      console.log('it is cookie');
       token = request.cookies[SystemConst.REFRESH_COOKIE];
     } else {
       token = input.refreshToken;
     }
     // logTrace("token is", token, ColorEnums.BgCyan)
-    if (!token || token=='undefined') throw new HttpException("NO Token Found", 400);
+    if (!token || token == 'undefined') throw new HttpException('NO Token Found', 400);
     const resp = await this.authService.resetTokens(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const options = {
@@ -115,7 +114,7 @@ export class AuthController {
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
     response.cookie(SystemConst.REFRESH_COOKIE, resp.val.refreshToken, options);
-    console.log("reset tokens", resp.val.expiresIn)
+    console.log('reset tokens', resp.val.expiresIn);
     return { authToken: resp.val };
   }
 

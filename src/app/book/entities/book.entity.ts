@@ -2,11 +2,18 @@ import mongoose, { Document, Types } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiQuery, ApiProperty } from '@nestjs/swagger';
 
 import { User } from '../../users';
 import { ImageObj } from '../../file/file.dto';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+export enum BookLanguage {
+  English = 'English',
+  Amharic = 'Amharic',
+  AffanOrommo = 'AfanOromo',
+  Tigrna = 'Tigrna',
+}
 
 @Schema({ timestamps: true })
 export class Book {
@@ -40,8 +47,11 @@ export class Book {
 
   @IsOptional()
   @IsString()
-  @Prop({ required: false })
-  language?: string;
+  @Prop({
+    type: String,
+    enum: Object.values(BookLanguage),
+  })
+  language: BookLanguage;
 
   @IsOptional()
   @Prop({ type: Number, required: false })
@@ -61,8 +71,12 @@ export class Book {
    * the books we have(instances) & count of books available
    */
   @Prop({ type: Number, required: false, default: 0 })
-  instanceCount: number;
+  donatedCnt: number;
 
+  /**
+   *
+   * the amount of books left in the library
+   */
   @IsOptional()
   @IsString()
   @Prop({ type: Number, required: false, default: 0 })
