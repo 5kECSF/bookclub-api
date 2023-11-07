@@ -1,12 +1,15 @@
 import mongoose, { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Donation } from '../../donation/entities/donation.entity';
+import { Book } from '../../book/entities/book.entity';
 
 export enum BorrowStatus {
   Borrowed = 'BORROWED',
-  QUE = 'QUE',
-  Available = 'AVAILABLE',
+  WaitList = 'WAITLIST',
+  Accepted = 'ACCEPTED',
+  Returned = 'RETURNED',
 }
 
 @Schema({ timestamps: true })
@@ -14,33 +17,46 @@ export class Borrow {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
 
+  @IsNotEmpty()
+  @IsString()
   @Prop({ type: String })
   userId: string;
 
+  @IsOptional()
   @Prop({ type: String })
-  userName: string;
+  userName?: string;
 
+  @IsNotEmpty()
+  @IsString()
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
+  bookId: Book['_id'];
+
+  @IsOptional()
+  @IsString()
+  @Prop({ type: String, required: false, ref: 'Donation' })
+  uid?: Donation['uid'];
+
+  @IsOptional()
   @Prop({ type: Number, required: false })
-  instanceNo: number;
+  instanceNo?: number;
 
+  @IsOptional()
   @Prop({ type: String })
   bookName?: string;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
-  bookId: string;
-
+  //requested date is got from timestamp
   @Prop({ type: Date, required: false })
-  takenDate: Date; //Created Date
+  takenDate?: Date; //Created Date
 
   @Prop({ type: Date, required: false })
   returnedDate?: Date;
 
   @Prop({ type: Date, required: false })
-  endDate?: Date;
+  dueDate?: Date;
 
   @IsOptional()
   @IsString()
-  @Prop({ type: String, enum: Object.values(BorrowStatus), default: BorrowStatus.Available })
+  @Prop({ type: String, enum: Object.values(BorrowStatus), default: BorrowStatus.WaitList })
   status?: BorrowStatus;
 }
 

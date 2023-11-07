@@ -12,8 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { DonationService } from './donation.service';
-import { CreateDonationInput, DonationQuery, UpdateDonationDto } from './dto/donation.dto';
-import { PaginatedRes, RoleType, UserFromToken } from '../../common/common.types.dto';
+import { CreateDonationInput, DonationQuery, UpdateDonationDto } from './entities/donation.dto';
+import { PaginatedRes, RoleType } from '../../common/common.types.dto';
 
 import { Donation } from './entities/donation.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
@@ -25,6 +25,7 @@ import { UserService } from '../users';
 
 import { errCode } from '../../common/constants/response.consts';
 import { Endpoint } from '../../common/constants/model.consts';
+import { ColorEnums, logTrace } from '../../common/logger';
 
 @Controller(Endpoint.Donation)
 export class DonationController {
@@ -40,15 +41,16 @@ export class DonationController {
   async createOne(@Req() req: Request, @Body() createDto: CreateDonationInput): Promise<Donation> {
     // const user: UserFromToken = req['user'];
     // createDto.userName=user.f
+    // logTrace('input', createDto, ColorEnums.BgCyan);
     const usr = await this.userService.findById(createDto.donorId);
     if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
 
     const book = await this.bookService.findById(createDto.bookId);
     if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
 
-    createDto.donorId = usr.val._id;
     createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
-    createDto.instanceNo = book.val.donatedCnt + 1;
+    createDto.instanceNo = (book.val.donatedCnt || 0) + 1;
+    createDto.bookName = book.val.title;
 
     const resp = await this.donationService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
@@ -58,7 +60,7 @@ export class DonationController {
       { $inc: { donatedCnt: 1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
-      { _id: createDto.bookId },
+      { _id: createDto.donorId },
       { $inc: { donatedCount: 1 } },
     );
     return resp.val;
@@ -72,6 +74,11 @@ export class DonationController {
     @Param('id') id: string,
     @Body() updateDonationDto: UpdateDonationDto,
   ) {
+    /**
+     * TODO
+     * if book id is updated, update books instance count
+     * if user id is updated update users donated count
+     */
     const res = await this.donationService.findOneAndUpdate({ _id: id }, updateDonationDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;

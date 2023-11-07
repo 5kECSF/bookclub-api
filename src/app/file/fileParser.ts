@@ -138,18 +138,18 @@ export function ApiFile(fieldName = 'file', required = false, localOptions?: Mul
   return applyDecorators(
     UseInterceptors(FileInterceptor(fieldName, localOptions)),
     ApiConsumes('multipart/form-data'),
-    ApiBody({
-      schema: {
-        type: 'object',
-        required: required ? [fieldName] : [],
-        properties: {
-          [fieldName]: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-      },
-    }),
+    // ApiBody({
+    //   schema: {
+    //     type: 'object',
+    //     required: required ? [fieldName] : [],
+    //     properties: {
+    //       [fieldName]: {
+    //         type: 'string',
+    //         format: 'binary',
+    //       },
+    //     },
+    //   },
+    // }),
   );
 }
 

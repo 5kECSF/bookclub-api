@@ -8,13 +8,12 @@ import { User, UserSchema, UsersModule } from '../auth/dependencies.auth';
 import { GuardsModule } from '../../providers/guards/guards.module';
 import { BookModule } from '../book/book.module';
 
-
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Donation.name, schema: DonationSchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    UsersModule,
     GuardsModule,
+    UsersModule,
     BookModule,
   ],
   controllers: [DonationController],

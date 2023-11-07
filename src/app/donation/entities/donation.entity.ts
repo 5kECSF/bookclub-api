@@ -7,10 +7,13 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users';
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Book } from '../../book/entities/book.entity';
 
 export enum bookStatus {
   Available = 'AVAILABLE',
-  borrowed = 'BORROWED',
+  NotAvailable = 'NOT_AVAILABLE', // if it is not borrowed but un available for another reason
+  Taken = 'TAKEN',
+  Reserved = 'RESERVED',
 }
 
 @Schema({ timestamps: true })
@@ -18,7 +21,11 @@ export class Donation {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @Prop({ type: String, unique: true, spares: true })
+  uid?: string;
+
+  @IsOptional()
   @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   donorId: User['_id'];
 
@@ -27,12 +34,17 @@ export class Donation {
   donorName: string;
 
   @IsString()
+  @IsOptional()
   @Prop({ type: String })
   bookName: string;
 
   @IsOptional()
+  @Prop({ type: String })
+  desc: string;
+
+  @IsOptional()
   @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
-  bookId: string;
+  bookId: Book['_id'];
 
   /**
    * the count of this specific book, instance Number
@@ -47,6 +59,17 @@ export class Donation {
   })
   @IsOptional()
   status: bookStatus;
+
+  /**
+   * To check who is in posesion of this book
+   */
+  @IsOptional()
+  @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
+  borrowerId?: User['_id'];
+
+  @IsOptional()
+  @Prop({ type: String })
+  borrowerName?: string;
 }
 
 export type DonationDocument = Donation & Document;

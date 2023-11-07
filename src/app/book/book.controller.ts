@@ -10,13 +10,10 @@ import {
   UseGuards,
   Req,
   HttpException,
-  UseInterceptors,
   UploadedFiles,
-  ParseFilePipeBuilder,
-  HttpStatus,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { BookQuery, CreateBookInput, UpdateBookDto } from './dto/book.dto';
+import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
 import { imageFileRegex, PaginatedRes, RoleType } from '../../common/common.types.dto';
 
 import { Book } from './entities/book.entity';
@@ -28,7 +25,7 @@ import { GenreService } from '../genres/genre.service';
 import { CategoryService } from '../category/category.service';
 
 import { generateSlug, removeSubArr } from '../../common/util/functions';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+
 import { FileService } from '../file/file.service';
 import { ApiManyFiltered } from '../file/fileParser';
 import { ColorEnums, logTrace } from '../../common/logger';

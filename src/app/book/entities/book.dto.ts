@@ -2,7 +2,7 @@ import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagge
 
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '../../../common/common.types.dto';
-import { Book, BookLanguage } from '../entities/book.entity';
+import { Book, BookLanguage } from './book.entity';
 import { ImageObj } from '../../file/file.dto';
 
 export class CreateBookInput extends PickType(Book, [

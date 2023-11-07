@@ -1,11 +1,11 @@
 import * as request from 'supertest';
 import { IntegrationTestManager } from '../../../../../test/setup/IntegrationTestManager';
 
-import { mockGenre, mockUpdateGenre } from './genre.stub';
+import { mockBorrow, mockUpdateBorrow } from './borrow.stub';
 // import { logTrace } from '../../../../common/logger';
 import { Endpoint } from '../../../../common/constants/model.consts';
 
-describe('genres Controller (e2e)', () => {
+describe('borrows Controller (e2e)', () => {
   // let app;
   let userToken;
   /**
@@ -15,23 +15,23 @@ describe('genres Controller (e2e)', () => {
   const app = iTM.app;
 
   beforeAll(async () => {
-    await iTM.beforeAll('genres');
+    await iTM.beforeAll('borrows');
   });
 
   afterAll(async () => {
-    await iTM.afterAll('genres');
+    await iTM.afterAll('borrows');
   });
 
-  it('genres-T01: FetchMany /genres (GET) to be empty', async () => {
-    const response = await request(iTM.httpServer).get('/genres');
+  it('borrows-T01: FetchMany /borrows (GET) to be empty', async () => {
+    const response = await request(iTM.httpServer).get('/borrows');
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });
 
-  it('genres-T02: CreateOne /genres (POST) UnAuthorized return 403', async () => {
+  it('borrows-T02: CreateOne /borrows (POST) UnAuthorized return 403', async () => {
     const response = await request(iTM.httpServer)
-      .post('/genres')
-      .send(mockGenre)
+      .post('/borrows')
+      .send(mockBorrow)
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(403);
@@ -40,52 +40,52 @@ describe('genres Controller (e2e)', () => {
 
   let createdTag;
 
-  it('genres-T03: CreateOne /genres (POST) Authorized -> 201', async () => {
+  it('borrows-T03: CreateOne /borrows (POST) Authorized -> 201', async () => {
     const response = await request(iTM.httpServer)
-      .post(`/${Endpoint.Genre}`)
-      .send(mockGenre)
+      .post(`/${Endpoint.Borrow}`)
+      .send(mockBorrow)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
       .expect(201);
     // logTrace('response', response.body);
     expect(response.status).toBe(201);
-    expect(response.body.name).toBe(mockGenre.name);
+    expect(response.body.name).toBe(mockBorrow.name);
     createdTag = response.body;
   });
-  it('genres-T04: FetchMany /genres (GET) to have one genre', async () => {
-    const response = await request(iTM.httpServer).get(`/${Endpoint.Genre}`).expect(200);
+  it('borrows-T04: FetchMany /borrows (GET) to have one borrow', async () => {
+    const response = await request(iTM.httpServer).get(`/${Endpoint.Borrow}`).expect(200);
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.count).toEqual(1);
   });
 
-  it('genres-T05: GetOne /genres (GET) to be same genre', async () => {
+  it('borrows-T05: GetOne /borrows (GET) to be same borrow', async () => {
     const response = await request(iTM.httpServer)
-      .get(`/${Endpoint.Genre}/${createdTag._id}`)
+      .get(`/${Endpoint.Borrow}/${createdTag._id}`)
       .expect(200);
 
     // expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockGenre.name);
+    expect(response.body.name).toBe(mockBorrow.name);
   });
 
-  it('genres-T06: UpdateOne /genres/:id (PATCH) -> 200', async () => {
+  it('borrows-T06: UpdateOne /borrows/:id (PATCH) -> 200', async () => {
     const response = await request(iTM.httpServer)
-      .patch(`/${Endpoint.Genre}/${createdTag._id}`)
-      .send(mockUpdateGenre)
+      .patch(`/${Endpoint.Borrow}/${createdTag._id}`)
+      .send(mockUpdateBorrow)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
       .expect(200);
     // logTrace('response', response.body);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockUpdateGenre.name);
+    expect(response.body.name).toBe(mockUpdateBorrow.name);
     // createdTag = response.body;
   });
-  it('genres-T07: Delete /genres/:id (Delete) 200', async () => {
+  it('borrows-T07: Delete /borrows/:id (Delete) 200', async () => {
     const response = await request(iTM.httpServer)
-      .delete(`/${Endpoint.Genre}/${createdTag._id}`)
+      .delete(`/${Endpoint.Borrow}/${createdTag._id}`)
       .set('Accept', 'application/json')
       .set('Authorization', iTM.adminAccessToken)
       .expect('Content-Type', /json/)
@@ -96,8 +96,8 @@ describe('genres Controller (e2e)', () => {
     // createdTag = response.body;
   });
 
-  it('genres-T08: FetchMany /genres (GET) to be empty, Verify Delete', async () => {
-    const response = await request(iTM.httpServer).get('/genres');
+  it('borrows-T08: FetchMany /borrows (GET) to be empty, Verify Delete', async () => {
+    const response = await request(iTM.httpServer).get('/borrows');
     expect(response.status).toBe(200);
     expect(response.body.count).toEqual(0);
   });

@@ -123,7 +123,7 @@ export class AuthController {
   async forgotPassword(@Body() input: EmailInput): Promise<boolean> {
     const res = await this.authService.sendResetCode(input.email);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.ok;
+    return res.val;
   }
 
   //Au.C-7 resetPassword

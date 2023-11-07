@@ -24,13 +24,18 @@ import { Endpoint } from '../../common/constants/model.consts';
 export class UsersController {
   constructor(private readonly usersService: UserService) {}
 
-  //FIXME this function is used by admins to add other admins
+  //FIXME this function is used by admins to add other admins and also users
   @Post()
   // @Roles(RoleType.ADMIN)
   // @UseGuards(JwtGuard)
   async createUser(@Body() createDto: CreateUser): Promise<User> {
+    /**
+     * this is to prevent errors, if admin wants to create active users he can update their status later
+     */
+    createDto.active = false;
     const resp = await this.usersService.createUser(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    resp.val.password = '';
     return resp.val;
   }
 
