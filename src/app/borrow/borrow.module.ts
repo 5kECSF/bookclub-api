@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Borrow, BorrowSchema } from './entities/borrow.entity';
 import { GuardsModule, UsersModule } from '../auth/dependencies.auth';
 import { BookModule } from '../book/book.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { BookModule } from '../book/book.module';
     GuardsModule,
     UsersModule,
     BookModule,
+    NotificationModule,
   ],
   controllers: [BorrowController],
   providers: [BorrowService],

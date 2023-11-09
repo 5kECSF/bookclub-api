@@ -171,7 +171,7 @@ export class AuthService {
     const loginUpdate = await this.updateHashedToken(user._id, loginAuthToken.refreshToken);
     if (!loginUpdate) return FAIL(ErrConst.INTERNAL_ERROR);
 
-    return Succeed({ authToken: loginAuthToken, user });
+    return Succeed({ authToken: loginAuthToken, userData: user });
   }
 
   //Au.S-3.1

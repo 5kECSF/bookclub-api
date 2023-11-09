@@ -3,16 +3,7 @@ import { PaginationInput } from '../imports.borrow';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Borrow, BorrowStatus } from './borrow.entity';
 
-export class CreateBorrowInput extends PickType(Borrow, [
-  'userId',
-  'bookId',
-  'userName',
-  'bookName',
-  'takenDate',
-  'dueDate',
-  'returnedDate',
-  'status',
-]) {}
+export class CreateBorrowInput extends OmitType(Borrow, ['_id']) {}
 
 export class RequestBorrowInput extends PickType(Borrow, ['bookId', 'userName', 'bookName']) {
   @IsOptional()

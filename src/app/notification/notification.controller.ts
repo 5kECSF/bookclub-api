@@ -11,10 +11,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { CreateNotificationInput, NotificationQuery, UpdateDto } from './dto/notification.dto';
+import { CreateNotificationInput, NotificationQuery, UpdateDto } from './entities/notification.dto';
 import { pagiKeys, PaginatedRes, RoleType } from '../../common/common.types.dto';
 
-import { pickKeys, removeKeys } from '../../common/util/util';
 import { Notification } from './entities/notification.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';

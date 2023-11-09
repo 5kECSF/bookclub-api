@@ -1,4 +1,5 @@
 import { User } from '../dependencies.auth';
+import { ApiProperty } from '@nestjs/swagger';
 
 //Auth-token.object-types
 
@@ -10,9 +11,11 @@ export class AuthToken {
 }
 
 export class AuthTokenResponse {
+  @ApiProperty({ type: AuthToken })
   authToken?: AuthToken;
 
-  user?: User;
+  @ApiProperty({ type: User })
+  userData?: User;
 }
 
 export class TokenResponse {

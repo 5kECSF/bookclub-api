@@ -2,20 +2,30 @@ import mongoose, { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { User } from '../../users';
-import { NotificationEnum } from '../dto/notification.dto';
-import { RoleType } from '../../../common/common.types.dto';
+
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+export enum NotificationEnum {
+  General = 'General',
+  Individual = 'Individual',
+}
+
 
 @Schema({ timestamps: true })
 export class Notification {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
 
+  @IsNotEmpty()
+  @IsString()
   @Prop({ type: String })
   title: string;
 
+  @IsNotEmpty()
   @Prop({ type: String })
   body?: string;
 
+  @IsOptional()
   @Prop({
     type: String,
     enum: Object.values(NotificationEnum),
@@ -23,6 +33,7 @@ export class Notification {
   })
   type?: NotificationEnum; //general, single user
 
+  @IsOptional()
   @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
   to: User['_id'];
 }

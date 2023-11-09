@@ -6,7 +6,7 @@ import { Donation } from '../../donation/entities/donation.entity';
 import { Book } from '../../book/entities/book.entity';
 
 export enum BorrowStatus {
-  Borrowed = 'BORROWED',
+  Taken = 'BORROWED',
   WaitList = 'WAITLIST',
   Accepted = 'ACCEPTED',
   Returned = 'RETURNED',
@@ -45,12 +45,15 @@ export class Borrow {
   bookName?: string;
 
   //requested date is got from timestamp
+  @IsOptional()
   @Prop({ type: Date, required: false })
   takenDate?: Date; //Created Date
 
+  @IsOptional()
   @Prop({ type: Date, required: false })
   returnedDate?: Date;
 
+  @IsOptional()
   @Prop({ type: Date, required: false })
   dueDate?: Date;
 

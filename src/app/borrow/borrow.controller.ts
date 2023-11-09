@@ -23,6 +23,7 @@ import { Request } from 'express';
 import { BookService } from '../book/book.service';
 import { UserService } from '../users';
 import { errCode } from '../../common/constants/response.consts';
+import { NotificationService } from '../notification/notification.service';
 
 @Controller(Endpoint.Borrow)
 export class BorrowController {
@@ -30,6 +31,7 @@ export class BorrowController {
     private readonly service: BorrowService,
     private readonly bookService: BookService,
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   @Post('/request/:bookId')
@@ -87,7 +89,7 @@ export class BorrowController {
   async markTaken(@Param('id') id: string): Promise<Borrow> {
     //TODO: Add taken date here
     //TODO: update the instance & book count
-    const resp = await this.service.updateById(id, { status: BorrowStatus.Borrowed });
+    const resp = await this.service.updateById(id, { status: BorrowStatus.Taken });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
