@@ -113,9 +113,9 @@ export class AuthController {
       httpOnly: true,
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
-    response.cookie(SystemConst.REFRESH_COOKIE, resp.val.refreshToken, options);
-    console.log('reset tokens', resp.val.expiresIn);
-    return { authToken: resp.val };
+    response.cookie(SystemConst.REFRESH_COOKIE, resp.val.authToken.refreshToken, options);
+    console.log('reset tokens', resp.val.authToken.expiresIn);
+    return resp.val;
   }
 
   //Au.C-6 forgotPassword

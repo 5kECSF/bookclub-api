@@ -17,6 +17,7 @@ import {
   UserService,
   VerificationServiceAuth,
 } from './dependencies.auth';
+import { removeKeys } from 'src/common/util/util';
 
 //--self
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
@@ -26,6 +27,11 @@ import { RespConst } from 'src/common/constants/response.consts';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
 import { EnvVar } from '../../common/config/config.instances';
 import { SystemConst } from '../../common/constants/system.consts';
+
+export class UserAndTokne{
+  usrToken: UserFromToken
+  user: User
+}
 
 @Injectable()
 export class AuthService {
@@ -161,6 +167,8 @@ export class AuthService {
     const user: User = await this.loginValidateUser(input);
     if (!user) return FAIL(ErrConst.INVALID_CREDENTIALS);
 
+    const pickedUser = removeKeys(user, ['password', 'hashedRefreshToken', 'verificationCodeHash', 'verificationCodeExpires']) as  User
+
     // 3.2: generate authentication Tokens
     const loginAuthToken: AuthToken = await this.generateAuthToken({
       _id: user._id,
@@ -171,7 +179,7 @@ export class AuthService {
     const loginUpdate = await this.updateHashedToken(user._id, loginAuthToken.refreshToken);
     if (!loginUpdate) return FAIL(ErrConst.INTERNAL_ERROR);
 
-    return Succeed({ authToken: loginAuthToken, userData: user });
+    return Succeed({ authToken: loginAuthToken, userData: pickedUser });
   }
 
   //Au.S-3.1
@@ -240,7 +248,7 @@ export class AuthService {
       const user = await this.getUserFromRefreshToken(token);
       if (!user.ok) return FAIL(user.errMessage);
       const userRes = await this.usersService.upsertOne(
-        { _id: user.val._id },
+        { _id: user.val.user._id },
         { hashedRefreshToken: '' },
       );
       if (!userRes.ok || userRes.val.modifiedCount < 1) return FAIL('Could Not Update');
@@ -253,37 +261,39 @@ export class AuthService {
   /*
    * AuSr-5.1:
    */
-  async resetTokens(resetToken: string): Promise<Resp<AuthToken>> {
+  async resetTokens(resetToken: string): Promise<Resp<AuthTokenResponse>> {
     //  1. verify the refresh token
     const user = await this.getUserFromRefreshToken(resetToken);
-    if (!user.ok) return user;
+    if (!user.ok) return FAIL(user.errMessage, user.code);
 
     //  2. generate new refresh token
-    const refreshAuthToken = await this.generateAuthToken(user.val, true);
+    const refreshAuthToken = await this.generateAuthToken(user.val.usrToken, true);
     /*
      * 3. update the users hashed refresh token
      *  here you can implement half life logic, if half life not reached skip this
      */
     const refreshUpdated = await this.updateHashedToken(
-      user.val._id,
+      user.val.user._id,
       refreshAuthToken.refreshToken,
     );
     if (!refreshUpdated) return FAIL(ErrConst.INTERNAL_ERROR);
-    return Succeed(refreshAuthToken);
+    return Succeed({authToken: refreshAuthToken, userData: user.val.user});
   }
+
 
   // when users access token experis, verifies users refresh token & returns the refresh token
   //Au.S-4.1  [logout & resetTokens]
-  public async getUserFromRefreshToken(refreshToken: string): Promise<Resp<UserFromToken>> {
+  public async getUserFromRefreshToken(refreshToken: string): Promise<Resp<UserAndTokne>> {
     if (!refreshToken) return null;
     //1.verify the refresh token
     const decoded = await this.jwtService.verifyRefreshToken(refreshToken);
-    if (!decoded.ok) return decoded;
-    // find the User from database
+    if (!decoded.ok) return FAIL(decoded.errMessage, decoded.code);
+    // find the User from database to mathch his refresh token
     const user: User = await this.usersService.findOneWithPwd({
       _id: decoded.val._id,
     });
     if (!user) return FAIL(ErrConst.USER_NOT_FOUND);
+    const pickedUser = removeKeys(user, ['password', 'hashedRefreshToken', 'verificationCodeHash', 'verificationCodeExpires']) as  User
 
     //compare the hashed refresh token and the users refresh token
     const isRefreshTokenMatching = await this.cryptoService.verifyHash(
@@ -291,7 +301,7 @@ export class AuthService {
       refreshToken,
     );
     if (!isRefreshTokenMatching) return FAIL('Tokens Not Matching');
-    return decoded;
+    return Succeed({ usrToken: decoded.val, user: pickedUser});
   }
 
   //  ==========================   PASSWORD RESET OPERATIONS
