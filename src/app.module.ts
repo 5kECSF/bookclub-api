@@ -13,9 +13,10 @@ import { DonationModule } from './app/donation/donation.module';
 import { NotificationModule } from './app/notification/notification.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 import { FileModule } from './app/file/file.module';
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+// import { APP_GUARD } from '@nestjs/core';
+// import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthorModule } from './app/writer/author.module';
+import { BorrowModule } from './app/borrow/borrow.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AuthorModule } from './app/writer/author.module';
     FeedbackModule,
     FileModule,
     AuthorModule,
+    BorrowModule,
     // ThrottlerModule.forRoot([
     //   {
     //     ttl: 60000,

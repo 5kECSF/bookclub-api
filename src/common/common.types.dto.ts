@@ -6,7 +6,12 @@ export interface HttpContext {
   res: Response;
 }
 
-export const pagiKeys = ['limit', 'sort', 'page'];
+export const pagiKeys = ['limit', 'sort', 'page', 'sortOrder'];
+
+enum SortOrder {
+  asc = 1,
+  desc = -1,
+}
 
 export class PaginationInputs {
   @IsOptional()
@@ -20,6 +25,9 @@ export class PaginationInputs {
 
   @IsOptional()
   sort?: string = '_id';
+
+  @IsOptional()
+  sortOrder?: SortOrder = 1;
 }
 
 export enum RoleType {

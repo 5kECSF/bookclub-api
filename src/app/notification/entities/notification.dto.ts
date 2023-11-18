@@ -14,4 +14,3 @@ export class NotificationQuery extends PaginationInput {
   @IsOptional()
   type?: NotificationEnum;
 }
-

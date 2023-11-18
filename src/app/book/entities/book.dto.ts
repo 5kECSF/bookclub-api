@@ -29,6 +29,10 @@ export class CreateBookInput extends PickType(Book, [
 
   @IsOptional()
   @ApiHideProperty()
+  uid?: number;
+
+  @IsOptional()
+  @ApiHideProperty()
   img?: ImageObj;
 }
 

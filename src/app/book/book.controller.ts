@@ -1,24 +1,23 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
-  UseGuards,
-  Req,
+  Get,
   HttpException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
-import { imageFileRegex, PaginatedRes, RoleType } from '../../common/common.types.dto';
+import { PaginatedRes, RoleType, UserFromToken } from '../../common/common.types.dto';
 
 import { Book } from './entities/book.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
-import { UserFromToken } from '../../common/common.types.dto';
 import { Express, Request } from 'express';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { GenreService } from '../genres/genre.service';
@@ -28,10 +27,11 @@ import { generateSlug, removeSubArr } from '../../common/util/functions';
 
 import { FileService } from '../file/file.service';
 import { ApiManyFiltered } from '../file/fileParser';
-import { ColorEnums, logTrace } from '../../common/logger';
+import { logTrace } from '../../common/logger';
 import { MaxImageSize } from '../../common/constants/system.consts';
 import { removeKeys } from '../../common/util/util';
 import { FAIL } from '../../common/constants/return.consts';
+import { SequenceService } from './sequence/sequence.entity';
 
 @Controller('book')
 export class BookController {
@@ -40,6 +40,7 @@ export class BookController {
     private readonly genreService: GenreService,
     private readonly categoryService: CategoryService,
     private fileService: FileService,
+    private readonly sequenceService: SequenceService,
   ) {}
 
   @Post()
@@ -56,6 +57,7 @@ export class BookController {
 
     createDto.img = imageObj.val;
     createDto.slug = generateSlug(createDto.title);
+    createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);

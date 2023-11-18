@@ -32,6 +32,10 @@ export class Borrow {
   bookId: Book['_id'];
 
   @IsOptional()
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
+  instanceId?: Donation['_id'];
+
+  @IsOptional()
   @IsString()
   @Prop({ type: String, required: false, ref: 'Donation' })
   uid?: Donation['uid'];
@@ -43,6 +47,10 @@ export class Borrow {
   @IsOptional()
   @Prop({ type: String })
   bookName?: string;
+
+  @IsOptional()
+  @Prop({ type: String })
+  note?: string;
 
   //requested date is got from timestamp
   @IsOptional()

@@ -24,6 +24,23 @@ import { BookService } from '../book/book.service';
 import { UserService } from '../users';
 import { errCode } from '../../common/constants/response.consts';
 import { NotificationService } from '../notification/notification.service';
+import { NotificationEnum } from '../notification/entities/notification.entity';
+import { DonationService } from '../donation/donation.service';
+import { bookStatus } from '../donation/entities/donation.entity';
+
+export class BookAccept {
+  body: string;
+  id: string;
+  uid: string;
+  instanceNo: string;
+  userId: string;
+}
+
+export class BookTaken {
+  note: string;
+  takenDate: string;
+  dueDate: string;
+}
 
 @Controller(Endpoint.Borrow)
 export class BorrowController {
@@ -32,6 +49,7 @@ export class BorrowController {
     private readonly bookService: BookService,
     private readonly userService: UserService,
     private readonly notificationService: NotificationService,
+    private readonly donationService: DonationService,
   ) {}
 
   @Post('/request/:bookId')
@@ -57,9 +75,9 @@ export class BorrowController {
     return resp.val;
   }
 
-  @Post('/cancle/:id')
+  @Post('/cancle/:borrowId')
   @UseGuards(JwtGuard)
-  async cancelRequest(@Req() req: Request, @Param('id') id: string): Promise<any> {
+  async cancelRequest(@Req() req: Request, @Param('borrowId') id: string): Promise<any> {
     const user: UserFromToken = req['user'];
     const res = await this.service.deleteOne({
       userId: user._id,
@@ -74,23 +92,50 @@ export class BorrowController {
   @Post('/acceptBorrow/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async acceptBorrow(@Param('id') id: string): Promise<Borrow> {
-    const resp = await this.service.updateById(id, { status: BorrowStatus.Accepted });
+  async acceptBorrow(@Param('id') id: string, @Body() message: BookAccept): Promise<Borrow> {
+    const resp = await this.service.updateById(id, {
+      status: BorrowStatus.Accepted,
+      uid: message.uid,
+      instanceId: message.id,
+      instanceNo: message.instanceNo,
+    });
+    const updateInstance = await this.donationService.updateById(message.id, {
+      status: bookStatus.Reserved,
+      borrowerId: resp.val.userId,
+      borrowerName: resp.val.userName,
+    });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, it could also be an email
-    // TODO: add a custom message to it `you can take the book on ....day @ ...place`
+    const notification = await this.notificationService.createOne({
+      title: `Your request to borrow ${resp.val.bookName} have been accepted`,
+      body: message.body,
+      type: NotificationEnum.Individual,
+      userId: resp.val.userId,
+    });
+    //TODO: add email notifications
+
     return resp.val;
   }
 
   @Post('/markTaken/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async markTaken(@Param('id') id: string): Promise<Borrow> {
+  async markTaken(@Param('id') id: string, @Body() body: BookTaken): Promise<Borrow> {
     //TODO: Add taken date here
     //TODO: update the instance & book count
-    const resp = await this.service.updateById(id, { status: BorrowStatus.Taken });
-    // const resp = await this.service.createOne(createDto);
+    const resp = await this.service.updateById(id, {
+      status: BorrowStatus.Taken,
+      takenDate: body.takenDate,
+      dueDate: body.dueDate,
+      note: body.note,
+    });
+    const updateInstance = await this.donationService.updateById(resp.val.instanceId, {
+      status: bookStatus.Taken,
+      tak: resp.val.userId,
+      borrowerName: resp.val.userName,
+    });
+    // const updateBook = await this.bookService.updateById(resp.val.bookId, {})
+    // const updateDonation = await this.donationService.updateById()
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
     return resp.val;

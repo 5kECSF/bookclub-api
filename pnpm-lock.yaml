@@ -59,6 +59,9 @@ dependencies:
   mongoose:
     specifier: ^7.0.4
     version: 7.0.4
+  mongoose-auto-increment:
+    specifier: ^5.0.1
+    version: 5.0.1(mongoose@7.0.4)
   nanoid:
     specifier: ^5.0.1
     version: 5.0.1
@@ -6732,6 +6735,15 @@ packages:
       socks: 2.7.1
     optionalDependencies:
       saslprep: 1.0.3
+    dev: false
+
+  /mongoose-auto-increment@5.0.1(mongoose@7.0.4):
+    resolution: {integrity: sha512-fuSw0np0ZZXYjNBBrD6Wg0y70N0i5NhBuH3AIETTXCchaq45FeHpISoQ3fFbbdSFhfVEDRtg+hVxEDpFjdI2lw==}
+    peerDependencies:
+      mongoose: ^4.1.12
+    dependencies:
+      extend: 3.0.2
+      mongoose: 7.0.4
     dev: false
 
   /mongoose@7.0.4:

@@ -8,12 +8,13 @@ import { User } from '../../users';
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Book } from '../../book/entities/book.entity';
+import { ImageObj } from '../../file/file.dto';
 
 export enum bookStatus {
   Available = 'AVAILABLE',
   NotAvailable = 'NOT_AVAILABLE', // if it is not borrowed but un available for another reason
   Taken = 'TAKEN',
-  Reserved = 'RESERVED',
+  Reserved = 'RESERVED', // if it has been accepted to be borrowed
 }
 
 @Schema({ timestamps: true })
@@ -46,12 +47,16 @@ export class Donation {
   @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
   bookId: Book['_id'];
 
+  @IsOptional()
+  @Prop({ type: ImageObj })
+  bookImg?: ImageObj;
+
   /**
    * the count of this specific book, instance Number
    */
   @IsOptional()
   @Prop({ type: Number, required: false, default: 0 })
-  instanceNo: number;
+  instanceNo?: number;
 
   @MProp({
     type: String,

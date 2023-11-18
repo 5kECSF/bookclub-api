@@ -23,6 +23,10 @@ export class Book {
   @Prop({ type: String, unique: true, sparse: true })
   slug: string;
 
+  @IsOptional()
+  @Prop({ type: String, unique: true, spares: true })
+  uid?: number;
+
   @IsNotEmpty()
   @IsString()
   @Prop({ type: String })

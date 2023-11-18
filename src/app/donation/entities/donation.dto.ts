@@ -1,6 +1,6 @@
 import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '../../../common/common.types.dto';
 
 import { bookStatus, Donation } from './donation.entity';
@@ -15,6 +15,7 @@ export class CreateDonationInput extends PickType(Donation, [
   //below will be set from the model
   'donorName',
   'bookName',
+  'bookImg',
 ]) {
   @IsOptional()
   @IsString()
