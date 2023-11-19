@@ -17,6 +17,11 @@ export class Borrow {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
 
+  @IsOptional()
+  @IsString()
+  @Prop({ type: String, enum: Object.values(BorrowStatus), default: BorrowStatus.WaitList })
+  status?: BorrowStatus;
+
   @IsNotEmpty()
   @IsString()
   @Prop({ type: String })
@@ -51,8 +56,8 @@ export class Borrow {
   @IsOptional()
   @Prop({ type: String })
   note?: string;
-
   //requested date is got from timestamp
+
   @IsOptional()
   @Prop({ type: Date, required: false })
   takenDate?: Date; //Created Date
@@ -64,11 +69,6 @@ export class Borrow {
   @IsOptional()
   @Prop({ type: Date, required: false })
   dueDate?: Date;
-
-  @IsOptional()
-  @IsString()
-  @Prop({ type: String, enum: Object.values(BorrowStatus), default: BorrowStatus.WaitList })
-  status?: BorrowStatus;
 }
 
 export type BorrowDocument = Borrow & Document;

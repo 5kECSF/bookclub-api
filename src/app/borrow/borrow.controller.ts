@@ -42,10 +42,14 @@ export class BookTaken {
   dueDate: string;
 }
 
+export class BookReturned {
+  returnedDate: string;
+}
+
 @Controller(Endpoint.Borrow)
 export class BorrowController {
   constructor(
-    private readonly service: BorrowService,
+    private readonly borrowService: BorrowService,
     private readonly bookService: BookService,
     private readonly userService: UserService,
     private readonly notificationService: NotificationService,
@@ -69,7 +73,7 @@ export class BorrowController {
       userName: `${usr.val.firstName} ${usr.val.lastName}`,
     };
 
-    const resp = await this.service.createOne(createDto);
+    const resp = await this.borrowService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     // TODO: send notification to admin here
     return resp.val;
@@ -79,7 +83,7 @@ export class BorrowController {
   @UseGuards(JwtGuard)
   async cancelRequest(@Req() req: Request, @Param('borrowId') id: string): Promise<any> {
     const user: UserFromToken = req['user'];
-    const res = await this.service.deleteOne({
+    const res = await this.borrowService.deleteOne({
       userId: user._id,
       _id: id,
       status: BorrowStatus.WaitList,
@@ -93,7 +97,7 @@ export class BorrowController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async acceptBorrow(@Param('id') id: string, @Body() message: BookAccept): Promise<Borrow> {
-    const resp = await this.service.updateById(id, {
+    const resp = await this.borrowService.updateById(id, {
       status: BorrowStatus.Accepted,
       uid: message.uid,
       instanceId: message.id,
@@ -103,6 +107,9 @@ export class BorrowController {
       status: bookStatus.Reserved,
       borrowerId: resp.val.userId,
       borrowerName: resp.val.userName,
+    });
+    const updateBook = await this.bookService.updateById(resp.val.bookId, {
+      $inc: { availableCnt: -1 },
     });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
@@ -121,9 +128,7 @@ export class BorrowController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async markTaken(@Param('id') id: string, @Body() body: BookTaken): Promise<Borrow> {
-    //TODO: Add taken date here
-    //TODO: update the instance & book count
-    const resp = await this.service.updateById(id, {
+    const resp = await this.borrowService.updateById(id, {
       status: BorrowStatus.Taken,
       takenDate: body.takenDate,
       dueDate: body.dueDate,
@@ -131,10 +136,17 @@ export class BorrowController {
     });
     const updateInstance = await this.donationService.updateById(resp.val.instanceId, {
       status: bookStatus.Taken,
-      tak: resp.val.userId,
-      borrowerName: resp.val.userName,
+      // borrowerId: resp.val.userId,
+      // borrowerName: resp.val.userName,
     });
-    // const updateBook = await this.bookService.updateById(resp.val.bookId, {})
+
+    const notification = await this.notificationService.createOne({
+      title: `The ${resp.val.bookName} book is marked as taken by you`,
+      body: `The book ${resp.val.bookName} has been marked as taken by You. if it is a mistake, contact us`,
+      type: NotificationEnum.Individual,
+      userId: resp.val.userId,
+    });
+
     // const updateDonation = await this.donationService.updateById()
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
@@ -144,10 +156,16 @@ export class BorrowController {
   @Post('/markReturned/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async markReturned(@Param('id') id: string): Promise<Borrow> {
+  async markReturned(@Param('id') id: string, @Body() body: BookReturned): Promise<Borrow> {
     //TODO: Add taken date here
     //TODO: update the instance & book count
-    const resp = await this.service.updateById(id, { status: BorrowStatus.Returned });
+    const resp = await this.borrowService.updateById(id, {
+      status: BorrowStatus.Returned,
+      returnedDate: body.returnedDate,
+    });
+    const updateBook = await this.bookService.updateById(resp.val.bookId, {
+      $inc: { availableCnt: 1 },
+    });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
@@ -158,7 +176,7 @@ export class BorrowController {
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createOne(@Body() createDto: CreateBorrowInput): Promise<Borrow> {
-    const resp = await this.service.createOne(createDto);
+    const resp = await this.borrowService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     return resp.val;
   }
@@ -167,7 +185,7 @@ export class BorrowController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
-    const res = await this.service.updateById(id, updateDto);
+    const res = await this.borrowService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }
@@ -176,7 +194,7 @@ export class BorrowController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id') id: string) {
-    const res = await this.service.findByIdAndDelete(id);
+    const res = await this.borrowService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }
@@ -184,14 +202,14 @@ export class BorrowController {
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
-    const res = await this.service.searchManyAndPaginate(['userName'], inputQuery);
+    const res = await this.borrowService.searchManyAndPaginate(['userName'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const res = await this.service.findById(id);
+    const res = await this.borrowService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }

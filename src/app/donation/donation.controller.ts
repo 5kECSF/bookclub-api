@@ -25,7 +25,6 @@ import { UserService } from '../users';
 
 import { errCode } from '../../common/constants/response.consts';
 import { Endpoint } from '../../common/constants/model.consts';
-import { ColorEnums, logTrace } from '../../common/logger';
 
 @Controller(Endpoint.Donation)
 export class DonationController {
