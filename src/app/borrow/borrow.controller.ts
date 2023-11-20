@@ -15,7 +15,13 @@ import { BorrowService } from './borrow.service';
 import { BorrowQuery, CreateBorrowInput, UpdateDto } from './entities/borrow.dto';
 import { PaginatedRes, RoleType, UserFromToken } from '../../common/common.types.dto';
 
-import { Borrow, BorrowStatus } from './entities/borrow.entity';
+import {
+  BorrowAccept,
+  BookReturned,
+  BookTaken,
+  Borrow,
+  BorrowStatus,
+} from './entities/borrow.entity';
 import { JwtGuard } from '../../providers/guards/guard.rest';
 import { Roles } from '../../providers/guards/roles.decorators';
 import { Endpoint } from '../../common/constants/model.consts';
@@ -27,24 +33,6 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationEnum } from '../notification/entities/notification.entity';
 import { DonationService } from '../donation/donation.service';
 import { bookStatus } from '../donation/entities/donation.entity';
-
-export class BookAccept {
-  body: string;
-  id: string;
-  uid: string;
-  instanceNo: string;
-  userId: string;
-}
-
-export class BookTaken {
-  note: string;
-  takenDate: string;
-  dueDate: string;
-}
-
-export class BookReturned {
-  returnedDate: string;
-}
 
 @Controller(Endpoint.Borrow)
 export class BorrowController {
@@ -75,7 +63,7 @@ export class BorrowController {
 
     const resp = await this.borrowService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    // TODO: send notification to admin here
+
     return resp.val;
   }
 
@@ -89,21 +77,26 @@ export class BorrowController {
       status: BorrowStatus.WaitList,
     });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    // TODO: send notification to admin here
+
     return res.val;
   }
 
   @Post('/acceptBorrow/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async acceptBorrow(@Param('id') id: string, @Body() message: BookAccept): Promise<Borrow> {
+  async acceptBorrow(@Param('id') id: string, @Body() message: BorrowAccept): Promise<Borrow> {
+    const instance = await this.donationService.findById(message.instanceId);
+    if (!instance.ok) throw new HttpException(instance.errMessage, instance.code);
+
     const resp = await this.borrowService.updateById(id, {
       status: BorrowStatus.Accepted,
-      uid: message.uid,
-      instanceId: message.id,
-      instanceNo: message.instanceNo,
+      instanceUid: instance.val.uid,
+      instanceId: message.instanceId,
     });
-    const updateInstance = await this.donationService.updateById(message.id, {
+    /**
+     * mark the instance book as reserved and update the id of the user who have taken it
+     */
+    const updateInstance = await this.donationService.updateById(message.instanceId, {
       status: bookStatus.Reserved,
       borrowerId: resp.val.userId,
       borrowerName: resp.val.userName,
@@ -134,11 +127,11 @@ export class BorrowController {
       dueDate: body.dueDate,
       note: body.note,
     });
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const updateInstance = await this.donationService.updateById(resp.val.instanceId, {
       status: bookStatus.Taken,
-      // borrowerId: resp.val.userId,
-      // borrowerName: resp.val.userName,
     });
+    if (!updateInstance.ok) throw new HttpException(resp.errMessage, resp.code);
 
     const notification = await this.notificationService.createOne({
       title: `The ${resp.val.bookName} book is marked as taken by you`,
@@ -147,9 +140,6 @@ export class BorrowController {
       userId: resp.val.userId,
     });
 
-    // const updateDonation = await this.donationService.updateById()
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
     return resp.val;
   }
 

@@ -2,7 +2,7 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Prop, Schema } from '@nestjs/mongoose';
 
-@Schema()
+@Schema({ _id: false })
 export class ImageObj {
   @IsNotEmpty()
   @IsString()

@@ -8,7 +8,12 @@
     ],
     "deleteOutDir": true,
     "plugins": [
-      "@nestjs/swagger"
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "introspectComments": true
+        }
+      }
     ]
   }
 }

@@ -55,6 +55,7 @@ export class FileService {
   }
 
   public generateUniqName(fileName: string, uid = '', ctr = 0): Img {
+    // const path = 'p1';
     const length = 16;
     if (uid === '')
       uid = crypto

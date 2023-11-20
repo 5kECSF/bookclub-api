@@ -22,13 +22,21 @@ export class Donation {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
 
+  /**
+   * this is the concation of book.uid-donation.instanceNo
+   * @example '2-1'
+   */
   @IsOptional()
   @Prop({ type: String, unique: true, spares: true })
   uid?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   donorId: User['_id'];
+
+  @IsNotEmpty()
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
+  bookId: Book['_id'];
 
   @IsOptional()
   @Prop({ type: String })
@@ -42,10 +50,6 @@ export class Donation {
   @IsOptional()
   @Prop({ type: String })
   desc: string;
-
-  @IsOptional()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
-  bookId: Book['_id'];
 
   @IsOptional()
   @Prop({ type: ImageObj })

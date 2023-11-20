@@ -5,21 +5,29 @@ import { PaginationInputs } from '../../../common/common.types.dto';
 
 import { bookStatus, Donation } from './donation.entity';
 
-import { User } from '../../users';
+import { ImageObj } from '../../file/file.dto';
 
 export class CreateDonationInput extends PickType(Donation, [
-  'status',
   'bookId',
+  'donorId',
+  'status',
   'desc',
-  'uid',
-  //below will be set from the model
-  'donorName',
-  'bookName',
-  'bookImg',
 ]) {
+  @ApiHideProperty()
   @IsOptional()
-  @IsString()
-  donorId: User['_id'];
+  donorName: string;
+
+  @ApiHideProperty()
+  @IsOptional()
+  uid: string;
+
+  @ApiHideProperty()
+  @IsOptional()
+  bookName: string;
+
+  @ApiHideProperty()
+  @IsOptional()
+  bookImg: ImageObj;
 
   @ApiHideProperty()
   @IsOptional()

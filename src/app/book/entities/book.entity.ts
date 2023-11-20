@@ -23,6 +23,9 @@ export class Book {
   @Prop({ type: String, unique: true, sparse: true })
   slug: string;
 
+  /**
+   * this is an auto increment id for books for easy identification & tracking;
+   */
   @IsOptional()
   @Prop({ type: String, unique: true, spares: true })
   uid?: number;
@@ -72,10 +75,10 @@ export class Book {
   authorName: string;
 
   /**
-   * the books we have(instances) & count of books available
+   * the books we have(instances)donations & count of books available
    */
   @Prop({ type: Number, required: false, default: 0 })
-  donatedCnt: number;
+  instanceCnt: number;
 
   /**
    *

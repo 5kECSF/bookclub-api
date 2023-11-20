@@ -48,7 +48,7 @@ export class DonationController {
     if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
 
     createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
-    createDto.instanceNo = (book.val.donatedCnt || 0) + 1;
+    createDto.instanceNo = (book.val.instanceCnt || 0) + 1;
     createDto.bookName = book.val.title;
     createDto.bookImg = book.val.img;
     if (book.val.uid) createDto.uid = `${book.val.uid}-${createDto.instanceNo}`;
@@ -58,7 +58,7 @@ export class DonationController {
 
     const ctg = await this.bookService.updateOneAndReturnCount(
       { _id: createDto.bookId },
-      { $inc: { donatedCnt: 1, availableCnt: 1 } },
+      { $inc: { instanceCnt: 1, availableCnt: 1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
       { _id: createDto.donorId },
@@ -94,7 +94,7 @@ export class DonationController {
 
     const ctg = await this.bookService.updateOneAndReturnCount(
       { _id: res.val.bookId },
-      { $inc: { donatedCnt: -1 } },
+      { $inc: { instanceCnt: -1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
       { _id: res.val.donorId },

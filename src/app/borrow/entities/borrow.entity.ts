@@ -1,4 +1,4 @@
-import mongoose, { Document, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
@@ -24,12 +24,8 @@ export class Borrow {
 
   @IsNotEmpty()
   @IsString()
-  @Prop({ type: String })
+  @Prop({ type: String, required: true, ref: 'User' })
   userId: string;
-
-  @IsOptional()
-  @Prop({ type: String })
-  userName?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -37,17 +33,17 @@ export class Borrow {
   bookId: Book['_id'];
 
   @IsOptional()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
+  @Prop({ type: String })
+  userName?: string;
+
+  @IsOptional()
+  @Prop({ type: Types.ObjectId, ref: 'Donation' })
   instanceId?: Donation['_id'];
 
   @IsOptional()
   @IsString()
   @Prop({ type: String, required: false, ref: 'Donation' })
-  uid?: Donation['uid'];
-
-  @IsOptional()
-  @Prop({ type: Number, required: false })
-  instanceNo?: number;
+  instanceUid?: Donation['uid'];
 
   @IsOptional()
   @Prop({ type: String })
@@ -75,3 +71,27 @@ export type BorrowDocument = Borrow & Document;
 export const BorrowSchema = SchemaFactory.createForClass(Borrow);
 // Create indexes
 BorrowSchema.index({ name: 'text' });
+
+export class BorrowAccept {
+  @IsOptional()
+  body: string;
+
+  @IsNotEmpty()
+  instanceId: string;
+}
+
+export class BookTaken {
+  @IsOptional()
+  note: string;
+
+  @IsNotEmpty()
+  takenDate: string;
+
+  @IsNotEmpty()
+  dueDate: string;
+}
+
+export class BookReturned {
+  @IsNotEmpty()
+  returnedDate: string;
+}
