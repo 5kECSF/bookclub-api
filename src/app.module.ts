@@ -1,22 +1,22 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app/app.controller';
 import { AppService } from './app/app.service';
-import { UsersModule } from './app/users/users.module';
+import { UsersModule } from './app/account/users/users.module';
 import { DatabaseModule } from './providers/database/databaseModule';
-import { AuthModule } from './app/auth/auth.module';
-import { ProfileModule } from './app/profile/profile.module';
-import { GenreModule } from './app/genres/genre.module';
-import { CategoryModule } from './app/category/category.module';
-import { BookModule } from './app/book/book.module';
-import { DonationModule } from './app/donation/donation.module';
+import { AuthModule } from './app/account/auth/auth.module';
+import { ProfileModule } from './app/account/profile/profile.module';
+import { GenreModule } from './app/library/genres/genre.module';
+import { CategoryModule } from './app/library/category/category.module';
+import { BookModule } from './app/library/book/book.module';
+import { DonationModule } from './app/library/donation/donation.module';
 
-import { NotificationModule } from './app/notification/notification.module';
-import { FeedbackModule } from './app/feedback/feedback.module';
-import { FileModule } from './app/file/file.module';
+import { NotificationModule } from './app/extra/notification/notification.module';
+import { FeedbackModule } from './app/extra/feedback/feedback.module';
+import { UploadModule } from '@/app/upload/upload.module';
 // import { APP_GUARD } from '@nestjs/core';
 // import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AuthorModule } from './app/writer/author.module';
-import { BorrowModule } from './app/borrow/borrow.module';
+import { AuthorModule } from '@/app/library/author/author.module';
+import { BorrowModule } from './app/library/borrow/borrow.module';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { BorrowModule } from './app/borrow/borrow.module';
     DonationModule,
     NotificationModule,
     FeedbackModule,
-    FileModule,
+    UploadModule,
     AuthorModule,
     BorrowModule,
     // ThrottlerModule.forRoot([

@@ -19,10 +19,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:users": "jest --config src/app/users/test/e2e/jest-e2e.json",
-    "test:signup": "jest --config src/app/auth/test/e2e/jest-e2e.json",
-    "test:genre": "jest --config src/app/borrow/test/e2e/jest-e2e.json",
-    "test:login": "jest --config src/app/auth/test/login/jest-e2e.json"
+    "test:users": "jest --config src/app/account/users/test/e2e/jest-e2e.json",
+    "test:signup": "jest --config src/app/account/auth/test/e2e/jest-e2e.json",
+    "test:genre": "jest --config src/app/library/borrow/test/e2e/jest-e2e.json",
+    "test:login": "jest --config src/app/account/auth/test/login/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",

@@ -1,0 +1,10 @@
+// the problem with this is we dont know who is importing this, solved by importing using `as`
+
+// ** Types
+
+export { logTrace as logTrace } from '../../../common/logger';
+//common
+export { MongoGenericRepository as MongoGenericRepository } from '../../../providers/database/base/mongo.base.repo';
+
+export { RoleType } from '../../../common/common.types.dto';
+export { PaginationInputs as PaginationInput } from '../../../common/common.types.dto';

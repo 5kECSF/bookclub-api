@@ -4,14 +4,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Connection } from 'mongoose';
 import { AppModule } from '../../src/app.module';
 import { getConnectionToken } from '@nestjs/mongoose';
-import { AuthService } from '../../src/app/auth/auth.service';
-import { UserService } from '../../src/app/users';
+import { AuthService } from '../../src/app/account/auth/auth.service';
+import { UserService } from '../../src/app/account/users';
 import {
   adminLogin,
   defaultAdmin,
   defaultUser1,
-} from '../../src/app/users/test/e2e/user.stub';
-import { LoginUserInput } from '../../src/app/auth/dto/auth.input.dto';
+} from '../../src/app/account/users/test/e2e/user.stub';
+import { LoginUserInput } from '../../src/app/account/auth/dto/auth.input.dto';
 // import { DatabaseService } from '../../src/providers/database/database.service';
 
 // import { adminUser } from '../features/users/tests/stubs/user.stub';

@@ -16,10 +16,13 @@ export class JwtGuard implements CanActivate {
     try {
       // ==============================     Authentication  ==============
       const token = this.getToken(request);
+      logTrace('token is', token);
+
       const user: UserFromToken = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
+      logTrace('user is', user);
       if (!user) return false;
       request.user = user as any;
-      // logTrace('auth usr', user);
+      logTrace('auth usr', user);
 
       // ========================================= Authorization =======================
 
@@ -45,8 +48,6 @@ export class JwtGuard implements CanActivate {
 
       // User must have role & the value of role must match with @RoleGuard('value_role')
       return user.role && allowedRoles.includes(user.role);
-
-      return true;
     } catch (e) {
       // return false or throw a specific error if desired
       return false;

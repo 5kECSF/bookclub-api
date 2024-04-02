@@ -47,7 +47,7 @@ export class EnvVar {
   envVariables: ENV_TYPES;
 
   private constructor() {
-    // we must have a .env file to tell us the Enviroment at first, it first read the .env file then it loads the other env files
+    // we must have a .env upload to tell us the Enviroment at first, it first read the .env upload then it loads the other env files
     dotenv.config({ path: `.env` });
     let mode = tryReadEnv('NODE_ENV', false, '');
 

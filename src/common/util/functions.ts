@@ -1,12 +1,14 @@
 import slugify from 'slugify';
 
-export const generateSlug = (title: string) => {
+export const generateSlug = (title: string, random = true) => {
   const baseSlug = slugify(title, { lower: true });
+  const first10 = baseSlug.slice(0, 10);
   const timestamp = Date.now().toString();
-  const randomPart = Math.floor(Math.random() * 10000)
+  let randomPart = Math.floor(Math.random() * 10000)
     .toString()
     .padStart(4, '0');
-  return `${baseSlug}-${randomPart}-${timestamp}`;
+  if (!random) randomPart = '';
+  return `${timestamp}-${randomPart}-${first10}`;
 };
 
 export const removeSubArr = (mainArr: string[], arrToBeRemoved: string[]) => {

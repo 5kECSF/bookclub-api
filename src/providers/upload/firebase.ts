@@ -2,8 +2,8 @@ import admin from 'firebase-admin';
 import { EnvVar } from '../../common/config/config.instances';
 import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
-import { ImageObj } from '../../app/file/file.dto';
 import { Injectable } from '@nestjs/common';
+import { UploadDto } from '@/app/upload/upload.entity';
 
 const fbConfig = {
   type: EnvVar.getInstance.FIREBASE_TYPE,
@@ -37,28 +37,30 @@ const ToBeAdded = `https://firebasestorage.googleapis.com/v0/b/${projName}/o/`;
 
 @Injectable()
 export class FirebaseService implements FileServiceInterface {
-  //gets a file name & a buffer file, and uploads the file to firebase -> returns an object{imageCover:{img:"name", suffix:""},imagePath:"" }
-  async UploadOne(fName: string, file: Buffer): Promise<Resp<ImageObj>> {
+  //gets a upload name & a buffer upload, and uploads the upload to firebase -> returns an object{imageCover:{img:"name", suffix:""},imagePath:"" }
+  async UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>> {
     try {
-      const fFile = await storageRef.file(fName);
+      const fFile = storageRef.file(fName);
       await fFile.save(file, { contentType: 'image/jpeg' });
-      const publicUrl = fFile.publicUrl();
 
-      //replacing the name of the public url so that it can be previewed by browser
-      publicUrl.replace(`${toBeRemoved}`, '');
+      // const parts = fName.split('/');
+      //URL-encoded representation of forward slash /
+      // const resultString = parts.join('%2F');
+
       // log_func("public url is", publicUrl, "BgMagenta", 2)
+      logTrace('upload succeed', fName);
       return Succeed({
-        fullImg: ToBeAdded + fName + '?alt=media',
-        // suffix: '?alt=media',
-        path: 'p1',
-        image: fName,
+        url: ToBeAdded + fName + '?alt=media',
+        suffix: '?alt=media',
+        pathId: 'p1',
+        fileName: fName,
       });
     } catch (e) {
       return FAIL('uploading to firebase failed', e.code);
     }
   }
 
-  async deleteImageById(id): Promise<Resp<boolean>> {
+  async deleteImageByPrefix(id): Promise<Resp<boolean>> {
     try {
       const res = await storageRef.deleteFiles({ prefix: id });
       logTrace('successfully deleted an image', res, ColorEnums.BgGreen);
@@ -83,18 +85,18 @@ export class FirebaseService implements FileServiceInterface {
 export interface FileServiceInterface {
   firebaseVerifyToken(token: string): Promise<Resp<any>>;
 
-  deleteImageById(id: string): Promise<Resp<boolean>>;
+  deleteImageByPrefix(id: string): Promise<Resp<boolean>>;
 
-  UploadOne(fName: string, file: Buffer): Promise<Resp<ImageObj>>;
+  UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>>;
 }
 
 @Injectable()
 export class MockFile implements FileServiceInterface {
-  UploadOne(fName: string, file: Buffer): Promise<Resp<ImageObj>> {
+  UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>> {
     return Promise.resolve(undefined);
   }
 
-  deleteImageById(id: string): Promise<Resp<boolean>> {
+  deleteImageByPrefix(id: string): Promise<Resp<boolean>> {
     return Promise.resolve(undefined);
   }
 

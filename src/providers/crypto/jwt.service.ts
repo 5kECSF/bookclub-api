@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import { verify, JwtPayload, sign } from 'jsonwebtoken';
-import { UserFromToken } from '../../common/common.types.dto';
-import { ENV_TYPES } from '../../common/config/config.utills';
-import { EnvVar } from '../../common/config/config.instances';
+import { UserFromToken } from '@/common/common.types.dto';
+import { ENV_TYPES } from '@/common/config/config.utills';
+import { EnvVar } from '@/common/config/config.instances';
 
-import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
+import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
+import { logTrace } from '@/common/logger';
 
 @Injectable()
 export class CustomJwtService {
@@ -36,13 +37,20 @@ export class CustomJwtService {
   }
 
   public async verifyAccessToken(authorization: string) {
-    const [_, token] = authorization.split(' ');
-    // logTrace('Access Token==', token);
-    const decoded = await verify(token, this._envConfig.JWT_ACCESS_SECRET, {
-      algorithms: ['HS256'],
-      complete: true,
-    });
-    return decoded.payload;
+    try {
+      const [_, token] = authorization.split(' ');
+      // logTrace('Access Token==', token);
+      const decoded = await verify(token, this._envConfig.JWT_ACCESS_SECRET, {
+        algorithms: ['HS256'],
+        complete: true,
+      });
+
+      return decoded.payload;
+    } catch (e) {
+      logTrace('err', e.message);
+      throw e;
+    }
+
     // return jwt.verify(token, this._envConfig.jwt.jwtAccessSecret, {
     //   algorithms: ['HS256'],
     //   complete: true
@@ -60,7 +68,6 @@ export class CustomJwtService {
 
   public async verifyRefreshToken(authorization: string): Promise<Resp<UserFromToken>> {
     try {
-      
       const [_, token] = authorization.split(' ');
       const decoded = verify(token, this._envConfig.JWT_REFRESH_SECRET, {
         algorithms: ['HS256'],
