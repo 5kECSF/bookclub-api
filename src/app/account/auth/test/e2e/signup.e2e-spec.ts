@@ -4,7 +4,7 @@ import * as request from 'supertest';
 import { regUsr, verifyInput } from './auth.stub';
 
 import { IntegrationTestManager } from '../../../../../../test/setup/IntegrationTestManager';
-import { RespConst } from '../../../../../common/constants/response.consts';
+import { ResponseConsts } from '@/common/constants/response.consts';
 
 describe('Signup Controller (e2e)', () => {
   // let app;
@@ -38,7 +38,7 @@ describe('Signup Controller (e2e)', () => {
       .expect(201);
     // logTrace('response', response.body);
     expect(response.status).toBe(201);
-    expect(response.body.message).toEqual(RespConst.VERIFICATION_SENT);
+    expect(response.body.message).toEqual(ResponseConsts.VERIFICATION_SENT);
     // userToken = response.body.token; // Assuming your API returns a token upon registration
   });
   it('/auth/activate (POST)', async () => {

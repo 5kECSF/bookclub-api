@@ -3,21 +3,21 @@ import { Injectable } from '@nestjs/common';
 
 //- users
 import { UserFromToken } from '@/common/common.types.dto';
-import { VerificationService } from '../../../providers/verification';
-import { ErrConst } from '../../../common/constants';
 import { logTrace } from '@/common/logger';
 import { CustomJwtService } from '@/providers/crypto/jwt.service';
+import { ErrConst } from '../../../common/constants';
+import { VerificationService } from '../../../providers/verification';
 
-import { CryptoService } from '@/providers/crypto/crypto.service';
-import { UserRes, RegisterUserInput, UserService, User } from '../users';
 import { removeKeys } from '@/common/util/util';
+import { CryptoService } from '@/providers/crypto/crypto.service';
+import { RegisterUserInput, User, UserRes, UserService } from '../users';
 
 //--self
-import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
-import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
+import { ResponseConsts } from '@/common/constants/response.consts';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
-import { RespConst } from '@/common/constants/response.consts';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
+import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
 
 import { SystemConst } from '@/common/constants/system.consts';
 import { getExpiryDate } from '@/providers/crypto/token.functions';
@@ -51,7 +51,7 @@ export class AuthService {
       if (user) {
         if (user.active) {
           // TODO: send a warning email/sms to users that some one is trying to log with their credintials
-          return Succeed(RespConst.VERIFICATION_SENT);
+          return FAIL(ResponseConsts.USER_EXISTS);
         }
         // if user is not Verified yet and waiting for verification dont do any thing
         // TODO :make him wait some minutes before re assigning (verificationExpires > date.now + (VerExp - allowed Reset))
@@ -102,7 +102,7 @@ export class AuthService {
      */
     const emRes = await this.verificationService.sendVerificationCode(addressedEmail, code);
 
-    return Succeed(RespConst.VERIFICATION_SENT);
+    return Succeed(ResponseConsts.VERIFICATION_SENT);
   }
 
   //===============  Verifying & activating user by code
@@ -343,7 +343,7 @@ export class AuthService {
         },
       );
       if (!usr.ok) return FAIL(usr.errMessage, usr.code);
-      return Succeed(RespConst.OPERATION_SUCCESS);
+      return Succeed(ResponseConsts.OPERATION_SUCCESS);
     } catch (e) {
       return FAIL(e.message, 500);
     }
@@ -389,7 +389,7 @@ export class AuthService {
     });
     // console.log('updated email,', usr);
     if (!usr.ok) return FAIL(ErrConst.INTERNAL_ERROR);
-    return Succeed(RespConst.OPERATION_SUCCESS);
+    return Succeed(ResponseConsts.OPERATION_SUCCESS);
   }
 
   //  ------------------------   AUTHORIZATION OPERATIONS

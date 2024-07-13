@@ -12,6 +12,9 @@ export enum ResponseConsts {
   INVALID_CREDENTIALS = 'Invalid credentials',
   VERIFICATION_FAILED = 'verification failed please try again or use a different account',
   COULD_NOT_CREATE_USER = 'Could not create user',
+  OPERATION_SUCCESS = 'operation is successful',
+  VERIFICATION_SENT = 'verification message Sent',
+  VERIFICATION_PENDING = 'verification is pending please wait few minutes',
 }
 
 export enum RespConst {
@@ -40,4 +43,8 @@ export const errCode: ErrorConstantMap = {
   [ResponseConsts.INVALID_CODE]: HttpCodes.UNAUTHORIZED,
   [ResponseConsts.INVALID_CREDENTIALS]: HttpCodes.UNAUTHORIZED,
   [ResponseConsts.VERIFICATION_FAILED]: HttpCodes.UNAUTHORIZED,
+  //201
+  [ResponseConsts.OPERATION_SUCCESS]: HttpCodes.CREATED,
+  [ResponseConsts.VERIFICATION_SENT]: HttpCodes.CREATED,
+  [ResponseConsts.VERIFICATION_PENDING]: HttpCodes.CREATED,
 };
