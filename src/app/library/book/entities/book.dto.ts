@@ -1,9 +1,9 @@
 import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { PaginationInputs } from '../../../../common/common.types.dto';
+import { PaginationInputs } from '@/common/common.types.dto';
 import { Book, BookLanguage } from './book.entity';
-import { UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
 
 export class CreateBookInput extends PickType(Book, [
   'title',
@@ -14,6 +14,7 @@ export class CreateBookInput extends PickType(Book, [
   'authorName',
   'language',
   'pageNo',
+  'fileId',
   // 'availableCnt',
 ]) {
   // @IsOptional()
@@ -31,14 +32,14 @@ export class CreateBookInput extends PickType(Book, [
   @ApiHideProperty()
   uid?: number;
 
-  @IsOptional()
   @ApiHideProperty()
-  img?: UploadDto;
+  @IsOptional()
+  upload?: EmbedUpload;
 }
 
-export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {
+export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug', 'fileId'])) {
   @IsOptional()
-  removedImages?: string[];
+  fileUpdated = false;
 }
 
 export class BookQuery extends PaginationInputs {

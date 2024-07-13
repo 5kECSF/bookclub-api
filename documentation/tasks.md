@@ -42,6 +42,15 @@ features for this that are finished & to be done
   - [x] upload single file
   - [x] update single file
   - [x] delete single file
-  - [] upload multiple file
-  - [] update multiple file
-  - [] delete multiple file
+  - [x] upload multiple file
+  - [x] update multiple file
+  - [x] delete multiple file
+
+    
+
+## integration tasks
+
+
+- [] integrate category api
+- [] integrate book api
+- 

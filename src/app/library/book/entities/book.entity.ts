@@ -1,12 +1,11 @@
-import mongoose, { Document, Types } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ApiQuery, ApiProperty } from '@nestjs/swagger';
 
-import { User } from '../../../account/users';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
 
 export enum BookLanguage {
   English = 'English',
@@ -42,15 +41,19 @@ export class Book {
 
   @IsNotEmpty()
   @IsString()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
+  @Prop({ type: String, required: true, ref: 'Category' })
   categoryId: string;
 
   @IsNotEmpty()
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
   genres: string[];
 
-  @Prop({ type: UploadDto })
-  img?: UploadDto;
+  @Prop({ type: EmbedUpload })
+  upload: EmbedUpload;
+
+  @IsOptional()
+  @Prop({ type: String, unique: true, sparse: true })
+  fileId?: string;
 
   @IsOptional()
   @IsString()
@@ -66,8 +69,8 @@ export class Book {
 
   @IsString()
   @IsOptional()
-  @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
-  authorId: User['_id'];
+  @Prop({ type: String, required: false, ref: 'User' })
+  authorId: string;
 
   @IsOptional()
   @IsString()

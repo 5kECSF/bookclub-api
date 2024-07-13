@@ -18,8 +18,8 @@ export class FeedBack {
   @Prop({ type: String })
   body?: string;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
-  userId: User['_id'];
+  @Prop({ type: String, required: true, ref: 'User' })
+  userId: string;
 
   @Prop({ type: String })
   userName: string;

@@ -9,7 +9,6 @@ import {
   Post,
   Query,
   Req,
-  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
@@ -18,21 +17,19 @@ import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto
 
 import { Book } from './entities/book.entity';
 import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Express, Request } from 'express';
+import { Request } from 'express';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { GenreService } from '../genres/genre.service';
 import { CategoryService } from '../category/category.service';
-import { generateSlug, removeSubArr } from '@/common/util/functions';
+import { generateSlug } from '@/common/util/functions';
 import { FileProviderService } from '@/app/upload/file-provider.service';
-import { ApiManyFiltered } from '@/app/upload/fileParser';
 import { logTrace } from '@/common/logger';
-import { MaxImageSize } from '@/common/constants/system.consts';
 import { removeKeys } from '@/common/util/util';
-import { FAIL } from '@/common/constants/return.consts';
 import { SequenceService } from './sequence/sequence.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Endpoint } from '@/common/constants/model.consts';
+import { UploadModel } from '@/app/upload/upload.entity';
 
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
@@ -49,22 +46,29 @@ export class BookController {
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
-  async createOne(
-    @Req() req: Request,
-    @Body() createDto: CreateBookInput,
-    @UploadedFiles() files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
-  ): Promise<Book> {
+  async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
-    const imageObj = await this.uploadService.UploadWithCover(files, user._id);
-    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
+    const img = await this.uploadService.findById(createDto.fileId);
+    if (!img.ok) throw new HttpException(img.errMessage, img.code);
 
-    createDto.img = imageObj.val;
+    createDto.upload = img.val;
     createDto.slug = generateSlug(createDto.title);
     createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    const updateImg = await this.uploadService.findOneAndUpdate(
+      {
+        _id: createDto.fileId,
+        // model: UploadModel.NotAssigned,
+      },
+      {
+        model: UploadModel.Book,
+        refId: resp.val._id,
+      },
+    );
+    if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
 
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
@@ -80,59 +84,19 @@ export class BookController {
   @Patch(':id')
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
-  async update(
-    @UploadedFiles() files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body() updateBookDto: UpdateBookDto,
-  ) {
+  async update(@Req() req: Request, @Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
     const user: UserFromToken = req['user'];
     const book = await this.bookService.findById(id);
     if (!book.ok) throw new HttpException(book.errMessage, book.code);
     /**
-     * if the cover image has changed
+     * if there is change on the image
      */
+    if (updateBookDto?.fileUpdated) {
+      const file = await this.uploadService.findById(book.val.upload._id);
+      if (!file.ok) throw new HttpException(file.errMessage, file.code);
+      updateBookDto.upload = file.val;
+    }
 
-    if (files.cover && files.cover.length > 0) {
-      logTrace('Updating Cover', files.cover.length);
-      const result = await this.uploadService.UpdateSingle(
-        files.cover[0],
-        book.val.img.fileName,
-        user._id,
-      );
-    }
-    /**
-     * if images have been removed
-     */
-    if (updateBookDto.removedImages) {
-      if (!Array.isArray(updateBookDto.removedImages))
-        updateBookDto.removedImages = [updateBookDto.removedImages];
-      await Promise.all(
-        updateBookDto.removedImages.map(async (fileName, i) => {
-          if (book.val.img.images.includes(fileName)) {
-            const result = await this.uploadService.deleteFileByQuery(fileName);
-            if (!result.ok) throw new HttpException(result.errMessage, result.code);
-          }
-        }),
-      );
-      book.val.img.images = removeSubArr(book.val.img.images, updateBookDto.removedImages);
-    }
-    /**
-     * If Images have been added
-     */
-    if (files.images && files.images.length > 0) {
-      const tot = files.images.length + book.val.img.images.length;
-      if (tot > 3) throw new HttpException('Image Numbers Exceeded', 400);
-      const images = await this.uploadService.uploadManyWithNewNames(
-        files.images,
-        user._id,
-        book.val.img.uid,
-      );
-      if (!images.ok) return FAIL(images.errMessage, images.code);
-      book.val.img.images = [...book.val.img.images, ...images.val];
-    }
-    updateBookDto.img = book.val.img;
     const res = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
@@ -144,9 +108,9 @@ export class BookController {
   async removeOne(@Req() req: Request, @Param('id') id: string): Promise<Book> {
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-
-    const result = await this.uploadService.deleteFileByQuery(res.val.img.uid);
+    const result = await this.uploadService.deleteFileById(res.val.fileId);
     if (!result.ok) throw new HttpException(result.errMessage, result.code);
+
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
         { _id: res.val.categoryId },

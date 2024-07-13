@@ -2,22 +2,34 @@ import { Document } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ApiHideProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { RoleType } from '../imports.user';
 
-import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
 import { UploadDto } from '@/app/upload/upload.entity';
 
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
 export const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  toJSON: {
+    transform(doc, ret) {
+      ret.id = ret._id;
+      // delete ret._id;
+    },
+  },
+})
 export class User {
   // @Prop({
   //   get: (id: string) => {
   //     return id
   //   },
   // })
+  @ApiProperty({ name: 'id' })
+  @Expose({ name: 'id' })
+  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
   readonly _id: string;
 
   @Prop({ type: String, unique: true, sparse: true })
@@ -78,6 +90,7 @@ export class User {
    */
   @ApiHideProperty()
   @Prop({ required: false })
+  @Exclude()
   newEmail: string;
 
   @Prop({ type: Boolean, required: false })

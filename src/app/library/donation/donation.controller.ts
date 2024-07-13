@@ -52,7 +52,7 @@ export class DonationController {
     createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
     createDto.instanceNo = (book.val.instanceCnt || 0) + 1;
     createDto.bookName = book.val.title;
-    createDto.bookImg = book.val.img;
+    createDto.bookImg = book.val.upload;
     if (book.val.uid) createDto.uid = `${book.val.uid}-${createDto.instanceNo}`;
 
     const resp = await this.donationService.createOne(createDto);

@@ -4,7 +4,6 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ColorEnums, logTrace } from './logger';

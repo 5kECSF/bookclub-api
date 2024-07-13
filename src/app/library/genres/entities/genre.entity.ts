@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import { ApiHideProperty, ApiProperty, PartialType, PickType } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
@@ -54,10 +54,10 @@ export class CreateGenreInput extends PickType(Genre, ['name', 'desc', 'restrict
 
   @ApiHideProperty()
   @IsOptional()
-  upload?: UploadDto;
+  upload?: EmbedUpload;
 }
 
-export class UpdateDto extends PartialType(PickType(Genre, ['name', 'desc', 'restricted'])) {}
+export class UpdateDto extends PartialType(OmitType(CreateGenreInput, ['slug'])) {}
 
 export class GenreQuery extends PaginationInput {
   @IsOptional()

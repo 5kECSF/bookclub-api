@@ -51,7 +51,7 @@ export interface IAuthToken {
 export class PaginatedRes<T> {
   count: number;
 
-  data: T[];
+  body: T[];
 }
 
 // --------------------          Unused

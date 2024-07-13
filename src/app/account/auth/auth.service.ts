@@ -18,8 +18,9 @@ import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { RespConst } from '@/common/constants/response.consts';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
-import { EnvVar } from '@/common/config/config.instances';
+
 import { SystemConst } from '@/common/constants/system.consts';
+import { getExpiryDate } from '@/providers/crypto/token.functions';
 
 export class UserAndTokne {
   usrToken: UserFromToken;
@@ -182,8 +183,8 @@ export class AuthService {
 
   //Au.S-3.1
   async loginValidateUser(input: LoginUserInput): Promise<User> {
-    const { phoneOrEmail, password } = input;
-    const userToLogin = await this.usersService.activeUserExists(phoneOrEmail);
+    const { info, password } = input;
+    const userToLogin = await this.usersService.activeUserExists(info);
     logTrace('usr', userToLogin);
     if (!userToLogin) return null;
     logTrace('usere exis', userToLogin);
@@ -222,7 +223,7 @@ export class AuthService {
       accessToken,
       refreshToken,
       sessionId: newPayload.sessionId,
-      expiresIn: Date.now() + EnvVar.getInstance.JWT_EXPIRY_TIME,
+      expiresIn: getExpiryDate(accessToken),
     };
   }
 
@@ -268,6 +269,7 @@ export class AuthService {
 
     //  2. generate new refresh token
     const refreshAuthToken = await this.generateAuthToken(user.val.usrToken, true);
+    logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
     /*
      * 3. update the users hashed refresh token
      *  here you can implement half life logic, if half life not reached skip this

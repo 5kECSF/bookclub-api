@@ -1,17 +1,11 @@
 import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 // import { IGenericRepository } from './IGenericRepo';
-
-import { pagiKeys, PaginationInputs } from '@/common/common.types.dto';
+import { pagiKeys, PaginatedRes, PaginationInputs } from '@/common/common.types.dto';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ErrConst } from '@/common/constants';
 import { pickKeys, removeKeys } from '@/common/util/util';
-
-export class PaginatedResponse<T> {
-  count: number;
-  data: T[];
-}
 
 export abstract class MongoGenericRepository<T> {
   private _repository: Model<T>;
@@ -25,7 +19,7 @@ export abstract class MongoGenericRepository<T> {
   public async filterManyAndPaginate(
     filter: FilterQuery<T>,
     pagination?: PaginationInputs,
-  ): Promise<Resp<PaginatedResponse<T>>> {
+  ): Promise<Resp<PaginatedRes<T>>> {
     let items: T[] = [];
     // Always make default pagination = 25 with first page
     const limit = pagination?.limit || 25;
@@ -44,7 +38,7 @@ export abstract class MongoGenericRepository<T> {
       const count = await this._repository.countDocuments(filter);
 
       // logTrace(`FINDMANY=====>>${count}`, items, ColorEnums.BgBlue);
-      return Succeed({ count, data: items });
+      return Succeed({ count, body: items });
     } catch (e) {
       logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);
@@ -56,7 +50,7 @@ export abstract class MongoGenericRepository<T> {
     filter: FilterQuery<T>,
     _pagination?: any,
     keysToRemove: string[] = [],
-  ): Promise<Resp<PaginatedResponse<T>>> {
+  ): Promise<Resp<PaginatedRes<T>>> {
     try {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
       // logTrace('keys to remove', keysToRemove);
@@ -95,7 +89,7 @@ export abstract class MongoGenericRepository<T> {
       const count = await this._repository.countDocuments(mainQuery);
       // logTrace(`FINDMANY=====>>${count}`, items, ColorEnums.BgBlue);
 
-      return Succeed({ count, data: items });
+      return Succeed({ count, body: items });
     } catch (e) {
       logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);

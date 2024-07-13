@@ -22,11 +22,11 @@ export const defaultUser1: CreateUser = {
   password: '123qwe',
 };
 export const adminLogin: LoginUserInput = {
-  phoneOrEmail: defaultAdmin.email,
+  info: defaultAdmin.email,
   password: defaultAdmin.password,
 };
 export const userLogin: LoginUserInput = {
-  phoneOrEmail: defaultUser1.email,
+  info: defaultUser1.email,
   password: defaultUser1.password,
 };
 

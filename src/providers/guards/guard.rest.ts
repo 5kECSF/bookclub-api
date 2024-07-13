@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { IncomingMessage } from 'http';
 //crypto
 import { CustomJwtService, RoleType, UserFromToken } from './guards.dependencies';
-import { ColorEnums, logTrace } from '../../common/logger';
+
 import { ROLES_KEY } from './roles.decorators';
 
 // this Guard is for non Graphql endpoints - this  verifies the `jwt Token & the Roles`  This is Enough for our app
@@ -16,13 +16,10 @@ export class JwtGuard implements CanActivate {
     try {
       // ==============================     Authentication  ==============
       const token = this.getToken(request);
-      logTrace('token is', token);
 
       const user: UserFromToken = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
-      logTrace('user is', user);
       if (!user) return false;
       request.user = user as any;
-      logTrace('auth usr', user);
 
       // ========================================= Authorization =======================
 

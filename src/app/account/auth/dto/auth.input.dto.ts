@@ -39,7 +39,7 @@ export class VerifyCodeInput {
 export class LoginUserInput {
   @IsString()
   @IsNotEmpty()
-  phoneOrEmail: string;
+  info: string;
 
   @IsString()
   @MinLength(3)

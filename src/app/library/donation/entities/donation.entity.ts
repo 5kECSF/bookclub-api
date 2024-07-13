@@ -1,13 +1,11 @@
-import mongoose, { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
-import { User } from '../../../account/users';
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Book } from '../../book/entities/book.entity';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { UploadDto } from '@/app/upload/upload.entity';
 
 export enum bookStatus {
@@ -31,12 +29,12 @@ export class Donation {
   uid?: string;
 
   @IsNotEmpty()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
-  donorId: User['_id'];
+  @Prop({ type: String, required: true, ref: 'User' })
+  donorId: string;
 
   @IsNotEmpty()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
-  bookId: Book['_id'];
+  @Prop({ type: String, required: true, ref: 'Book' })
+  bookId: string;
 
   @IsOptional()
   @Prop({ type: String })
@@ -73,8 +71,8 @@ export class Donation {
    * To check who is in posesion of this book
    */
   @IsOptional()
-  @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
-  borrowerId?: User['_id'];
+  @Prop({ type: String, required: false, ref: 'User' })
+  borrowerId?: string;
 
   @IsOptional()
   @Prop({ type: String })

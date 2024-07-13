@@ -1,7 +1,7 @@
 import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
 import { IsOptional, IsString } from 'class-validator';
-import { PaginationInputs } from '../../../../common/common.types.dto';
+import { PaginationInputs } from '@/common/common.types.dto';
 
 import { bookStatus, Donation } from './donation.entity';
 

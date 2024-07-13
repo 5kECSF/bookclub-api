@@ -11,6 +11,7 @@ import { ColorEnums, logTrace } from '../../common/logger';
       useFactory: async () => {
         const mongoUri = EnvVar.getInstance.MONGODB_URI;
         logTrace('monogUri', mongoUri.substring(0, 20), ColorEnums.BgGreen);
+        logTrace('monogUri', mongoUri, ColorEnums.BgGreen);
         try {
           const mongooseOptions = {
             uri: mongoUri,

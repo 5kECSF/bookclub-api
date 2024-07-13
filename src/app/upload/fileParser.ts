@@ -2,7 +2,6 @@ import {
   applyDecorators,
   ArgumentMetadata,
   BadRequestException,
-  HttpStatus,
   Injectable,
   ParseFilePipeBuilder,
   PipeTransform,
@@ -16,7 +15,7 @@ import {
   MulterField,
 } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { Express } from 'express';
-import { imageFileRegex } from '@/common/common.types.dto';
+// import { imageFileRegex } from '@/common/common.types.dto';
 
 import {
   ReferenceObject,

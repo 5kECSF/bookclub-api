@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import * as sharp from 'sharp';
-import * as crypto from 'crypto';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { FileUploadProvider } from '../../providers/upload';
 import { UploadDto } from '@/app/upload/upload.entity';
-import { generateSlug } from '@/common/util/functions';
-
-interface Img {
-  uid?: string;
-  name: string;
-}
+import { generateUniqName } from '@/common/util/functions';
 
 @Injectable()
 export class FileProviderService {
@@ -21,8 +15,9 @@ export class FileProviderService {
     uid?: string,
     ctr?: number,
   ): Promise<Resp<UploadDto>> {
-    const imgName = this.generateUniqName(file.originalname, uid, ctr);
+    const imgName = generateUniqName(file.originalname, uid, ctr);
     const uploaded = await this.IUploadSingleImage(file.buffer, imgName.name);
+    uploaded.val.uid = imgName.uid;
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
     return Succeed(uploaded.val);
   }
@@ -36,20 +31,6 @@ export class FileProviderService {
 
   public async IDeleteImageByPrefix(id): Promise<Resp<any>> {
     return this.fileUploadProvider.deleteImageByPrefix(id);
-  }
-
-  public generateUniqName(fileName: string, uid = '', ctr = 0): Img {
-    const length = 8;
-    if (uid === '')
-      uid = crypto
-        .randomBytes(Math.ceil(length / 2))
-        .toString('hex')
-        .slice(0, length);
-    const names = fileName.split('.');
-    const slug = generateSlug(names[0], true);
-
-    const ext = names[names.length - 1];
-    return { name: `${uid}-${slug}-${ctr}.${ext}`, uid: uid };
   }
 
   // resizing image

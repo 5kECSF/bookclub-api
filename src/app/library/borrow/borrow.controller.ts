@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { BorrowService } from './borrow.service';
 import { BorrowQuery, CreateBorrowInput, UpdateDto } from './entities/borrow.dto';
-import { PaginatedRes, RoleType, UserFromToken } from '../../../common/common.types.dto';
+import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 
 import {
   BorrowAccept,

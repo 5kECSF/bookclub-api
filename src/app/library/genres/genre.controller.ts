@@ -9,23 +9,20 @@ import {
   Post,
   Query,
   Req,
-  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import { GenreService } from './genre.service';
-import { RoleType, UserFromToken } from '@/common/common.types.dto';
+import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { CreateGenreInput, Genre, GenreQuery, UpdateDto } from './entities/genre.entity';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { generateSlug } from '@/common/util/functions';
 import { Endpoint } from '@/common/constants/model.consts';
-import { ApiSingleFiltered } from '@/app/upload/fileParser';
-import { MaxImageSize } from '@/common/constants/system.consts';
-import { Express, Request } from 'express';
+import { Request } from 'express';
 import { ReqParamPipe } from '@/common/lib/pipes';
 import { UploadService } from '@/app/upload/upload.service';
-import { UploadDto } from '@/app/upload/upload.entity';
+import { UploadModel } from '@/app/upload/upload.entity';
 import { logTrace } from '@/common/logger';
 
 @Controller(Endpoint.Genre)
@@ -38,18 +35,26 @@ export class GenreController {
   // @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
     const user: UserFromToken = req['user'];
-    const img = await this.uploadService.findById(createDto.fileId);
+    const img = await this.uploadService.findOne({
+      _id: createDto.fileId,
+      model: UploadModel.NotAssigned,
+    });
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    logTrace('img', img.val);
-    const upload: UploadDto = {
-      _id: img.val._id,
-      fileName: img.val.fileName,
-      pathId: img.val.pathId,
-    };
-    createDto.upload = upload;
+    createDto.upload = img.val;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.genreService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    const updateImg = await this.uploadService.findOneAndUpdate(
+      {
+        _id: createDto.fileId,
+        model: UploadModel.NotAssigned,
+      },
+      {
+        model: UploadModel.Genre,
+        refId: resp.val._id,
+      },
+    );
+    if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
     //this is for testing purposes
     // resp.val.img.fullImg = img.val.fullImg;
     return resp.val;
@@ -58,22 +63,18 @@ export class GenreController {
   @Patch(':id')
   // @UseGuards(JwtGuard)
   // @Roles(RoleType.ADMIN)
-  @ApiSingleFiltered('file', true, MaxImageSize)
   async update(
     @Req() req: Request,
-    @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
     @Body() updateDto: UpdateDto,
-  ) {
+  ): Promise<Genre> {
     const user: UserFromToken = req['user'];
     const genre = await this.genreService.findById(id);
     if (!genre.ok) throw new HttpException(genre.errMessage, genre.code);
-    if (file && file.buffer) {
-      const update = await this.uploadService.UpdateSingle(
-        file,
-        genre.val.upload.fileName,
-        user._id,
-      );
+    if (updateDto?.fileId) {
+      const file = await this.uploadService.findById(genre.val.upload._id);
+      if (!file.ok) throw new HttpException(file.errMessage, file.code);
+      updateDto.upload = file.val;
     }
     const res = await this.genreService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
@@ -84,16 +85,21 @@ export class GenreController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id', ReqParamPipe) id: string) {
+    const query = { refId: id, isPrimary: true };
+    const result = await this.uploadService.deleteFileByQuery(query);
+    if (!result.ok) {
+      logTrace('fileNot found', result.errMessage);
+      // throw new HttpException('file Not Found', result.code);
+    }
     const res = await this.genreService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileByQuery(res.val.upload.uid);
-    if (!result.ok) throw new HttpException(result.errMessage, result.code);
+
     return res.val;
   }
 
   // == below queries don't need authentication
   @Get()
-  async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<GenreResponse> {
+  async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<PaginatedRes<Genre>> {
     const res = await this.genreService.searchManyAndPaginate(['title'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;

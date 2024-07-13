@@ -1,9 +1,7 @@
-import { CreateAuthorInput } from '../../dto/author.dto';
-
-export const mockAuthor: CreateAuthorInput = {
+export const mockAuthor = {
   name: 'new tag',
 };
 
-export const mockUpdateAuthor: CreateAuthorInput = {
+export const mockUpdateAuthor = {
   name: 'new tag 2',
 };

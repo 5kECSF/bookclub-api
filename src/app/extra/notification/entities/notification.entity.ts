@@ -33,8 +33,8 @@ export class Notification {
   type?: NotificationEnum; //general, single user
 
   @IsOptional()
-  @Prop({ type: Types.ObjectId, required: false, ref: 'User' })
-  userId: User['_id'];
+  @Prop({ type: String, required: false, ref: 'User' })
+  userId: string;
 }
 
 export type NotificationDocument = Notification & Document;

@@ -1,14 +1,23 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ApiHideProperty, OmitType, PickType } from '@nestjs/swagger';
+import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { PaginationInput } from '@/app/extra/feedback/feedback.dependencies';
+
+export enum UploadModel {
+  Category = 'Category',
+  Genre = 'Genre',
+  Book = 'Book',
+  Author = 'Author',
+  Donation = 'Donation',
+  NotAssigned = 'NotAssigned',
+}
 
 @Schema({ timestamps: true })
 export class Upload {
   _id: string;
 
-  @Prop({ type: Types.ObjectId })
+  @Prop({ type: String })
   userId?: string;
 
   /**
@@ -34,6 +43,18 @@ export class Upload {
   pathId?: string;
 
   @IsOptional()
+  @IsString()
+  @Prop({
+    type: String,
+    enum: Object.values(UploadModel),
+    default: UploadModel.NotAssigned,
+  })
+  model?: UploadModel;
+
+  @Prop({ type: String })
+  refId?: string;
+
+  @IsOptional()
   @ApiHideProperty()
   suffix?: string;
 
@@ -56,7 +77,7 @@ export class Upload {
   url?: string;
 }
 
-export class UploadDt extends OmitType(Upload, ['_id']) {}
+export class UpdateDto extends PartialType(OmitType(Upload, ['_id'])) {}
 
 export type UploadDocument = Upload & Document;
 export const UploadSchema = SchemaFactory.createForClass(Upload);
@@ -69,7 +90,7 @@ export class UploadDto extends PickType(Upload, ['fileName', 'suffix', 'pathId',
 
   url?: string;
 }
-@Schema({ timestamps: true })
+@Schema({ _id: false })
 export class EmbedUpload {
   @Prop({ type: String })
   _id?: string;
@@ -90,10 +111,7 @@ export class EmbedUpload {
   @Prop({ type: [{ type: String }], default: undefined })
   images?: string[];
 }
-export class UploadBody {
-  @IsOptional()
-  fileName?: string;
-
+export class UpdateBody {
   @IsOptional()
   removedImages?: string[];
 }

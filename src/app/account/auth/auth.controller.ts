@@ -1,20 +1,25 @@
+import { UserFromToken } from '@/common/common.types.dto';
+import { EnvVar } from '@/common/config/config.instances';
+import { Endpoint } from '@/common/constants/model.consts';
+import { SystemConst } from '@/common/constants/system.consts';
+import { ColorEnums, logTrace } from '@/common/logger';
+import { JwtGuard } from '@/providers/guards/guard.rest';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
   BadRequestException,
-  Headers,
-  UseGuards,
+  Body,
+  Controller,
+  HttpException,
+  Patch,
+  Post,
   Req,
   Res,
-  HttpException,
+  UseGuards
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { AuthService } from './auth.service';
-import { RegisterUserInput } from '../users';
+import { RegisterUserInput, UserService } from '../users';
 import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import { AuthService } from './auth.service';
 import {
   ChangePasswordInput,
   EmailInput,
@@ -24,15 +29,8 @@ import {
   VerifyCodeInput,
 } from './dto/auth.input.dto';
 import { AuthTokenResponse } from './dto/auth.response.dto';
-import { ColorEnums, logTrace } from '@/common/logger';
-import { UserService } from '../users';
-import { JwtGuard } from '@/providers/guards/guard.rest';
-import { EnvVar } from '@/common/config/config.instances';
-import { Endpoint } from '@/common/constants/model.consts';
-import { SystemConst } from '@/common/constants/system.consts';
-import { UserFromToken } from '@/common/common.types.dto';
-import { ApiTags } from '@nestjs/swagger';
 
+// @UseInterceptors(ClassSerializerInterceptor)
 @Controller(Endpoint.Auth)
 @ApiTags(Endpoint.Auth)
 export class AuthController {
@@ -66,6 +64,7 @@ export class AuthController {
     const res = await this.authService.login(input);
     if (!res.ok) throw new BadRequestException(res.errMessage);
     //setting tokens
+
     const options = {
       httpOnly: true,
       secure: EnvVar.getInstance.NODE_ENV == 'production',

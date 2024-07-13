@@ -2,8 +2,6 @@ import { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Donation } from '../../donation/entities/donation.entity';
-import { Book } from '../../book/entities/book.entity';
 
 export enum BorrowStatus {
   Taken = 'BORROWED',
@@ -29,21 +27,21 @@ export class Borrow {
 
   @IsNotEmpty()
   @IsString()
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Book' })
-  bookId: Book['_id'];
+  @Prop({ type: String, required: true, ref: 'Book' })
+  bookId: string;
 
   @IsOptional()
   @Prop({ type: String })
   userName?: string;
 
   @IsOptional()
-  @Prop({ type: Types.ObjectId, ref: 'Donation' })
-  instanceId?: Donation['_id'];
+  @Prop({ type: String, ref: 'Donation' })
+  instanceId?: string;
 
   @IsOptional()
   @IsString()
   @Prop({ type: String, required: false, ref: 'Donation' })
-  instanceUid?: Donation['uid'];
+  instanceUid?: string;
 
   @IsOptional()
   @Prop({ type: String })
