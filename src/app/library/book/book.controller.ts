@@ -91,7 +91,7 @@ export class BookController {
     /**
      * if there is change on the image
      */
-    if (updateBookDto?.fileUpdated) {
+    if (updateBookDto?.fileUpdated || updateBookDto.fileId) {
       const file = await this.uploadService.findById(book.val.upload._id);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
       updateBookDto.upload = file.val;

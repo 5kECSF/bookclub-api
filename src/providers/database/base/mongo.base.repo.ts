@@ -1,11 +1,11 @@
 import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 // import { IGenericRepository } from './IGenericRepo';
 import { pagiKeys, PaginatedRes, PaginationInputs } from '@/common/common.types.dto';
-import { ColorEnums, logTrace } from '@/common/logger';
-import { RemovedModel, UpdateResponse } from './mongo.entity';
-import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ErrConst } from '@/common/constants';
+import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
+import { ColorEnums, logTrace } from '@/common/logger';
 import { pickKeys, removeKeys } from '@/common/util/util';
+import { RemovedModel, UpdateResponse } from './mongo.entity';
 
 export abstract class MongoGenericRepository<T> {
   private _repository: Model<T>;
@@ -73,8 +73,8 @@ export abstract class MongoGenericRepository<T> {
 
       let items: T[] = [];
       // Always make default pagination = 25 with first page
-      const limit = paginateQuery?.limit || 25;
-      const page = paginateQuery?.page || 1;
+      const limit = parseInt(paginateQuery?.limit) || 25;
+      const page = parseInt(paginateQuery?.page) || 1;
       const sort = paginateQuery?.sort || '_id';
 
       // logTrace('filter', filter);
@@ -82,14 +82,25 @@ export abstract class MongoGenericRepository<T> {
       items = await this._repository
         .find(mainQuery)
         .skip((page - 1) * limit)
-        .limit(limit)
+        .limit(limit + 1)
         .sort(sort)
         .lean();
+      let hasNext = false;
+      if (items.length > limit) {
+        hasNext = true;
+        items.pop();
+      }
 
       const count = await this._repository.countDocuments(mainQuery);
       // logTrace(`FINDMANY=====>>${count}`, items, ColorEnums.BgBlue);
+      const response: PaginatedRes<T> = {
+        body: items,
+        count,
+        hasNext,
+        hasPrev: page > 1,
+      };
 
-      return Succeed({ count, body: items });
+      return Succeed(response);
     } catch (e) {
       logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);

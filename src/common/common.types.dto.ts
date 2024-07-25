@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
 import { IsOptional } from 'class-validator';
+import { Request, Response } from 'express';
 
 export interface HttpContext {
   req: Request;
@@ -50,6 +50,8 @@ export interface IAuthToken {
 
 export class PaginatedRes<T> {
   count: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 
   body: T[];
 }

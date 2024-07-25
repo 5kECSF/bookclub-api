@@ -37,7 +37,7 @@ export class CreateBookInput extends PickType(Book, [
   upload?: EmbedUpload;
 }
 
-export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug', 'fileId'])) {
+export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {
   @IsOptional()
   fileUpdated = false;
 }

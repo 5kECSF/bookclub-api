@@ -110,7 +110,7 @@ export class UploadController {
   }
 
   // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   @Patch('multi/:id')
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async updateWithCover(
