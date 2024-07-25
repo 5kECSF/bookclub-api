@@ -31,7 +31,7 @@ import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 export class UploadController {
   constructor(private uploadService: UploadService) {}
 
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard)
   @Post('single')
   @ApiSingleFiltered('file', true, MaxImageSize)
   async createSingle(
