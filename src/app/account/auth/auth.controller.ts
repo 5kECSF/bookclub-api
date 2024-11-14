@@ -13,7 +13,7 @@ import {
   Post,
   Req,
   Res,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
@@ -37,7 +37,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService, private usersService: UserService) {}
 
   //Au.C-1 RegisterAndSendCode
-  @Post('signup')
+  @Post('register')
   async registerAndSendCode(@Body() input: RegisterUserInput) {
     const resp = await this.authService.registerWithEmailCode(input);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);

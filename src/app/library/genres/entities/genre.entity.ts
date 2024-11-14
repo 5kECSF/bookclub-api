@@ -3,7 +3,7 @@ import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { PaginationInput } from '@/app/library/genres/imports.genre';
 
 @Schema({ timestamps: true, versionKey: false })

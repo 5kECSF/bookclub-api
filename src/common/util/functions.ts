@@ -1,5 +1,5 @@
-import slugify from 'slugify';
 import * as crypto from 'crypto';
+import slugify from 'slugify';
 
 export const generateSlug = (title: string, random = true, timeStamp = true) => {
   const baseSlug = slugify(title, { lower: true });
@@ -23,11 +23,13 @@ interface Img {
 
 export function generateUniqName(fileName: string, uid = '', ctr = 0): Img {
   const length = 6;
+  //uid is useful for sorting
   if (uid === '') {
     uid = generateShortDate() + generateRandom(length);
   }
 
   const names = fileName.split('.');
+  //chooses if slug should have random and timestamp
   const slug = generateSlug(names[0], true, false);
 
   const ext = names[names.length - 1];

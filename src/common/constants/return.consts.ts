@@ -1,4 +1,3 @@
-import { ColorEnums, logTrace } from '../logger';
 
 export interface Resp<T> {
   ok: boolean;
@@ -10,7 +9,7 @@ export interface Resp<T> {
 }
 
 export function FAIL(errMessage: string, code = 400, e: Error = null): Resp<any> {
-  logTrace('Error Response', errMessage, ColorEnums.BgMagenta, 3);
+  // logTrace('Error Response', errMessage, ColorEnums.BgMagenta, 3);
 
   return {
     ok: false,

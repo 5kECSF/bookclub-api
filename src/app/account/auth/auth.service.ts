@@ -246,6 +246,7 @@ export class AuthService {
   // Au.S-4
   async logOut(token: string): Promise<Resp<boolean>> {
     try {
+      if (token === undefined) return FAIL('token is undefined');
       const user = await this.getUserFromRefreshToken(token);
       if (!user.ok) return FAIL(user.errMessage);
       const userRes = await this.usersService.upsertOne(
