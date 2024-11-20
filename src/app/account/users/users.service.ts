@@ -1,16 +1,15 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { emailRegex } from './entities/user.entity';
-import { User, UserDocument } from './entities/user.entity';
+import { emailRegex, User, UserDocument } from './entities/user.entity';
 
-import { MongoGenericRepository } from './imports.user';
-import { FilterQuery, Model } from 'mongoose';
-import { CreateUser } from './dto/user.mut.dto';
-import { CryptoService } from '@/providers/crypto/crypto.service';
-import { ChangePasswordInput } from '../auth/dto/auth.input.dto';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
+import { CryptoService } from '@/providers/crypto/crypto.service';
+import { FilterQuery, Model } from 'mongoose';
 import { ErrConst } from '../../../common/constants';
+import { ChangePasswordInput } from '../auth/dto/auth.input.dto';
+import { CreateUser } from './dto/user.mut.dto';
+import { logTrace, MongoGenericRepository } from './imports.user';
 
 @Injectable()
 export class UserService extends MongoGenericRepository<User> {
@@ -27,13 +26,18 @@ export class UserService extends MongoGenericRepository<User> {
   }
 
   public async findOneWithPwd(where: FilterQuery<User>): Promise<User> {
+    try {
+      const user: User = await this.userModel
+        .findOne(where)
+        .select('+password +verificationCodeHash +verificationCodeExpires +hashedRefreshToken')
+        .lean();
+
+      return user;
+    } catch (e) {
+      logTrace('failed to find user=', e.message);
+      return null;
+    }
     // logTrace('findinguser=', where);
-    const user: User = await this.userModel
-      .findOne(where)
-      .select('+password +verificationCodeHash +verificationCodeExpires +hashedRefreshToken')
-      .lean();
-    // logTrace('foundUser=', user);
-    return user;
   }
 
   async anyUserExists(phoneOrEmail: string) {

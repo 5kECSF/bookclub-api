@@ -1,10 +1,10 @@
 import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 // import { IGenericRepository } from './IGenericRepo';
-import { pagiKeys, PaginatedRes, PaginationInputs } from '@/common/common.types.dto';
+import { pagiKeys, PaginatedRes } from '@/common/common.types.dto';
 import { ErrConst } from '@/common/constants';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
-import { pickKeys, removeKeys } from '@/common/util/util';
+import { pickKeys } from '@/common/util/util';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
 
 export abstract class MongoGenericRepository<T> {
@@ -16,59 +16,58 @@ export abstract class MongoGenericRepository<T> {
     this._populateOnFind = populateOnFind;
   }
 
-  public async filterManyAndPaginate(
-    filter: FilterQuery<T>,
-    pagination?: PaginationInputs,
-  ): Promise<Resp<PaginatedRes<T>>> {
-    let items: T[] = [];
-    // Always make default pagination = 25 with first page
-    const limit = pagination?.limit || 25;
-    const page = pagination?.page || 1;
-    const sort = pagination?.sort || '_id';
+  // public async filterManyAndPaginate(
+  //   filter: FilterQuery<T>,
+  //   pagination?: PaginationInputs,
+  // ): Promise<Resp<PaginatedRes<T>>> {
+  //   let items: T[] = [];
+  //   // Always make default pagination = 25 with first page
+  //   const limit = pagination?.limit || 25;
+  //   const page = pagination?.page || 1;
+  //   const sort = pagination?.sort || '_id';
 
-    // logTrace('filter', filter);
-    try {
-      items = await this._repository
-        .find(filter)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .sort(sort)
-        .lean();
+  //   // logTrace('filter', filter);
+  //   try {
+  //     items = await this._repository
+  //       .find(filter)
+  //       .skip((page - 1) * limit)
+  //       .limit(limit)
+  //       .sort(sort)
+  //       .lean();
 
-      const count = await this._repository.countDocuments(filter);
+  //     const count = await this._repository.countDocuments(filter);
 
-      // logTrace(`FINDMANY=====>>${count}`, items, ColorEnums.BgBlue);
-      return Succeed({ count, body: items });
-    } catch (e) {
-      logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
-      return FAIL(e.message);
-    }
-  }
+  //     // logTrace(`FINDMANY=====>>${count}`, items, ColorEnums.BgBlue);
+  //     return Succeed({ count, body: items });
+  //   } catch (e) {
+  //     logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
+  //     return FAIL(e.message);
+  //   }
+  // }
 
   public async searchManyAndPaginate(
     fieldsToSearch: string[],
     filter: FilterQuery<T>,
-    _pagination?: any,
-    keysToRemove: string[] = [],
+    keysToFilter: string[] = [],
+    additionalQuery: Record<string, any> = {},
   ): Promise<Resp<PaginatedRes<T>>> {
     try {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
       // logTrace('keys to remove', keysToRemove);
-      const query = removeKeys(filter, [...pagiKeys, ...keysToRemove, 'searchText']);
+      const query = pickKeys(filter, [...keysToFilter]);
 
-      let mainQuery: Record<string, any> = {};
+      let mainQuery: Record<string, any> = additionalQuery;
       // this adds text search capability
       if (filter.searchText) {
         const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
         mainQuery = {
+          ...mainQuery,
           $or: fieldsToSearch.map((field) => ({ [field]: searchText })),
         };
       }
-
       Object.keys(query).forEach((key) => {
         mainQuery[key] = query[key];
       });
-
       //--- the above function with out text search
 
       let items: T[] = [];

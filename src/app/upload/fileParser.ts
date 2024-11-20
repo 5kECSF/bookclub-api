@@ -1,32 +1,29 @@
 import {
   applyDecorators,
   ArgumentMetadata,
-  BadRequestException,
+  HttpException,
   Injectable,
-  ParseFilePipeBuilder,
   PipeTransform,
-  SetMetadata,
-  UseInterceptors,
+  UseInterceptors
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import {
-  MulterOptions,
   MulterField,
+  MulterOptions,
 } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
-import { Express } from 'express';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 // import { imageFileRegex } from '@/common/common.types.dto';
 
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
   ReferenceObject,
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
+import { MaxImageSize } from '@/common/constants/system.consts';
 import { UnsupportedMediaTypeException } from '@nestjs/common';
 
 export type UploadFields = MulterField & { required?: boolean };
-import { MaxImageSize } from '@/common/constants/system.consts';
 
 @Injectable()
 export class ParseFile implements PipeTransform {
@@ -36,10 +33,10 @@ export class ParseFile implements PipeTransform {
   ): Express.Multer.File | Express.Multer.File[] {
     if (files === undefined || files === null) {
       // console.log('files===>', files)
-      throw new BadRequestException('Validation failed (upload expected)');
+      throw new HttpException('Validation failed (upload expected)', 400);
     }
     if (Array.isArray(files) && files.length === 0) {
-      throw new BadRequestException('Validation failed (files expected)');
+      throw new HttpException('Validation failed (files expected)', 400);
     }
 
     return files;

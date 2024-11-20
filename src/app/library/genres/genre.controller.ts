@@ -1,3 +1,12 @@
+import { UploadModel } from '@/app/upload/upload.entity';
+import { UploadService } from '@/app/upload/upload.service';
+import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
+import { Endpoint } from '@/common/constants/model.consts';
+import { ReqParamPipe } from '@/common/lib/pipes';
+import { logTrace } from '@/common/logger';
+import { generateSlug } from '@/common/util/functions';
+import { JwtGuard } from '@/providers/guards/guard.rest';
+import { Roles } from '@/providers/guards/roles.decorators';
 import {
   Body,
   Controller,
@@ -11,19 +20,16 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { GenreService } from './genre.service';
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
-import { CreateGenreInput, Genre, GenreQuery, UpdateDto } from './entities/genre.entity';
-import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Roles } from '@/providers/guards/roles.decorators';
-import { generateSlug } from '@/common/util/functions';
-import { Endpoint } from '@/common/constants/model.consts';
 import { Request } from 'express';
-import { ReqParamPipe } from '@/common/lib/pipes';
-import { UploadService } from '@/app/upload/upload.service';
-import { UploadModel } from '@/app/upload/upload.entity';
-import { logTrace } from '@/common/logger';
+import {
+  CreateGenreInput,
+  Genre,
+  GenreFilter,
+  GenreQuery,
+  UpdateDto,
+} from './entities/genre.entity';
+import { GenreService } from './genre.service';
 
 @Controller(Endpoint.Genre)
 @ApiTags(Endpoint.Genre)
@@ -100,7 +106,7 @@ export class GenreController {
   // == below queries don't need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<PaginatedRes<Genre>> {
-    const res = await this.genreService.searchManyAndPaginate(['title'], inputQuery);
+    const res = await this.genreService.searchManyAndPaginate(['title'], inputQuery, GenreFilter);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }

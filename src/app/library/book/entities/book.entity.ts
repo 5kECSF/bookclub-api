@@ -1,11 +1,11 @@
-import mongoose, { Document } from 'mongoose';
+import { Document } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ApiQuery, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
 
 export enum BookLanguage {
   English = 'English',
@@ -106,3 +106,15 @@ export type BookDocument = Book & Document;
 export const BookSchema = SchemaFactory.createForClass(Book);
 // Create indexes
 BookSchema.index({ title: 'text', desc: 'text' });
+
+export const BookFilter: (keyof Book)[] = [
+  'title',
+  'authorName',
+  'fileId',
+  'authorId',
+  '_id',
+  'language',
+  'categoryId',
+  'active',
+  'pageNo',
+];

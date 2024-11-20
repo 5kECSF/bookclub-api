@@ -3,7 +3,7 @@ import { HttpCodes } from './http.codes';
 export enum ResponseConsts {
   INTERNAL_ERROR = 'Internal Error',
   INVALID_INPUT = 'Your input is invalid',
-  USER_EXISTS = 'USER_EXISTS',
+  USER_EXISTS = 'the user already exists',
   TOKEN_NOT_VALID = 'TOKEN_NOT_VALID',
   USER_NOT_FOUND = 'USER_NOT_FOUND',
   UNAUTHORIZED = 'UNAUTHORIZED',

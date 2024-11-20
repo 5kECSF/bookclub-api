@@ -1,3 +1,4 @@
+import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 import {
   Body,
   Controller,
@@ -13,23 +14,21 @@ import {
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 
-import { Book } from './entities/book.entity';
-import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Request } from 'express';
-import { Roles } from '@/providers/guards/roles.decorators';
-import { GenreService } from '../genres/genre.service';
-import { CategoryService } from '../category/category.service';
-import { generateSlug } from '@/common/util/functions';
 import { FileProviderService } from '@/app/upload/file-provider.service';
-import { logTrace } from '@/common/logger';
-import { removeKeys } from '@/common/util/util';
-import { SequenceService } from './sequence/sequence.entity';
-import { UploadService } from '@/app/upload/upload.service';
-import { ApiTags } from '@nestjs/swagger';
-import { Endpoint } from '@/common/constants/model.consts';
 import { UploadModel } from '@/app/upload/upload.entity';
+import { UploadService } from '@/app/upload/upload.service';
+import { Endpoint } from '@/common/constants/model.consts';
+import { logTrace } from '@/common/logger';
+import { generateSlug } from '@/common/util/functions';
+import { JwtGuard } from '@/providers/guards/guard.rest';
+import { Roles } from '@/providers/guards/roles.decorators';
+import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { CategoryService } from '../category/category.service';
+import { GenreService } from '../genres/genre.service';
+import { Book, BookFilter } from './entities/book.entity';
+import { SequenceService } from './sequence/sequence.entity';
 
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
@@ -147,13 +146,18 @@ export class BookController {
       genres = [genres];
     }
     logTrace('query', inputQuery);
-    const query = removeKeys(inputQuery, ['genres', 'searchText']);
+    const query = {};
     if (inputQuery?.genres && inputQuery.genres.length > 0) {
       query['genres'] = { $in: genres };
     }
     logTrace('input q', query);
 
-    const res = await this.bookService.searchManyAndPaginate(['title', 'desc'], inputQuery);
+    const res = await this.bookService.searchManyAndPaginate(
+      ['title', 'desc'],
+      inputQuery,
+      BookFilter,
+      query,
+    );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }

@@ -1,10 +1,10 @@
-import { Document } from 'mongoose';
-import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
+import { PaginationInput } from '@/app/library/genres/imports.genre';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { EmbedUpload } from '@/app/upload/upload.entity';
-import { PaginationInput } from '@/app/library/genres/imports.genre';
+import { Document } from 'mongoose';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Genre {
@@ -56,6 +56,8 @@ export class CreateGenreInput extends PickType(Genre, ['name', 'desc', 'restrict
   @IsOptional()
   upload?: EmbedUpload;
 }
+
+export const GenreFilter: (keyof Genre)[] = ['count', 'name', 'fileId', 'restricted', '_id'];
 
 export class UpdateDto extends PartialType(OmitType(CreateGenreInput, ['slug'])) {}
 

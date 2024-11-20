@@ -4,17 +4,7 @@ import { Endpoint } from '@/common/constants/model.consts';
 import { SystemConst } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { JwtGuard } from '@/providers/guards/guard.rest';
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  HttpException,
-  Patch,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpException, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { RegisterUserInput, UserService } from '../users';
@@ -51,7 +41,7 @@ export class AuthController {
       input.phoneOrEmail,
       input.code,
     );
-    if (!userResponse.ok) throw new BadRequestException(userResponse.errMessage);
+    if (!userResponse.ok) throw new HttpException(userResponse.errMessage, userResponse.code);
     return userResponse.val;
   }
 
@@ -62,7 +52,7 @@ export class AuthController {
     @Body() input: LoginUserInput,
   ): Promise<AuthTokenResponse> {
     const res = await this.authService.login(input);
-    if (!res.ok) throw new BadRequestException(res.errMessage);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
     //setting tokens
 
     const options = {
@@ -102,7 +92,7 @@ export class AuthController {
     @Body() input: TokenInput,
   ): Promise<AuthTokenResponse> {
     let token;
-    logTrace('input', input, ColorEnums.BgBlue);
+    logTrace('input', input, ColorEnums.FgYellow);
     if (input.isCookie) {
       console.log('it is cookie');
       token = request.cookies[SystemConst.REFRESH_COOKIE];
