@@ -106,7 +106,7 @@ export class GenreController {
   // == below queries don't need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<PaginatedRes<Genre>> {
-    const res = await this.genreService.searchManyAndPaginate(['title'], inputQuery, GenreFilter);
+    const res = await this.genreService.searchManyAndPaginate(['name'], inputQuery, GenreFilter);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.val;
   }

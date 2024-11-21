@@ -55,16 +55,21 @@ export abstract class MongoGenericRepository<T> {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
       // logTrace('keys to remove', keysToRemove);
       const query = pickKeys(filter, [...keysToFilter]);
+      logTrace('filter', filter);
 
       let mainQuery: Record<string, any> = additionalQuery;
       // this adds text search capability
       if (filter.searchText) {
-        const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
+        // const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
+        // logTrace('searchTxt', searchText);
         mainQuery = {
           ...mainQuery,
-          $or: fieldsToSearch.map((field) => ({ [field]: searchText })),
+          $or: fieldsToSearch.map((field) => ({
+            [field]: { $regex: `${filter.searchText}`, $options: 'i' },
+          })),
         };
       }
+      logTrace('query', mainQuery, filter.searchText);
       Object.keys(query).forEach((key) => {
         mainQuery[key] = query[key];
       });
@@ -76,7 +81,7 @@ export abstract class MongoGenericRepository<T> {
       const page = parseInt(paginateQuery?.page) || 1;
       const sort = paginateQuery?.sort || '_id';
 
-      // logTrace('filter', filter);
+      logTrace('main!', mainQuery);
 
       items = await this._repository
         .find(mainQuery)
