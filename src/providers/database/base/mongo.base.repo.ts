@@ -59,13 +59,13 @@ export abstract class MongoGenericRepository<T> {
 
       let mainQuery: Record<string, any> = additionalQuery;
       // this adds text search capability
-      if (filter.searchText) {
+      if (filter.q) {
         // const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
         // logTrace('searchTxt', searchText);
         mainQuery = {
           ...mainQuery,
           $or: fieldsToSearch.map((field) => ({
-            [field]: { $regex: `${filter.searchText}`, $options: 'i' },
+            [field]: { $regex: `${filter.q}`, $options: 'i' },
           })),
         };
       }
