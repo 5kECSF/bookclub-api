@@ -47,10 +47,12 @@ export class BookController {
   @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
+    //find the image
     const img = await this.uploadService.findById(createDto.fileId);
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
 
     createDto.upload = img.val;
+
     createDto.slug = generateSlug(createDto.title);
     createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
@@ -60,6 +62,7 @@ export class BookController {
     const updateImg = await this.uploadService.findOneAndUpdate(
       {
         _id: createDto.fileId,
+        //TODO, this is for testing, remove in production, also use the groupId
         // model: UploadModel.NotAssigned,
       },
       {
@@ -68,12 +71,13 @@ export class BookController {
       },
     );
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
-
+    //TODO: update this using count, to make it always accurate
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
         { _id: createDto.categoryId },
         { $inc: { count: 1 } },
       ),
+      //
       this.genreService.updateMany({ name: { $in: createDto.genres } }, { $inc: { count: 1 } }),
     ]);
 

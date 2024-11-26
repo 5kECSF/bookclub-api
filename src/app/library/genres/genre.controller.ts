@@ -41,6 +41,7 @@ export class GenreController {
   // @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
     const user: UserFromToken = req['user'];
+    //find the image
     const img = await this.uploadService.findOne({
       _id: createDto.fileId,
       model: UploadModel.NotAssigned,
