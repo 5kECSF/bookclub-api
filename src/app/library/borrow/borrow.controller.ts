@@ -59,14 +59,14 @@ export class BorrowController {
       status: BorrowStatus.WaitList,
       userId: user._id,
       bookId: id,
-      bookName: book.val.title,
-      userName: `${usr.val.firstName} ${usr.val.lastName}`,
+      bookName: book.body.title,
+      userName: `${usr.body.firstName} ${usr.body.lastName}`,
     };
 
     const resp = await this.borrowService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
-    return resp.val;
+    return resp.body;
   }
 
   @Post('/cancle/:borrowId')
@@ -80,7 +80,7 @@ export class BorrowController {
     });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
 
-    return res.val;
+    return res.body;
   }
 
   @Post('/acceptBorrow/:id')
@@ -92,7 +92,7 @@ export class BorrowController {
 
     const resp = await this.borrowService.updateById(id, {
       status: BorrowStatus.Accepted,
-      instanceUid: instance.val.uid,
+      instanceUid: instance.body.uid,
       instanceId: message.instanceId,
     });
     /**
@@ -100,23 +100,23 @@ export class BorrowController {
      */
     const updateInstance = await this.donationService.updateById(message.instanceId, {
       status: bookStatus.Reserved,
-      borrowerId: resp.val.userId,
-      borrowerName: resp.val.userName,
+      borrowerId: resp.body.userId,
+      borrowerName: resp.body.userName,
     });
-    const updateBook = await this.bookService.updateById(resp.val.bookId, {
+    const updateBook = await this.bookService.updateById(resp.body.bookId, {
       $inc: { availableCnt: -1 },
     });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const notification = await this.notificationService.createOne({
-      title: `Your request to borrow ${resp.val.bookName} have been accepted`,
+      title: `Your request to borrow ${resp.body.bookName} have been accepted`,
       body: message.body,
       type: NotificationEnum.Individual,
-      userId: resp.val.userId,
+      userId: resp.body.userId,
     });
     //TODO: add email notifications
 
-    return resp.val;
+    return resp.body;
   }
 
   @Post('/markTaken/:id')
@@ -130,19 +130,19 @@ export class BorrowController {
       note: body.note,
     });
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    const updateInstance = await this.donationService.updateById(resp.val.instanceId, {
+    const updateInstance = await this.donationService.updateById(resp.body.instanceId, {
       status: bookStatus.Taken,
     });
     if (!updateInstance.ok) throw new HttpException(resp.errMessage, resp.code);
 
     const notification = await this.notificationService.createOne({
-      title: `The ${resp.val.bookName} book is marked as taken by you`,
-      body: `The book ${resp.val.bookName} has been marked as taken by You. if it is a mistake, contact us`,
+      title: `The ${resp.body.bookName} book is marked as taken by you`,
+      body: `The book ${resp.body.bookName} has been marked as taken by You. if it is a mistake, contact us`,
       type: NotificationEnum.Individual,
-      userId: resp.val.userId,
+      userId: resp.body.userId,
     });
 
-    return resp.val;
+    return resp.body;
   }
 
   @Post('/markReturned/:id')
@@ -155,13 +155,13 @@ export class BorrowController {
       status: BorrowStatus.Returned,
       returnedDate: body.returnedDate,
     });
-    const updateBook = await this.bookService.updateById(resp.val.bookId, {
+    const updateBook = await this.bookService.updateById(resp.body.bookId, {
       $inc: { availableCnt: 1 },
     });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
-    return resp.val;
+    return resp.body;
   }
 
   @Post()
@@ -170,7 +170,7 @@ export class BorrowController {
   async createOne(@Body() createDto: CreateBorrowInput): Promise<Borrow> {
     const resp = await this.borrowService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -179,7 +179,7 @@ export class BorrowController {
   async update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
     const res = await this.borrowService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -188,7 +188,7 @@ export class BorrowController {
   async remove(@Param('id') id: string) {
     const res = await this.borrowService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   // == below queries dont need authentication
@@ -196,13 +196,13 @@ export class BorrowController {
   async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
     const res = await this.borrowService.searchManyAndPaginate(['userName'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.borrowService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

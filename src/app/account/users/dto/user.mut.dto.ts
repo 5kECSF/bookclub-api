@@ -9,7 +9,7 @@ import {
   MinLength,
   IsBoolean,
 } from 'class-validator';
-import { UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 
 export class RegisterUserInput {
   @IsNotEmpty()
@@ -31,7 +31,7 @@ export class RegisterUserInput {
 
   @ApiHideProperty()
   @IsOptional()
-  avatar?: UploadDto;
+  avatar?: EmbedUpload;
 }
 
 export class UpdateMeDto extends PartialType(OmitType(RegisterUserInput, ['email', 'password'])) {}

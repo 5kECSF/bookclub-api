@@ -4,9 +4,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ApiProperty } from '@nestjs/swagger';
 
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UploadDto } from '@/app/upload/upload.entity';
 
 export enum bookStatus {
   Available = 'AVAILABLE',
@@ -50,8 +50,8 @@ export class Donation {
   desc: string;
 
   @IsOptional()
-  @Prop({ type: UploadDto })
-  bookImg?: UploadDto;
+  @Prop({ type: EmbedUpload, _id: false })
+  bookImg?: EmbedUpload;
 
   /**
    * the count of this specific book, instance Number

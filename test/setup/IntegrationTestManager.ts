@@ -70,11 +70,11 @@ export class IntegrationTestManager {
     /**
      * setting the access & the refresh tokens
      */
-    this.adminAccessToken = adminUserResp.val.authToken.accessToken;
-    this.adminRefreshToken = adminUserResp.val.authToken.refreshToken;
+    this.adminAccessToken = adminUserResp.body.authToken.accessToken;
+    this.adminRefreshToken = adminUserResp.body.authToken.refreshToken;
 
-    this.userAccessToken = userResp.val.authToken.accessToken;
-    this.userRefreshToken = userResp.val.authToken.refreshToken;
+    this.userAccessToken = userResp.body.authToken.accessToken;
+    this.userRefreshToken = userResp.body.authToken.refreshToken;
 
     // this.connection = this.modules.get<DatabaseService>(DatabaseService).getDbHandle();
   }

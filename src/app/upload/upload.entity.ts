@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 import { PaginationInput } from '@/app/extra/feedback/feedback.dependencies';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Document } from 'mongoose';
 
 export enum UploadModel {
   Category = 'Category',
@@ -11,6 +11,11 @@ export enum UploadModel {
   Author = 'Author',
   Donation = 'Donation',
   NotAssigned = 'NotAssigned',
+}
+
+export enum UploadStatus {
+  Draft = 'draft',
+  Active = 'active',
 }
 
 @Schema({ timestamps: true })
@@ -28,8 +33,7 @@ export class Upload {
   uid?: string;
 
   /**
-   * FILE_NAME: this the actual images name, which is put on firebase,
-   * ie, userId/
+   * FILE_NAME: this the actual images name, which is put on firebase, it could be empyt when draft
    */
   @Prop({ type: String, unique: true, sparse: true })
   @IsString()
@@ -51,15 +55,24 @@ export class Upload {
   })
   model?: UploadModel;
 
+  @IsOptional()
+  @IsString()
+  @Prop({
+    type: String,
+    enum: Object.values(UploadStatus),
+    default: UploadStatus.Draft,
+  })
+  status?: UploadStatus;
+
   @Prop({ type: String })
-  refId?: string;
+  refId?: string; //this is the parent images id for non primary images
 
   @IsOptional()
   @ApiHideProperty()
   suffix?: string;
 
   @IsOptional()
-  @Prop({ type: [{ type: String }], default: undefined })
+  @Prop({ type: [{ type: String }], default: undefined }) //default is undefined because child images dont have images
   images?: string[];
 
   //===========  other fields
@@ -84,12 +97,20 @@ export const UploadSchema = SchemaFactory.createForClass(Upload);
 
 // Upload Dto is saved inside the img object of the models
 @Schema({ _id: false })
-export class UploadDto extends PickType(Upload, ['fileName', 'suffix', 'pathId', 'uid', 'images']) {
+export class UploadDto extends PickType(Upload, [
+  'fileName',
+  'suffix',
+  'pathId',
+  'uid',
+  'images',
+  'status',
+]) {
   @Prop({ type: String })
   _id?: string;
 
   url?: string;
 }
+//this is the model embeded in the other models
 @Schema({ _id: false })
 export class EmbedUpload {
   @Prop({ type: String })

@@ -32,7 +32,7 @@ admin.initializeApp({
 const storageRef = admin.storage().bucket(`gs://${FirebaseProjectName}.appspot.com`);
 
 const projName = `${FirebaseProjectName}.appspot.com`;
-const toBeRemoved = `https://storage.googleapis.com/${projName}/`;
+// const toBeRemoved = `https://storage.googleapis.com/${projName}/`;
 export const ToBeAdded = `https://firebasestorage.googleapis.com/v0/b/${projName}/o/`;
 
 @Injectable()

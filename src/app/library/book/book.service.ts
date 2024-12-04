@@ -33,7 +33,7 @@ export class BookService extends MongoGenericRepository<Book> {
         { _id: userId, dislikedBooks: bookId },
         { $pull: { dislikedBooks: bookId } },
       );
-      if (dislike.val.matchedCount >= 1 && dislike.val.modifiedCount >= 1) dislikeCont++;
+      if (dislike.body.matchedCount >= 1 && dislike.body.modifiedCount >= 1) dislikeCont++;
 
       // 2. if the user have not previously liked this book like it
       const like = await this.usersService.updateOneAndReturnCount(
@@ -41,7 +41,7 @@ export class BookService extends MongoGenericRepository<Book> {
         { $addToSet: { likedBooks: bookId } },
       );
       if (!like.ok) return false;
-      if (like.val.matchedCount >= 1 && like.val.modifiedCount >= 1) likeCnt++;
+      if (like.body.matchedCount >= 1 && like.body.modifiedCount >= 1) likeCnt++;
 
       if (likeCnt > 0 || dislikeCont > 0) {
         const result: UpdateResponse = await this.bookModel.updateOne(
@@ -73,7 +73,7 @@ export class BookService extends MongoGenericRepository<Book> {
         { _id: userId, likedBooks: bookId },
         { $pull: { likedBooks: bookId } },
       );
-      if (removeLike.val.matchedCount >= 1 && removeLike.val.modifiedCount >= 1) remvdLikeCnt++;
+      if (removeLike.body.matchedCount >= 1 && removeLike.body.modifiedCount >= 1) remvdLikeCnt++;
 
       // 2. if the user have not previously disliked this book dislike it
       const addToDislike = await this.usersService.updateOneAndReturnCount(
@@ -81,7 +81,8 @@ export class BookService extends MongoGenericRepository<Book> {
         { $addToSet: { dislikedBooks: bookId } },
       );
       if (!addToDislike.ok) return false;
-      if (addToDislike.val.matchedCount >= 1 && addToDislike.val.modifiedCount >= 1) dislikedCnt++;
+      if (addToDislike.body.matchedCount >= 1 && addToDislike.body.modifiedCount >= 1)
+        dislikedCnt++;
 
       if (dislikedCnt > 0 || remvdLikeCnt > 0) {
         const result: UpdateResponse = await this.bookModel.updateOne(

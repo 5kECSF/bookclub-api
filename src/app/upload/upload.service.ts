@@ -1,7 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { UpdateBody, Upload, UploadDocument, UploadDto } from './upload.entity';
+import { UpdateBody, Upload, UploadDocument, UploadStatus } from './upload.entity';
 
 import { FileProviderService } from '@/app/upload/file-provider.service';
 import { RoleType, UserFromToken } from '@/common/common.types.dto';
@@ -24,46 +24,81 @@ export class UploadService extends MongoGenericRepository<Upload> {
   public async UploadSingle(
     file: Express.Multer.File,
     userId: string,
-    uid = '',
-    ctr = 0,
-  ): Promise<Resp<UploadDto>> {
+    uid = '', //the uid for multi image upload function
+    ctr = 0, //the counter for multi image upload function
+  ): Promise<Resp<Upload>> {
     if (!file) return FAIL('File Must not be empty', 400);
     const imgName = generateUniqName(file.originalname, uid, ctr);
     const uploaded = await this.fileService.IUploadSingleImage(file.buffer, imgName.name);
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
 
-    const upload = await this.createOne({ ...uploaded.val, userId, uid: imgName.uid });
-    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+    const upload = await this.createOne({ ...uploaded.body, userId, uid: imgName.uid });
+    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
 
     // logTrace('val', data);
     // logTrace('val', uploaded.val);
-    return Succeed(upload.val);
+    return Succeed(upload.body);
+  }
+
+  //upload single takes file, the uid, userId then upload the file then save it to database
+  public async CreateDraftImg(userId: string): Promise<Resp<Upload>> {
+    const imgName = generateUniqName('file.ext');
+
+    const upload = await this.createOne({ userId, uid: imgName.uid, status: UploadStatus.Draft });
+    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+
+    return Succeed(upload.body);
+  }
+
+  public async UpdateDraftImg(
+    file: Express.Multer.File,
+    id: string,
+    userId: string,
+  ): Promise<Resp<Upload>> {
+    if (!file) return FAIL('Image Must not be empty', 400);
+    //Find the image from the database
+    const draftImg = await this.findOne({ _id: id, userId: userId, status: UploadStatus.Draft });
+    if (!draftImg.ok) return FAIL(draftImg.errMessage, draftImg.code);
+
+    // Create a new image, we dont care about the name
+    const uploaded = await this.fileService.IUploadWithNewName(file);
+    if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+    //update the images details on the database
+    //TODO: update the upload hash and size
+    const res = await this.updateById(id, {
+      ...uploaded.body,
+      status: UploadStatus.Active,
+      userId,
+    });
+    if (!res.ok) return FAIL(res.errMessage, res.code);
+    // upload.val.fullImg = uploaded.val.fullImg;
+    return Succeed(res.body);
   }
 
   public async UpdateSingle(
     file: Express.Multer.File,
     query,
     userId: string,
-  ): Promise<Resp<UploadDto>> {
+  ): Promise<Resp<Upload>> {
     if (!file) return FAIL('Image Must not be empty', 400);
-    //Find the old Image
+    //Find the image from the database
     const oldFile = await this.findOne(query);
-    if (!oldFile.ok) throw new HttpException(oldFile.errMessage, oldFile.code);
+    if (!oldFile.ok) return FAIL(oldFile.errMessage, oldFile.code);
     // Delete The old Image File
-    const resp = await this.fileService.IDeleteImageByPrefix(oldFile.val.fileName);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    // Create a new image
-    const uploaded = await this.fileService.IUploadWithNewName(file, oldFile.val.uid);
+    const resp = await this.fileService.IDeleteImageByPrefix(oldFile.body.fileName);
+    if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+    // Create a new image, we dont care about the name
+    const uploaded = await this.fileService.IUploadWithNewName(file, oldFile.body.uid);
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
     //update the images details on the database
     //TODO: update the upload hash and size
-    const upload = await this.updateById(oldFile.val._id, {
-      ...uploaded.val,
+    const res = await this.updateById(oldFile.body._id, {
+      ...uploaded.body,
       userId,
     });
-    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+    if (!res.ok) return FAIL(res.errMessage, res.code);
     // upload.val.fullImg = uploaded.val.fullImg;
-    return Succeed(upload.val);
+    return Succeed(res.body);
   }
 
   /**
@@ -77,19 +112,19 @@ export class UploadService extends MongoGenericRepository<Upload> {
       images?: Express.Multer.File[];
     },
     userId: string,
-  ): Promise<Resp<UploadDto>> {
+  ): Promise<Resp<Upload>> {
     if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
 
     const single = await this.UploadSingle(files.cover[0], userId);
     if (!single.ok) return single;
-    logTrace('upload single finished', single.val._id);
+    logTrace('upload single finished', single.body._id);
     if (files.images) {
-      const images = await this.uploadManyWithNewNames(files.images, userId, single.val.uid);
+      const images = await this.uploadManyWithNewNames(files.images, userId, single.body.uid);
       if (!images.ok) return FAIL(images.errMessage, images.code);
-      await this.updateById(single.val._id, { images: images.val });
-      single.val.images = images.val;
+      await this.updateById(single.body._id, { images: images.body });
+      single.body.images = images.body;
     }
-    return Succeed(single.val);
+    return Succeed(single.body);
   }
 
   /**
@@ -107,7 +142,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
     id: string,
     user: UserFromToken,
     updateDto: UpdateBody,
-  ): Promise<Resp<UploadDto>> {
+  ): Promise<Resp<Upload>> {
     const query = { _id: id };
     if (user?.role != RoleType.ADMIN) {
       query['userId'] = user._id;
@@ -116,7 +151,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
     const primaryFile = await this.findOne(query);
     if (!primaryFile.ok) return FAIL(primaryFile.errMessage, primaryFile.code);
 
-    let imagesList = primaryFile.val.images || [];
+    let imagesList = primaryFile.body.images || [];
 
     /**
      * if images have been removed
@@ -151,7 +186,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
       logTrace('Updating Cover', files.cover.length);
       const result = await this.UpdateSingle(
         files.cover[0],
-        { _id: primaryFile.val._id },
+        { _id: primaryFile.body._id },
         user._id,
       );
     }
@@ -163,12 +198,16 @@ export class UploadService extends MongoGenericRepository<Upload> {
       //this is checking from the updated primaryFiles list so it is right
       const tot = files.images.length + imagesList.length;
       if (tot > 3) throw new HttpException('Image Numbers Exceeded max image size', 400);
-      const images = await this.uploadManyWithNewNames(files.images, user._id, primaryFile.val.uid);
+      const images = await this.uploadManyWithNewNames(
+        files.images,
+        user._id,
+        primaryFile.body.uid,
+      );
       if (!images.ok) return FAIL(images.errMessage, images.code);
-      imagesList = [...imagesList, ...images.val];
+      imagesList = [...imagesList, ...images.body];
     }
     // update the images array of hte primary image
-    const imageObj = await this.updateById(primaryFile.val._id, {
+    const imageObj = await this.updateById(primaryFile.body._id, {
       images: imagesList,
     });
     if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
@@ -186,7 +225,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
         files.map(async (file, i) => {
           const data = await this.UploadSingle(file, userId, uid, i);
           if (!data.ok) return FAIL('failed uploading multi images, in a loop');
-          names.push(data.val.fileName);
+          names.push(data.body.fileName);
         }),
       );
       return Succeed(names);
@@ -199,16 +238,16 @@ export class UploadService extends MongoGenericRepository<Upload> {
     const file = await this.findOne(query);
     if (!file.ok) return FAIL(file.errMessage, file.code);
 
-    if (file?.val?.images && file.val.images.length > 0) {
-      for (const img of file.val.images) {
+    if (file?.body?.images && file.body.images.length > 0) {
+      for (const img of file.body.images) {
         const resp = await this.fileService.IDeleteImageByPrefix(img);
         if (!resp.ok) return FAIL(resp.errMessage, resp.code);
       }
     }
-    const resp = await this.fileService.IDeleteImageByPrefix(file.val.fileName);
+    const resp = await this.fileService.IDeleteImageByPrefix(file.body.fileName);
     if (!resp.ok) return FAIL(resp.errMessage, resp.code);
 
-    const upload = await this.findByIdAndDelete(file.val._id);
+    const upload = await this.findByIdAndDelete(file.body._id);
     if (!upload.ok) return FAIL(upload.errMessage, upload.code);
     return upload;
   }
@@ -224,10 +263,10 @@ export class UploadService extends MongoGenericRepository<Upload> {
     const file = await this.findById(id);
     if (!file.ok) throw new HttpException(file.errMessage, file.code);
 
-    const resp = await this.fileService.IDeleteImageByPrefix(file.val.uid);
+    const resp = await this.fileService.IDeleteImageByPrefix(file.body.uid);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
-    const upload = await this.deleteMany({ uid: file.val.uid });
+    const upload = await this.deleteMany({ uid: file.body.uid });
     if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
     return upload;
   }

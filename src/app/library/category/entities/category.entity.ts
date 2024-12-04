@@ -1,8 +1,8 @@
-import mongoose, { Document, Types } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
+import { Document } from 'mongoose';
 
 @Schema()
 export class Category {
@@ -14,8 +14,8 @@ export class Category {
   @Prop({ type: String, unique: true })
   name: string;
 
-  @Prop({ type: UploadDto, _id: false })
-  img: UploadDto;
+  // @Prop({ type: UploadDto, _id: false })
+  // img: UploadDto;
 
   @Prop({ type: EmbedUpload })
   upload: EmbedUpload;

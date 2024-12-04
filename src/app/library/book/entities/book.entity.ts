@@ -13,6 +13,11 @@ export enum BookLanguage {
   AffanOrommo = 'AfanOromo',
   Tigrna = 'Tigrna',
 }
+export enum BookStatus {
+  Active = 'active',
+  Draft = 'draft',
+  Deactivated = 'deactivated',
+}
 
 @Schema({ timestamps: true })
 export class Book {
@@ -52,7 +57,8 @@ export class Book {
   upload: EmbedUpload;
 
   @IsOptional()
-  @Prop({ type: String, unique: true, sparse: true })
+  // @Prop({ type: String, unique: true, sparse: true })//TODO: uncomment this on production
+  @Prop({ type: String })
   fileId?: string;
 
   @IsOptional()
@@ -62,6 +68,14 @@ export class Book {
     enum: Object.values(BookLanguage),
   })
   language: BookLanguage;
+
+  @IsOptional()
+  @IsString()
+  @Prop({
+    type: String,
+    enum: Object.values(BookStatus),
+  })
+  status: BookStatus;
 
   @IsOptional()
   @Prop({ type: Number, required: false })
@@ -83,14 +97,10 @@ export class Book {
   @Prop({ type: Number, required: false, default: 0 })
   instanceCnt: number;
 
-  /**
-   *
-   * the amount of books left in the library
-   */
   @IsOptional()
   @IsString()
   @Prop({ type: Number, required: false, default: 0 })
-  availableCnt: number;
+  availableCnt: number; //the amount of books left in the library
 
   @Prop({ type: Number, required: false, default: 0 })
   likesCount: number;
@@ -113,6 +123,7 @@ export const BookFilter: (keyof Book)[] = [
   'fileId',
   'authorId',
   '_id',
+  'status',
   'language',
   'categoryId',
   'active',

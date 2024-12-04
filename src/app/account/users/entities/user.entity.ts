@@ -6,7 +6,7 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { RoleType } from '../imports.user';
 
-import { UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
@@ -53,8 +53,8 @@ export class User {
   @ApiHideProperty()
   password: string;
 
-  @Prop({ type: UploadDto, _id: false })
-  avatar: UploadDto;
+  @Prop({ type: EmbedUpload, _id: false })
+  avatar: EmbedUpload;
 
   @Prop({
     type: String,

@@ -1,7 +1,6 @@
-
 export interface Resp<T> {
   ok: boolean;
-  val: T;
+  body: T;
   error: Error;
   errMessage?: string;
   errName?: string;
@@ -13,7 +12,7 @@ export function FAIL(errMessage: string, code = 400, e: Error = null): Resp<any>
 
   return {
     ok: false,
-    val: null,
+    body: null,
     error: e,
     errMessage,
     code,
@@ -23,7 +22,7 @@ export function FAIL(errMessage: string, code = 400, e: Error = null): Resp<any>
 export function Succeed<T>(val: T): Resp<T> {
   return {
     ok: true,
-    val: val,
+    body: val,
     error: null,
   };
 }

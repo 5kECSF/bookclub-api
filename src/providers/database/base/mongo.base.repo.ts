@@ -55,7 +55,7 @@ export abstract class MongoGenericRepository<T> {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
       // logTrace('keys to remove', keysToRemove);
       const query = pickKeys(filter, [...keysToFilter]);
-      logTrace('filter', filter);
+      // logTrace('filter', filter);
 
       let mainQuery: Record<string, any> = additionalQuery;
       // this adds text search capability
@@ -69,7 +69,7 @@ export abstract class MongoGenericRepository<T> {
           })),
         };
       }
-      logTrace('query', mainQuery, filter.searchText);
+      // logTrace('query', mainQuery, filter.searchText);
       Object.keys(query).forEach((key) => {
         mainQuery[key] = query[key];
       });
@@ -81,7 +81,7 @@ export abstract class MongoGenericRepository<T> {
       const page = parseInt(paginateQuery?.page) || 1;
       const sort = paginateQuery?.sort || '_id';
 
-      logTrace('main!', mainQuery);
+      // logTrace('main!', mainQuery);
 
       items = await this._repository
         .find(mainQuery)

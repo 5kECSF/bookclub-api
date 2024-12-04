@@ -16,7 +16,7 @@ import {
 
 import { Endpoint } from '@/common/constants/model.consts';
 
-import { UpdateBody, UpdateDto, Upload, UploadDto, UploadQuery } from '@/app/upload/upload.entity';
+import { UpdateBody, UpdateDto, Upload, UploadQuery } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 import { MaxImageSize } from '@/common/constants/system.consts';
@@ -37,12 +37,27 @@ export class UploadController {
   async createSingle(
     @Req() req: Request,
     @UploadedFile(ParseFile) file: Express.Multer.File,
-  ): Promise<UploadDto> {
+  ): Promise<Upload> {
     const user: UserFromToken = req['user'];
     logTrace('user is', user);
     const img = await this.uploadService.UploadSingle(file, user?._id);
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    return img.val;
+    return img.body;
+  }
+
+  @Post(':id')
+  @ApiSingleFiltered('file', true, MaxImageSize)
+  @UseGuards(JwtGuard)
+  async updateDraft(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+  ) {
+    if (!file || !file.buffer) throw new HttpException('no upload Found', 400);
+    const user: UserFromToken = req['user'];
+
+    const res = await this.uploadService.UpdateDraftImg(file, id, user._id);
+    return res.body;
   }
 
   @Patch(':id')
@@ -61,7 +76,7 @@ export class UploadController {
       query['userId'] = user._id;
     }
     const res = await this.uploadService.UpdateSingle(file, query, user._id);
-    return res.val;
+    return res.body;
   }
 
   @Patch('data/:id')
@@ -74,7 +89,7 @@ export class UploadController {
       query['userId'] = user._id;
     }
     const res = await this.uploadService.findOneAndUpdate(query, updateDto);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':name')
@@ -89,7 +104,7 @@ export class UploadController {
     }
     const deleteResp = await this.uploadService.deleteFileByQuery(query);
     if (!deleteResp.ok) throw new HttpException(deleteResp.errMessage, deleteResp.code);
-    return deleteResp.val;
+    return deleteResp.body;
   }
 
   // @Roles(RoleType.ADMIN)
@@ -104,9 +119,9 @@ export class UploadController {
     const user: UserFromToken = req['user'];
     const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
     if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
-    logTrace('upload mulit suceed', imageObj.val, ColorEnums.BgCyan);
+    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
 
-    return imageObj.val;
+    return imageObj.body;
   }
 
   // @Roles(RoleType.ADMIN)
@@ -124,22 +139,22 @@ export class UploadController {
     const user: UserFromToken = req['user'];
     const data = await this.uploadService.UpdateWithCover(files, id, user, updateDto);
     if (!data.ok) throw new HttpException(data.errMessage, data.code);
-    logTrace('update mulit suceed', data.val, ColorEnums.BgCyan);
-    return data.val;
+    logTrace('update mulit suceed', data.body, ColorEnums.BgCyan);
+    return data.body;
   }
 
   @Get('')
   async filterAndPaginate(@Query() inputQuery: UploadQuery): Promise<PaginatedRes<Upload>> {
     const res = await this.uploadService.searchManyAndPaginate(['fileName'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.uploadService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Post()

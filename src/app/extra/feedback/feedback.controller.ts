@@ -44,11 +44,11 @@ export class FeedbackController {
     if (!usr.ok) throw new HttpException(usr.errMessage, errCode.UNAUTHORIZED);
 
     createDto.userId = user._id;
-    createDto.fullName = `${usr.val.firstName} ${usr.val.lastName}`;
+    createDto.fullName = `${usr.body.firstName} ${usr.body.lastName}`;
 
     const resp = await this.feedbackService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -57,7 +57,7 @@ export class FeedbackController {
   async update(@Param('id') id: string, @Body() updateDto: UpdateFeedbackDto) {
     const res = await this.feedbackService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -66,7 +66,7 @@ export class FeedbackController {
   async remove(@Param('id') id: string) {
     const res = await this.feedbackService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   // == below queries dont need authentication
@@ -75,7 +75,7 @@ export class FeedbackController {
   async filterAndPaginate(@Query() inputQuery: FeedbackQuery): Promise<PaginatedRes<FeedBack>> {
     const res = await this.feedbackService.searchManyAndPaginate(['title'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
@@ -83,6 +83,6 @@ export class FeedbackController {
   async findOne(@Param('id') id: string) {
     const res = await this.feedbackService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

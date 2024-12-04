@@ -1,10 +1,10 @@
-import { Document } from 'mongoose';
-import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
+import { PaginationInput } from '@/app/library/author/imports.author';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiHideProperty, ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { EmbedUpload, UploadDto } from '@/app/upload/upload.entity';
-import { PaginationInput } from '@/app/library/author/imports.author';
+import { Document } from 'mongoose';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Author {

@@ -45,11 +45,11 @@ export class AuthorController {
     const user: UserFromToken = req['user'];
     const img = await this.uploadService.findById(createDto.fileId);
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    logTrace('img', img.val);
+    logTrace('img', img.body);
     const upload: EmbedUpload = {
-      _id: img.val._id,
-      fileName: img.val.fileName,
-      pathId: img.val.pathId,
+      _id: img.body._id,
+      fileName: img.body.fileName,
+      pathId: img.body.pathId,
     };
     createDto.upload = upload;
     createDto.slug = generateSlug(createDto.name);
@@ -57,7 +57,7 @@ export class AuthorController {
     const resp = await this.authorService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     // resp.val.img.fullImg = img.val.fullImg;
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -74,13 +74,13 @@ export class AuthorController {
     const author = await this.authorService.findById(id);
     if (!author.ok) throw new HttpException(author.errMessage, author.code);
     if (updateDto.fileId) {
-      const file = await this.uploadService.findById(author.val.upload._id);
+      const file = await this.uploadService.findById(author.body.upload._id);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
-      updateDto.upload = file.val;
+      updateDto.upload = file.body;
     }
     const res = await this.authorService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -89,9 +89,9 @@ export class AuthorController {
   async remove(@Param('id', ReqParamPipe) id: string) {
     const res = await this.authorService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileById(res.val.upload._id);
+    const result = await this.uploadService.deleteFileById(res.body.upload._id);
     if (!result.ok) throw new HttpException(result.errMessage, result.code);
-    return res.val;
+    return res.body;
   }
 
   // == below queries dont need authentication
@@ -99,13 +99,13 @@ export class AuthorController {
   async filterAndPaginate(@Query() inputQuery: AuthorQuery): Promise<PaginatedRes<Author>> {
     const res = await this.authorService.searchManyAndPaginate(['title'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.authorService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

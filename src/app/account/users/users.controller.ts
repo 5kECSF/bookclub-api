@@ -37,8 +37,8 @@ export class UsersController {
     createDto.active = false;
     const resp = await this.usersService.createUser(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    resp.val.password = '';
-    return resp.val;
+    resp.body.password = '';
+    return resp.body;
   }
 
   @Get()
@@ -50,7 +50,7 @@ export class UsersController {
       inputQuery,
     );
     if (!res.ok) throw new HttpException(res.errMessage, 500);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
@@ -59,7 +59,7 @@ export class UsersController {
   async findOne(@Param('id') id: string): Promise<User> {
     const res = await this.usersService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Patch(':id')
@@ -68,7 +68,7 @@ export class UsersController {
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserWithRole): Promise<User> {
     const res = await this.usersService.updateById(id, updateUserDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -77,6 +77,6 @@ export class UsersController {
   async remove(@Param('id') id: string): Promise<User> {
     const res = await this.usersService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

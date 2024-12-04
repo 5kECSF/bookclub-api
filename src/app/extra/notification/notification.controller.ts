@@ -31,7 +31,7 @@ export class NotificationController {
   async createOne(@Body() createDto: CreateNotificationInput) {
     const resp = await this.notificationService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -40,7 +40,7 @@ export class NotificationController {
   async update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
     const res = await this.notificationService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -49,7 +49,7 @@ export class NotificationController {
   async remove(@Param('id') id: string) {
     const res = await this.notificationService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   // == below queries dont need authentication
@@ -59,13 +59,13 @@ export class NotificationController {
   ): Promise<PaginatedRes<Notification>> {
     const res = await this.notificationService.searchManyAndPaginate(['title'], inputQuery);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.notificationService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

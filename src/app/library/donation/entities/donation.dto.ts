@@ -1,17 +1,18 @@
-import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
+import { ApiHideProperty, PartialType, PickType } from '@nestjs/swagger';
 
-import { IsOptional, IsString } from 'class-validator';
 import { PaginationInputs } from '@/common/common.types.dto';
+import { IsOptional } from 'class-validator';
 
 import { bookStatus, Donation } from './donation.entity';
 
-import { UploadDto } from '@/app/upload/upload.entity';
+import { EmbedUpload } from '@/app/upload/upload.entity';
 
 export class CreateDonationInput extends PickType(Donation, [
   'bookId',
   'donorId',
   'status',
   'desc',
+  'bookImg',
 ]) {
   @ApiHideProperty()
   @IsOptional()
@@ -27,7 +28,7 @@ export class CreateDonationInput extends PickType(Donation, [
 
   @ApiHideProperty()
   @IsOptional()
-  bookImg: UploadDto;
+  bookImg: EmbedUpload;
 
   @ApiHideProperty()
   @IsOptional()

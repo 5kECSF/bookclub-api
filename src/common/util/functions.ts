@@ -35,6 +35,7 @@ export function generateUniqName(fileName: string, uid = '', ctr = 0): Img {
   const ext = names[names.length - 1];
   return { name: `${uid}-${slug}-${ctr}.${ext}`, uid: uid };
 }
+
 export const removeSubArr = (mainArr: string[], arrToBeRemoved: string[]) => {
   return mainArr.filter((name) => {
     return !arrToBeRemoved.includes(name);

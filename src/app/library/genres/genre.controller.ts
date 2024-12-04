@@ -47,7 +47,7 @@ export class GenreController {
       model: UploadModel.NotAssigned,
     });
     if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    createDto.upload = img.val;
+    createDto.upload = img.body;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.genreService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
@@ -58,13 +58,13 @@ export class GenreController {
       },
       {
         model: UploadModel.Genre,
-        refId: resp.val._id,
+        refId: resp.body._id,
       },
     );
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
     //this is for testing purposes
     // resp.val.img.fullImg = img.val.fullImg;
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -79,13 +79,13 @@ export class GenreController {
     const genre = await this.genreService.findById(id);
     if (!genre.ok) throw new HttpException(genre.errMessage, genre.code);
     if (updateDto?.fileId) {
-      const file = await this.uploadService.findById(genre.val.upload._id);
+      const file = await this.uploadService.findById(genre.body.upload._id);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
-      updateDto.upload = file.val;
+      updateDto.upload = file.body;
     }
     const res = await this.genreService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -101,7 +101,7 @@ export class GenreController {
     const res = await this.genreService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
 
-    return res.val;
+    return res.body;
   }
 
   // == below queries don't need authentication
@@ -109,14 +109,14 @@ export class GenreController {
   async filterAndPaginate(@Query() inputQuery: GenreQuery): Promise<PaginatedRes<Genre>> {
     const res = await this.genreService.searchManyAndPaginate(['name'], inputQuery, GenreFilter);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.genreService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }
 

@@ -4,7 +4,17 @@ import { Endpoint } from '@/common/constants/model.consts';
 import { SystemConst } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Body, Controller, HttpException, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpException,
+  HttpStatus,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { RegisterUserInput, UserService } from '../users';
@@ -31,7 +41,7 @@ export class AuthController {
   async registerAndSendCode(@Body() input: RegisterUserInput) {
     const resp = await this.authService.registerWithEmailCode(input);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    return { message: resp.val };
+    return { message: resp.body };
   }
 
   //Au.C-2 AcivateRegistration
@@ -42,7 +52,7 @@ export class AuthController {
       input.code,
     );
     if (!userResponse.ok) throw new HttpException(userResponse.errMessage, userResponse.code);
-    return userResponse.val;
+    return userResponse.body;
   }
 
   //Au.C-3 Login
@@ -59,9 +69,9 @@ export class AuthController {
       httpOnly: true,
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
-    response.cookie(SystemConst.REFRESH_COOKIE, res.val.authToken.refreshToken, options);
+    response.cookie(SystemConst.REFRESH_COOKIE, res.body.authToken.refreshToken, options);
     // logTrace("user Login", res.val.authToken.expiresIn)
-    return res.val;
+    return res.body;
   }
 
   //Au.C-4 Logout
@@ -81,7 +91,7 @@ export class AuthController {
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
     response.cookie(SystemConst.REFRESH_COOKIE, '');
-    return resp.val;
+    return resp.body;
   }
 
   //Au.C-5 resetTokens
@@ -100,16 +110,23 @@ export class AuthController {
       token = input.refreshToken;
     }
     // logTrace("token is", token, ColorEnums.BgCyan)
-    if (!token || token == 'undefined') throw new HttpException('NO Token Found', 400);
+    if (!token || token == 'undefined')
+      throw new HttpException('NO Token Found', HttpStatus.UNAUTHORIZED);
     const resp = await this.authService.resetTokens(token);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    if (!resp.ok) {
+      //  response.status(resp.code).json({
+      //   message: resp.errMessage,
+      // });
+      logTrace(resp.code, resp.errMessage, ColorEnums.FgRed);
+      throw new HttpException(resp.errMessage, resp.code);
+    }
     const options = {
       httpOnly: true,
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
-    response.cookie(SystemConst.REFRESH_COOKIE, resp.val.authToken.refreshToken, options);
-    console.log('reset tokens', resp.val.authToken.expiresIn);
-    return resp.val;
+    response.cookie(SystemConst.REFRESH_COOKIE, resp.body.authToken.refreshToken, options);
+    console.log('reset tokens', resp.body.authToken.expiresIn);
+    return resp.body;
   }
 
   //Au.C-6 forgotPassword
@@ -117,7 +134,7 @@ export class AuthController {
   async forgotPassword(@Body() input: EmailInput): Promise<boolean> {
     const res = await this.authService.sendResetCode(input.email);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   //Au.C-7 resetPassword
@@ -135,7 +152,7 @@ export class AuthController {
 
     const ans = await this.usersService.changePassword(user._id, input);
     if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
-    return ans.val;
+    return ans.body;
     // return this.profileService.update(user._id, input);
   }
 
@@ -147,7 +164,7 @@ export class AuthController {
     const user: UserFromToken = req['user'];
     const ans = await this.authService.requestEmailChange(user._id, input);
     if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
-    return ans.val;
+    return ans.body;
     // return this.profileService.update(user._id, input);
   }
 
@@ -160,7 +177,7 @@ export class AuthController {
 
     const ans = await this.authService.verifyUpdateEmail(user._id, input);
     if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
-    return ans.val;
+    return ans.body;
     // return this.profileService.update(user._id, input);
   }
 }

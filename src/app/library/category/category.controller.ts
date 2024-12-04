@@ -46,7 +46,7 @@ export class CategoryController {
       // model: UploadModel.NotAssigned,
     });
     if (!img.ok) throw new HttpException('Image Not Found', img.code);
-    createDto.upload = img.val;
+    createDto.upload = img.body;
 
     createDto.slug = generateSlug(createDto.name, false, false);
     const resp = await this.categoryService.createOne(createDto);
@@ -58,12 +58,12 @@ export class CategoryController {
       },
       {
         model: UploadModel.Category,
-        refId: resp.val._id,
+        refId: resp.body._id,
       },
     );
     if (!updatedImg.ok) throw new HttpException(updatedImg.errMessage, updatedImg.code);
     // resp.val.img.fullImg = img.val.fullImg;
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -74,14 +74,14 @@ export class CategoryController {
     const ctg = await this.categoryService.findById(id);
     if (!ctg.ok) throw new HttpException(ctg.errMessage, ctg.code);
     if (updateDto?.fileId) {
-      const file = await this.uploadService.findById(ctg.val.upload._id);
+      const file = await this.uploadService.findById(ctg.body.upload._id);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
-      updateDto.upload = file.val;
+      updateDto.upload = file.body;
     }
 
     const res = await this.categoryService.updateById(id, updateDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -90,11 +90,11 @@ export class CategoryController {
   async remove(@Param('id') id: string) {
     const res = await this.categoryService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileById(res.val.upload._id);
+    const result = await this.uploadService.deleteFileById(res.body.upload._id);
     if (!result.ok) throw new HttpException(result.errMessage, result.code);
     const deleteResp = await this.categoryService.findByIdAndDelete(id);
     if (!deleteResp.ok) throw new HttpException(res.errMessage, res.code);
-    return deleteResp.val;
+    return deleteResp.body;
   }
 
   // == below queries dont need authentication
@@ -104,13 +104,13 @@ export class CategoryController {
 
     const res = await this.categoryService.searchManyAndPaginate(['title'], query);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.categoryService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

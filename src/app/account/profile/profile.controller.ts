@@ -36,7 +36,7 @@ export class ProfileController {
     const user: UserFromToken = req['user'];
     const res = await this.usersService.findById(user._id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   //Au.M-9 Update user
@@ -51,10 +51,10 @@ export class ProfileController {
     const user: UserFromToken = req['user'];
     if (file && file.buffer) {
       const update = await this.uploadService.UploadSingle(file, user._id);
-      input.avatar = update.val;
+      input.avatar = update.body;
     }
     const res = await this.usersService.updateById(user._id, input);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

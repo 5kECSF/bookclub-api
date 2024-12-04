@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 // import { Request } from 'express';
 
 //- users
@@ -93,7 +93,7 @@ export class AuthService {
       },
     );
 
-    if (!usr.ok || (usr.val.modifiedCount == 0 && usr.val.upsertedCount == 0)) {
+    if (!usr.ok || (usr.body.modifiedCount == 0 && usr.body.upsertedCount == 0)) {
       // logTrace('update op=', usr);
       return FAIL(ErrConst.COULD_NOT_CREATE_USER);
     }
@@ -127,7 +127,7 @@ export class AuthService {
     );
     if (!updatedUser.ok) return FAIL(updatedUser.errMessage, updatedUser.code);
     // await this.emailService.sendWelcome(newUser.email)
-    return Succeed({ error: '', user: updatedUser.val });
+    return Succeed({ error: '', user: updatedUser.body });
   }
 
   /**
@@ -240,7 +240,7 @@ export class AuthService {
       },
     );
     if (!usr.ok) return false;
-    return usr.val.modifiedCount > 0;
+    return usr.body.modifiedCount > 0;
   }
 
   // Au.S-4
@@ -250,10 +250,10 @@ export class AuthService {
       const user = await this.getUserFromRefreshToken(token);
       if (!user.ok) return FAIL(user.errMessage);
       const userRes = await this.usersService.upsertOne(
-        { _id: user.val.user._id },
+        { _id: user.body.user._id },
         { hashedRefreshToken: '' },
       );
-      if (!userRes.ok || userRes.val.modifiedCount < 1) return FAIL('Could Not Update');
+      if (!userRes.ok || userRes.body.modifiedCount < 1) return FAIL('Could Not Update');
       return Succeed(true);
     } catch (e) {
       return FAIL(e.message);
@@ -269,18 +269,18 @@ export class AuthService {
     if (!user.ok) return FAIL(user.errMessage, user.code);
 
     //  2. generate new refresh token
-    const refreshAuthToken = await this.generateAuthToken(user.val.usrToken, true);
+    const refreshAuthToken = await this.generateAuthToken(user.body.usrToken, true);
     logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
     /*
      * 3. update the users hashed refresh token
      *  here you can implement half life logic, if half life not reached skip this
      */
     const refreshUpdated = await this.updateHashedToken(
-      user.val.user._id,
+      user.body.user._id,
       refreshAuthToken.refreshToken,
     );
     if (!refreshUpdated) return FAIL(ErrConst.INTERNAL_ERROR);
-    return Succeed({ authToken: refreshAuthToken, userData: user.val.user });
+    return Succeed({ authToken: refreshAuthToken, userData: user.body.user });
   }
 
   // when users access token experis, verifies users refresh token & returns the refresh token
@@ -292,7 +292,7 @@ export class AuthService {
     if (!decoded.ok) return FAIL(decoded.errMessage, decoded.code);
     // find the User from database to mathch his refresh token
     const user: User = await this.usersService.findOneWithPwd({
-      _id: decoded.val._id,
+      _id: decoded.body._id,
     });
     if (!user) return FAIL(ErrConst.USER_NOT_FOUND);
     const pickedUser = removeKeys(user, [
@@ -307,8 +307,8 @@ export class AuthService {
       user.hashedRefreshToken,
       refreshToken,
     );
-    if (!isRefreshTokenMatching) return FAIL('Tokens Not Matching');
-    return Succeed({ usrToken: decoded.val, user: pickedUser });
+    if (!isRefreshTokenMatching) return FAIL('Tokens Not Matching', HttpStatus.UNAUTHORIZED);
+    return Succeed({ usrToken: decoded.body, user: pickedUser });
   }
 
   //  ==========================   PASSWORD RESET OPERATIONS
@@ -365,12 +365,12 @@ export class AuthService {
     const usr = await this.usersService.findById(id);
     if (!usr.ok) return FAIL(ErrConst.USER_NOT_FOUND);
 
-    if (usr.val.email == input.newEmail) return FAIL(ErrConst.INVALID_INPUT);
+    if (usr.body.email == input.newEmail) return FAIL(ErrConst.INVALID_INPUT);
 
     //3. send reset email code with the new email
     return this.sendCodeAndUpdateHash(input.newEmail, {
       newEmail: input.newEmail,
-      email: usr.val.email,
+      email: usr.body.email,
     });
   }
 
@@ -402,7 +402,7 @@ export class AuthService {
     if (!decoded || !decoded?._id) return null;
     logTrace('token Verified', decoded);
     const realUser = await this.usersService.findById(decoded._id);
-    if (!realUser.val) return null;
-    return realUser.val;
+    if (!realUser.body) return null;
+    return realUser.body;
   }
 }

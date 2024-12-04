@@ -13,13 +13,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
+import { ActivateBookInput, BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
 
-import { FileProviderService } from '@/app/upload/file-provider.service';
-import { UploadModel } from '@/app/upload/upload.entity';
+import { EmbedUpload, UploadModel } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.consts';
-import { logTrace } from '@/common/logger';
 import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
@@ -27,7 +25,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
-import { Book, BookFilter } from './entities/book.entity';
+import { Book, BookFilter, BookStatus } from './entities/book.entity';
 import { SequenceService } from './sequence/sequence.entity';
 
 @Controller(Endpoint.Book)
@@ -37,27 +35,50 @@ export class BookController {
     private readonly bookService: BookService,
     private readonly genreService: GenreService,
     private readonly categoryService: CategoryService,
-    private fileService: FileProviderService,
     private readonly sequenceService: SequenceService,
     private readonly uploadService: UploadService,
   ) {}
 
   @Post()
-  @Roles(RoleType.ADMIN)
+  @Roles(RoleType.ADMIN, RoleType.USER)
   @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
-    //find the image
-    const img = await this.uploadService.findById(createDto.fileId);
-    if (!img.ok) throw new HttpException(img.errMessage, img.code);
-
-    createDto.upload = img.val;
-
+    const draftImg = await this.uploadService.CreateDraftImg(user._id);
     createDto.slug = generateSlug(createDto.title);
+    createDto.fileId = draftImg.body._id;
+    createDto.status = BookStatus.Draft;
     createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    return resp.body;
+  }
+
+  @Post(':id')
+  // @Roles(RoleType.ADMIN, RoleType.USER)
+  // @UseGuards(JwtGuard)
+  async activateBook(
+    @Req() req: Request,
+    @Body() createDto: ActivateBookInput,
+    @Param('id') id: string,
+  ): Promise<Book> {
+    const user: UserFromToken = req['user'];
+    //find the image
+    const img = await this.uploadService.findById(createDto.fileId);
+    if (!img.ok) throw new HttpException(img.errMessage, img.code);
+    const upload: EmbedUpload = {
+      fileName: img.body.fileName,
+      pathId: img.body.pathId,
+      uid: img.body.uid,
+      images: img.body.images,
+    };
+    const resp = await this.bookService.findOneAndUpdate(
+      { _id: id },
+      { status: BookStatus.Active, upload: upload, fileId: createDto.fileId },
+    );
+    if (!resp.ok || resp.body == null) throw new HttpException(resp.errMessage, resp.code);
 
     const updateImg = await this.uploadService.findOneAndUpdate(
       {
@@ -67,21 +88,20 @@ export class BookController {
       },
       {
         model: UploadModel.Book,
-        refId: resp.val._id,
+        refId: resp.body._id,
       },
     );
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
-    //TODO: update this using count, to make it always accurate
+    //===============>>     TODO: update this using count, to make it always accurate
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
-        { _id: createDto.categoryId },
+        { _id: resp.body.categoryId },
         { $inc: { count: 1 } },
       ),
-      //
-      this.genreService.updateMany({ name: { $in: createDto.genres } }, { $inc: { count: 1 } }),
+      this.genreService.updateMany({ name: { $in: resp.body.genres } }, { $inc: { count: 1 } }),
     ]);
 
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -95,14 +115,14 @@ export class BookController {
      * if there is change on the image
      */
     if (updateBookDto?.fileUpdated || updateBookDto.fileId) {
-      const file = await this.uploadService.findById(book.val.upload._id);
+      const file = await this.uploadService.findById(book.body.upload._id);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
-      updateBookDto.upload = file.val;
+      updateBookDto.upload = file.body;
     }
-
+    //Todo: calculate the Genres & categories Count
     const res = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -111,18 +131,18 @@ export class BookController {
   async removeOne(@Req() req: Request, @Param('id') id: string): Promise<Book> {
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileById(res.val.fileId);
+    const result = await this.uploadService.deleteFileById(res.body.fileId);
     if (!result.ok) throw new HttpException(result.errMessage, result.code);
 
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
-        { _id: res.val.categoryId },
+        { _id: res.body.categoryId },
         { $inc: { count: -1 } },
       ),
-      this.genreService.updateMany({ name: { $in: res.val.genres } }, { $inc: { count: -1 } }),
+      this.genreService.updateMany({ name: { $in: res.body.genres } }, { $inc: { count: -1 } }),
     ]);
 
-    return res.val;
+    return res.body;
   }
 
   @Post('like/:bookId')
@@ -149,27 +169,26 @@ export class BookController {
       // If `tags` is not an array, convert it to a single-element array.
       genres = [genres];
     }
-    logTrace('query', inputQuery);
-    const query = {};
+    // logTrace('query', inputQuery);
+    const additionalQuery = {};
     if (inputQuery?.genres && inputQuery.genres.length > 0) {
-      query['genres'] = { $in: genres };
+      additionalQuery['genres'] = { $in: genres };
     }
-    logTrace('input q', query);
 
     const res = await this.bookService.searchManyAndPaginate(
       ['title', 'desc'],
       inputQuery,
       BookFilter,
-      query,
+      additionalQuery,
     );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.bookService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }

@@ -1,4 +1,4 @@
-features for this that are finished & to be done
+# features for this that are finished & to be done
 
 > Finished Tasks
 
@@ -7,34 +7,32 @@ features for this that are finished & to be done
 - create default user & admin inside integration test manager
 
 > tasks to do
->
 
 - [x] generes api
 - [x] categories api
 - [x] books api
 - [x] document the code using ts docs
 - [] borrow request
-    - [x] request borrow
-    - [x] cancel request to borrow
-    - [] cancel accepted request
-    - [] Admin accept borrow
-        - [x] update borrow model { status, uid, instanceId, instance No}
-        - [x] update donation model {status, borrower Id , borrower Name}
-        - [x] update book instance and book count
-        - [x] send notification to user with message {book Name, userId}
-        - [] send Email Notification
+  - [x] request borrow
+  - [x] cancel request to borrow
+  - [] cancel accepted request
+  - [] Admin accept borrow
+    - [x] update borrow model { status, uid, instanceId, instance No}
+    - [x] update donation model {status, borrower Id , borrower Name }
+    - [x] update book instance and book count
+    - [x] send notification to user with message {book Name, userId}
+    - [] send Email Notification
 
-    - [] Admin mark book Taken
-        - [x] update borrow model {taken date, duedate, note, status}
-        - [x] update book Instance {status}
-        - [x] send Notification To the User
+  - [] Admin mark book Taken
+    - [x] update borrow model {taken date, duedate, note, status}
+    - [x] update book Instance {status}
+    - [x] send Notification To the User
 
-    - [] admin mark returned
-    -
-    - [] admin revert mark returned
-    - [] admin Revert accept borrow
-    - [] admin revert mark taken
-
+  - [] admin mark returned
+  -
+  - [] admin revert mark returned
+  - [] admin Revert accept borrow
+  - [] admin revert mark taken
 
 ---
 
@@ -46,11 +44,27 @@ features for this that are finished & to be done
   - [x] update multiple file
   - [x] delete multiple file
 
-    
-
 ## integration tasks
-
 
 - [] integrate category api
 - [] integrate book api
-- 
+
+## book club
+
+- [] book api
+  - create: 
+    - [ ] page, author, language, status
+- [] category api
+- [] genre api
+- [] upload api
+
+- [] user api
+- [] donation api
+- [] notification api
+- [] feedback api
+- [] book instance(Donation) api
+
+
+<!-- Uploading logic -->
+- when creating it makes post with the files
+- when updating it makes patch requests with the 

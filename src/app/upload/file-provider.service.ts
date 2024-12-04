@@ -1,3 +1,5 @@
+// This file provider resizes, calls uploadFile & delte file by name
+
 import { UploadDto } from '@/app/upload/upload.entity';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
@@ -14,6 +16,8 @@ interface ImageResizeResponse {
 export class FileProviderService {
   constructor(private fileUploadProvider: FileUploadProvider) {}
 
+  //generate new name & IUploadSingleImage ||
+  //dont need it for the new function because the image is generated first
   public async IUploadWithNewName(
     file: Express.Multer.File,
     uid?: string,
@@ -21,16 +25,17 @@ export class FileProviderService {
   ): Promise<Resp<UploadDto>> {
     const imgName = generateUniqName(file.originalname, uid, ctr);
     const uploaded = await this.IUploadSingleImage(file.buffer, imgName.name);
-    uploaded.val.uid = imgName.uid;
+    uploaded.body.uid = imgName.uid;
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
-    return Succeed(uploaded.val);
+    return Succeed(uploaded.body);
   }
 
+  //given a name it resizes the file and uploads it & is the one used with the new function
   public async IUploadSingleImage(file: Buffer, fName: string): Promise<Resp<UploadDto>> {
     const res = await this.resizeSinglePicW(file);
     if (!res.ok) return FAIL('resizing failed');
     // return await FUploadToFirebaseFunc(fName, res.val);
-    return this.fileUploadProvider.UploadOne(fName, res.val);
+    return this.fileUploadProvider.UploadOne(fName, res.body);
   }
 
   public async IDeleteImageByPrefix(id): Promise<Resp<any>> {

@@ -49,11 +49,11 @@ export class DonationController {
     const book = await this.bookService.findById(createDto.bookId);
     if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
 
-    createDto.donorName = `${usr.val.firstName} ${usr.val.lastName}`;
-    createDto.instanceNo = (book.val.instanceCnt || 0) + 1;
-    createDto.bookName = book.val.title;
-    createDto.bookImg = book.val.upload;
-    if (book.val.uid) createDto.uid = `${book.val.uid}-${createDto.instanceNo}`;
+    createDto.donorName = `${usr.body.firstName} ${usr.body.lastName}`;
+    createDto.instanceNo = (book.body.instanceCnt || 0) + 1;
+    createDto.bookName = book.body.title;
+    createDto.bookImg = book.body.upload;
+    if (book.body.uid) createDto.uid = `${book.body.uid}-${createDto.instanceNo}`;
 
     const resp = await this.donationService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
@@ -66,7 +66,7 @@ export class DonationController {
       { _id: createDto.donorId },
       { $inc: { donatedCount: 1 } },
     );
-    return resp.val;
+    return resp.body;
   }
 
   @Patch(':id')
@@ -84,7 +84,7 @@ export class DonationController {
      */
     const res = await this.donationService.findOneAndUpdate({ _id: id }, updateDonationDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Delete(':id')
@@ -95,15 +95,15 @@ export class DonationController {
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
 
     const ctg = await this.bookService.updateOneAndReturnCount(
-      { _id: res.val.bookId },
+      { _id: res.body.bookId },
       { $inc: { instanceCnt: -1 } },
     );
     const donor = await this.userService.updateOneAndReturnCount(
-      { _id: res.val.donorId },
+      { _id: res.body.donorId },
       { $inc: { donatedCount: -1 } },
     );
 
-    return res.val;
+    return res.body;
   }
 
   //=   ========  the below queries dont need authentication
@@ -115,13 +115,13 @@ export class DonationController {
       inputQuery,
     );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const res = await this.donationService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.val;
+    return res.body;
   }
 }
