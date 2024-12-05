@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
@@ -22,7 +23,7 @@ import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
 import { Book, BookFilter, BookStatus } from './entities/book.entity';
@@ -107,7 +108,12 @@ export class BookController {
   @Patch(':id')
   // @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  async update(@Req() req: Request, @Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
+  async update(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') id: string,
+    @Body() updateBookDto: UpdateBookDto,
+  ) {
     const user: UserFromToken = req['user'];
     const bookResp = await this.bookService.findById(id);
     if (!bookResp.ok) throw new HttpException(bookResp.errMessage, bookResp.code);
@@ -120,9 +126,12 @@ export class BookController {
       updateBookDto.upload = file.body;
     }
     //Todo: calculate the Genres & categories Count
-    const res = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
-    if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.body;
+    const resp = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
+    if (!resp.ok) {
+      return res.status(resp.code).json(resp);
+      // throw new HttpException(res.errMessage, res.code);
+    }
+    return resp.body;
   }
 
   @Delete(':id')
