@@ -32,3 +32,7 @@ pnpm doc:serve
 # and visit 
 http://127.0.0.1:8080
 ```
+
+
+
+- sharp may cause troubles when installing but you can fix it by running `pnpm cache delete`

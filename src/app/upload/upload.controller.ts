@@ -9,11 +9,12 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UploadedFile,
   UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
-
+import { Request, Response } from 'express';
 import { Endpoint } from '@/common/constants/model.consts';
 
 import { UpdateBody, UpdateDto, Upload, UploadQuery } from '@/app/upload/upload.entity';
@@ -25,6 +26,7 @@ import { JwtGuard } from '@/providers/guards/guard.rest';
 import { ToBeAdded } from '@/providers/upload/firebase';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
+import { JsonRes } from '../library/book/book.controller';
 
 @Controller(Endpoint.File)
 @ApiTags(Endpoint.File)
@@ -132,16 +134,14 @@ export class UploadController {
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async createDraftWithCover(
     @Req() req: Request,
+    @Res() res: Response,
     @UploadedFiles()
     files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
     @Param('id') id: string,
   ) {
     const user: UserFromToken = req['user'];
     const imageObj = await this.uploadService.UploadDraftWithCover(files, id, user?._id);
-    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
-    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
-
-    return imageObj.body;
+     return JsonRes(res, imageObj)
   }
 
   // @Roles(RoleType.ADMIN)

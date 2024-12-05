@@ -139,8 +139,9 @@ export class UploadService extends MongoGenericRepository<Upload> {
       cover?: Express.Multer.File[];
       images?: Express.Multer.File[];
     },
-    userId: string,
     fileId: string,
+    userId: string,
+
   ): Promise<Resp<Upload>> {
     if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
 

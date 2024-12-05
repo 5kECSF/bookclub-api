@@ -28,7 +28,14 @@ import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
 import { Book, BookFilter, BookStatus } from './entities/book.entity';
 import { SequenceService } from './sequence/sequence.entity';
+import { logTrace } from './imports.book';
+import { Resp } from '@/common/constants/return.consts';
+import { ColorEnums } from '@/common/logger';
 
+export const JsonRes=(res: Response, resp: Resp<any>)=>{
+  logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3)
+  return res.status(resp.code).json(resp);
+}
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
 export class BookController {
@@ -47,7 +54,7 @@ export class BookController {
     const user: UserFromToken = req['user'];
     const draftImg = await this.uploadService.CreateDraftImg(user._id);
     createDto.slug = generateSlug(createDto.title);
-    createDto.fileId = draftImg.body._id;
+    createDto.fileId = draftImg.body._id.toString();
     createDto.status = BookStatus.Draft;
     createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
@@ -66,33 +73,38 @@ export class BookController {
     @Param('id') id: string,
   ): Promise<Book> {
     const user: UserFromToken = req['user'];
-    //find the image
-    const img = await this.uploadService.findById(createDto.fileId);
-    if (!img.ok) throw new HttpException(img.errMessage, img.code);
-    const upload: EmbedUpload = {
-      fileName: img.body.fileName,
-      pathId: img.body.pathId,
-      uid: img.body.uid,
-      images: img.body.images,
-    };
-    const resp = await this.bookService.findOneAndUpdate(
-      { _id: id },
-      { status: BookStatus.Active, upload: upload, fileId: createDto.fileId },
-    );
-    if (!resp.ok || resp.body == null) throw new HttpException(resp.errMessage, resp.code);
-
+    //find the book
+    const book = await this.bookService.findById(id)
+    if (!book.ok) throw new HttpException(book.errMessage, book.code);
+    //update the images model & ref id
     const updateImg = await this.uploadService.findOneAndUpdate(
       {
-        _id: createDto.fileId,
+        _id: book.body.fileId,
         //TODO, this is for testing, remove in production, also use the groupId
         // model: UploadModel.NotAssigned,
+        //userId: user._id,
       },
       {
         model: UploadModel.Book,
-        refId: resp.body._id,
+        refId: id,
       },
     );
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
+    
+    
+    const upload: EmbedUpload = {
+      fileName: updateImg.body.fileName,
+      pathId: updateImg.body.pathId,
+      uid: updateImg.body.uid,
+      images: updateImg.body.images,
+    };
+    const resp = await this.bookService.findOneAndUpdate(
+      { _id: id },
+      { status: BookStatus.Active, upload: upload },
+    );
+    if (!resp.ok || resp.body == null) throw new HttpException(resp.errMessage, resp.code);
+
+    
     //===============>>     TODO: update this using count, to make it always accurate
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
@@ -116,7 +128,10 @@ export class BookController {
   ) {
     const user: UserFromToken = req['user'];
     const bookResp = await this.bookService.findById(id);
-    if (!bookResp.ok) throw new HttpException(bookResp.errMessage, bookResp.code);
+    if (!bookResp.ok) {
+      return res.status(bookResp.code).json(bookResp);
+      // throw new HttpException(res.errMessage, res.
+    }
     /**
      * if there is change on the image
      */
@@ -128,11 +143,13 @@ export class BookController {
     //Todo: calculate the Genres & categories Count
     const resp = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!resp.ok) {
+      logTrace("", resp.errMessage)
       return res.status(resp.code).json(resp);
-      // throw new HttpException(res.errMessage, res.code);
+    
     }
     return resp.body;
   }
+ 
 
   @Delete(':id')
   @UseGuards(JwtGuard)

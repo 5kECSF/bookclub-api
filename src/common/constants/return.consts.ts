@@ -5,6 +5,7 @@ export interface Resp<T> {
   errMessage?: string;
   errName?: string;
   code?: number;
+  message: string
 }
 
 export function FAIL(errMessage: string, code = 400, e: Error = null): Resp<any> {
@@ -15,14 +16,17 @@ export function FAIL(errMessage: string, code = 400, e: Error = null): Resp<any>
     body: null,
     error: e,
     errMessage,
+    message: errMessage,
     code,
   };
 }
 
-export function Succeed<T>(val: T): Resp<T> {
+export function Succeed<T>(val: T, msg="success"): Resp<T> {
   return {
     ok: true,
     body: val,
     error: null,
+    message: msg,
+    code:200
   };
 }
