@@ -58,7 +58,7 @@ export class BookController {
 
   @Post(':id')
   // @Roles(RoleType.ADMIN, RoleType.USER)
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   async activateBook(
     @Req() req: Request,
     @Body() createDto: ActivateBookInput,
@@ -105,17 +105,17 @@ export class BookController {
   }
 
   @Patch(':id')
-  @Roles(RoleType.ADMIN)
+  // @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async update(@Req() req: Request, @Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
     const user: UserFromToken = req['user'];
-    const book = await this.bookService.findById(id);
-    if (!book.ok) throw new HttpException(book.errMessage, book.code);
+    const bookResp = await this.bookService.findById(id);
+    if (!bookResp.ok) throw new HttpException(bookResp.errMessage, bookResp.code);
     /**
      * if there is change on the image
      */
     if (updateBookDto?.fileUpdated || updateBookDto.fileId) {
-      const file = await this.uploadService.findById(book.body.upload._id);
+      const file = await this.uploadService.findById(bookResp.body.fileId);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
       updateBookDto.upload = file.body;
     }
@@ -129,6 +129,7 @@ export class BookController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async removeOne(@Req() req: Request, @Param('id') id: string): Promise<Book> {
+    //TODO: iterate and remove all the files
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     const result = await this.uploadService.deleteFileById(res.body.fileId);

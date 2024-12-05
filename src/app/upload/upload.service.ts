@@ -50,7 +50,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
     return Succeed(upload.body);
   }
 
-  public async UpdateDraftImg(
+  public async UploadDraftImg(
     file: Express.Multer.File,
     id: string,
     userId: string,
@@ -101,6 +101,8 @@ export class UploadService extends MongoGenericRepository<Upload> {
     return Succeed(res.body);
   }
 
+  //======================================   Multi Images ===============
+
   /**
    * this is used by model one that uploads an image & multiple images
    * @param files
@@ -130,6 +132,33 @@ export class UploadService extends MongoGenericRepository<Upload> {
   /**
    * this is used by model one that uploads an image & multiple images
    * @param files
+   * @param userId
+   */
+  public async UploadDraftWithCover(
+    files: {
+      cover?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
+    userId: string,
+    fileId: string,
+  ): Promise<Resp<Upload>> {
+    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
+
+    let single = await this.UploadDraftImg(files.cover[0], fileId, userId);
+    if (!single.ok) return single;
+    logTrace('upload single finished', single.body._id);
+    if (files.images) {
+      const images = await this.uploadManyWithNewNames(files.images, userId, single.body.uid);
+      if (!images.ok) return FAIL(images.errMessage, images.code);
+      single = await this.updateById(single.body._id, { images: images.body });
+      // single.body.images = images.body;
+    }
+    return Succeed(single.body);
+  }
+
+  /**
+   * this is used by model one that uploads an image & multiple images
+   * @param files
    * @param id
    * @param user
    * @param updateDto
@@ -143,11 +172,12 @@ export class UploadService extends MongoGenericRepository<Upload> {
     user: UserFromToken,
     updateDto: UpdateBody,
   ): Promise<Resp<Upload>> {
+    if (id === 'undefined') return FAIL('the file id is undefined', 400);
     const query = { _id: id };
     if (user?.role != RoleType.ADMIN) {
       query['userId'] = user._id;
     }
-    logTrace('update dto', updateDto);
+    // logTrace('update dto', updateDto);
     const primaryFile = await this.findOne(query);
     if (!primaryFile.ok) return FAIL(primaryFile.errMessage, primaryFile.code);
 
@@ -158,11 +188,11 @@ export class UploadService extends MongoGenericRepository<Upload> {
      */
     if (updateDto?.removedImages && updateDto.removedImages.length > 0) {
       logTrace('images to be removed===', updateDto.removedImages);
-      //the following line is helpful if the removedImages is not written as removedImages[]
-      // if it is a single one and not in form of removedImages[]  it will become string instad of array
+
+      // if `updateDto.removedImages` is not an array, make it an array(it becomes a string if it is a single element)
       if (!Array.isArray(updateDto.removedImages))
         updateDto.removedImages = [updateDto.removedImages];
-      logTrace('images to be removed', updateDto.removedImages);
+      // logTrace('images to be removed', updateDto.removedImages);
       const removed = [];
 
       await Promise.all(
@@ -175,7 +205,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
           }
         }),
       );
-      // logTrace('removed images are', removed);
+
       //remove the deleted images from the new Images list
       imagesList = removeSubArr(imagesList, removed);
       // logTrace('new images are', imagesList);

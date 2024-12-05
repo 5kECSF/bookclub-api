@@ -48,7 +48,7 @@ export class UploadController {
   @Post(':id')
   @ApiSingleFiltered('file', true, MaxImageSize)
   @UseGuards(JwtGuard)
-  async updateDraft(
+  async uploadDraft(
     @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
@@ -56,7 +56,7 @@ export class UploadController {
     if (!file || !file.buffer) throw new HttpException('no upload Found', 400);
     const user: UserFromToken = req['user'];
 
-    const res = await this.uploadService.UpdateDraftImg(file, id, user._id);
+    const res = await this.uploadService.UploadDraftImg(file, id, user._id);
     return res.body;
   }
 
@@ -79,6 +79,7 @@ export class UploadController {
     return res.body;
   }
 
+  //used to update the upload models data only, with out updating the file
   @Patch('data/:id')
   @UseGuards(JwtGuard)
   async updateDataById(@Req() req: Request, @Body() updateDto: UpdateDto, @Param('id') id: string) {
@@ -107,8 +108,10 @@ export class UploadController {
     return deleteResp.body;
   }
 
+  //===============================     Muti Operations ==========
+
   // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   @Post('multi')
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
   async createWithCover(
@@ -118,6 +121,23 @@ export class UploadController {
   ) {
     const user: UserFromToken = req['user'];
     const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
+    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
+    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
+
+    return imageObj.body;
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('multi/:id')
+  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
+  async createDraftWithCover(
+    @Req() req: Request,
+    @UploadedFiles()
+    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
+    @Param('id') id: string,
+  ) {
+    const user: UserFromToken = req['user'];
+    const imageObj = await this.uploadService.UploadDraftWithCover(files, id, user?._id);
     if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
     logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
 
@@ -135,13 +155,15 @@ export class UploadController {
     @Param('id') id: string,
     @Body() updateDto: UpdateBody,
   ) {
-    logTrace('name==', id);
+    // logTrace('name==', id);
     const user: UserFromToken = req['user'];
     const data = await this.uploadService.UpdateWithCover(files, id, user, updateDto);
     if (!data.ok) throw new HttpException(data.errMessage, data.code);
     logTrace('update mulit suceed', data.body, ColorEnums.BgCyan);
     return data.body;
   }
+
+  //================================================     Query Operations ==========
 
   @Get('')
   async filterAndPaginate(@Query() inputQuery: UploadQuery): Promise<PaginatedRes<Upload>> {

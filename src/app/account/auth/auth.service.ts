@@ -270,7 +270,7 @@ export class AuthService {
 
     //  2. generate new refresh token
     const refreshAuthToken = await this.generateAuthToken(user.body.usrToken, true);
-    logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
+    // logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
     /*
      * 3. update the users hashed refresh token
      *  here you can implement half life logic, if half life not reached skip this

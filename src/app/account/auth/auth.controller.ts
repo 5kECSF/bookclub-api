@@ -102,7 +102,7 @@ export class AuthController {
     @Body() input: TokenInput,
   ): Promise<AuthTokenResponse> {
     let token;
-    logTrace('input', input, ColorEnums.FgYellow);
+    // logTrace('input', input, ColorEnums.FgYellow);
     if (input.isCookie) {
       console.log('it is cookie');
       token = request.cookies[SystemConst.REFRESH_COOKIE];
@@ -125,7 +125,7 @@ export class AuthController {
       secure: EnvVar.getInstance.NODE_ENV == 'production',
     };
     response.cookie(SystemConst.REFRESH_COOKIE, resp.body.authToken.refreshToken, options);
-    console.log('reset tokens', resp.body.authToken.expiresIn);
+    // console.log('reset tokens', resp.body.authToken.expiresIn);
     return resp.body;
   }
 

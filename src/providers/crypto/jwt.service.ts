@@ -69,7 +69,7 @@ export class CustomJwtService {
   public async verifyRefreshToken(token: string): Promise<Resp<UserFromToken>> {
     try {
       // const [_, token] = authorization.split(' ');
-      logTrace(EnvVar.getInstance.JWT_REFRESH_SECRET, token);
+      // logTrace(EnvVar.getInstance.JWT_REFRESH_SECRET, token);
       const decoded = verify(token, EnvVar.getInstance.JWT_REFRESH_SECRET, {
         algorithms: ['HS256'],
       }) as JwtPayload;
