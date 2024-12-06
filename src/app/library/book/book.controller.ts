@@ -19,6 +19,8 @@ import { ActivateBookInput, BookQuery, CreateBookInput, UpdateBookDto } from './
 import { EmbedUpload, UploadModel } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.consts';
+import { Resp } from '@/common/constants/return.consts';
+import { ColorEnums } from '@/common/logger';
 import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
@@ -26,15 +28,20 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
-import { Book, BookFilter, BookStatus } from './entities/book.entity';
-import { SequenceService } from './sequence/sequence.entity';
+import { Book, BookFilter, ItemStatus } from './entities/book.entity';
 import { logTrace } from './imports.book';
-import { Resp } from '@/common/constants/return.consts';
-import { ColorEnums } from '@/common/logger';
+import { SequenceService } from './sequence/sequence.entity';
 
-export const JsonRes=(res: Response, resp: Resp<any>)=>{
-  logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3)
+export const JsonRes = (res: Response, resp: Resp<any>) => {
+  logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3);
   return res.status(resp.code).json(resp);
+};
+
+export function ThrowRes(resp: Resp<any>, log = false) {
+  if (log) {
+    logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3);
+  }
+  throw new HttpException(resp.message, resp.code);
 }
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
@@ -53,13 +60,14 @@ export class BookController {
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
     const draftImg = await this.uploadService.CreateDraftImg(user._id);
+    if (!draftImg.ok) ThrowRes(draftImg);
     createDto.slug = generateSlug(createDto.title);
     createDto.fileId = draftImg.body._id.toString();
-    createDto.status = BookStatus.Draft;
+    createDto.status = ItemStatus.Draft;
     createDto.uid = await this.sequenceService.getNextSequenceValue();
     // logTrace('creating book', createDto.title);
     const resp = await this.bookService.createOne(createDto);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    if (!resp.ok) ThrowRes(resp);
 
     return resp.body;
   }
@@ -74,7 +82,7 @@ export class BookController {
   ): Promise<Book> {
     const user: UserFromToken = req['user'];
     //find the book
-    const book = await this.bookService.findById(id)
+    const book = await this.bookService.findById(id);
     if (!book.ok) throw new HttpException(book.errMessage, book.code);
     //update the images model & ref id
     const updateImg = await this.uploadService.findOneAndUpdate(
@@ -90,8 +98,7 @@ export class BookController {
       },
     );
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
-    
-    
+
     const upload: EmbedUpload = {
       fileName: updateImg.body.fileName,
       pathId: updateImg.body.pathId,
@@ -100,11 +107,10 @@ export class BookController {
     };
     const resp = await this.bookService.findOneAndUpdate(
       { _id: id },
-      { status: BookStatus.Active, upload: upload },
+      { status: ItemStatus.Active, upload: upload },
     );
     if (!resp.ok || resp.body == null) throw new HttpException(resp.errMessage, resp.code);
 
-    
     //===============>>     TODO: update this using count, to make it always accurate
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
@@ -143,13 +149,11 @@ export class BookController {
     //Todo: calculate the Genres & categories Count
     const resp = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!resp.ok) {
-      logTrace("", resp.errMessage)
+      logTrace('', resp.errMessage);
       return res.status(resp.code).json(resp);
-    
     }
     return resp.body;
   }
- 
 
   @Delete(':id')
   @UseGuards(JwtGuard)

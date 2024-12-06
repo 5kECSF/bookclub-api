@@ -13,7 +13,7 @@ export enum BookLanguage {
   AffanOrommo = 'AfanOromo',
   Tigrna = 'Tigrna',
 }
-export enum BookStatus {
+export enum ItemStatus {
   Active = 'active',
   Draft = 'draft',
   Deactivated = 'deactivated',
@@ -53,13 +53,24 @@ export class Book {
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
   genres: string[];
 
+  //===========================   File Related ===============
   @Prop({ type: EmbedUpload })
   upload: EmbedUpload;
+
+  @IsOptional()
+  @IsString()
+  @Prop({
+    type: String,
+    enum: Object.values(ItemStatus),
+  })
+  status: ItemStatus;
 
   @IsOptional()
   // @Prop({ type: String, unique: true, sparse: true })//TODO: uncomment this on production
   @Prop({ type: String })
   fileId?: string;
+
+  //======================   end file related
 
   @IsOptional()
   @IsString()
@@ -68,14 +79,6 @@ export class Book {
     enum: Object.values(BookLanguage),
   })
   language: BookLanguage;
-
-  @IsOptional()
-  @IsString()
-  @Prop({
-    type: String,
-    enum: Object.values(BookStatus),
-  })
-  status: BookStatus;
 
   @IsOptional()
   @Prop({ type: Number, required: false })

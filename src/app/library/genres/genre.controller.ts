@@ -22,6 +22,7 @@ import {
 } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { ThrowRes } from '../book/book.controller';
 import {
   CreateGenreInput,
   Genre,
@@ -50,7 +51,7 @@ export class GenreController {
     createDto.upload = img.body;
     createDto.slug = generateSlug(createDto.name);
     const resp = await this.genreService.createOne(createDto);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    if (!resp.ok) ThrowRes(resp);
     const updateImg = await this.uploadService.findOneAndUpdate(
       {
         _id: createDto.fileId,

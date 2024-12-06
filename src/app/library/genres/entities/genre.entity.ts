@@ -5,6 +5,7 @@ import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
+import { ItemStatus } from '../../book/entities/book.entity';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Genre {
@@ -33,6 +34,14 @@ export class Genre {
 
   @Prop({ type: EmbedUpload })
   upload: EmbedUpload;
+
+  @IsOptional()
+  @IsString()
+  @Prop({
+    type: String,
+    enum: Object.values(ItemStatus),
+  })
+  status: ItemStatus;
 
   @IsOptional()
   @Prop({ type: String, unique: true, sparse: true })

@@ -1,3 +1,4 @@
+import { Endpoint } from '@/common/constants/model.consts';
 import {
   Body,
   Controller,
@@ -15,7 +16,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { Endpoint } from '@/common/constants/model.consts';
 
 import { UpdateBody, UpdateDto, Upload, UploadQuery } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
@@ -25,8 +25,8 @@ import { ColorEnums, logTrace } from '@/common/logger';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { ToBeAdded } from '@/providers/upload/firebase';
 import { ApiTags } from '@nestjs/swagger';
-import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 import { JsonRes } from '../library/book/book.controller';
+import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 
 @Controller(Endpoint.File)
 @ApiTags(Endpoint.File)
@@ -141,7 +141,7 @@ export class UploadController {
   ) {
     const user: UserFromToken = req['user'];
     const imageObj = await this.uploadService.UploadDraftWithCover(files, id, user?._id);
-     return JsonRes(res, imageObj)
+    return JsonRes(res, imageObj);
   }
 
   // @Roles(RoleType.ADMIN)
