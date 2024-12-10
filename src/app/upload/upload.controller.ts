@@ -20,6 +20,7 @@ import { Request, Response } from 'express';
 import { UpdateBody, UpdateDto, Upload, UploadQuery } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
+import { Resp } from '@/common/constants/return.consts';
 import { MaxImageSize } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { JwtGuard } from '@/providers/guards/guard.rest';
@@ -33,6 +34,7 @@ import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 export class UploadController {
   constructor(private uploadService: UploadService) {}
 
+  //Upload file with out the fileName from the user
   @UseGuards(JwtGuard)
   @Post('single')
   @ApiSingleFiltered('file', true, MaxImageSize)
@@ -43,10 +45,11 @@ export class UploadController {
     const user: UserFromToken = req['user'];
     logTrace('user is', user);
     const img = await this.uploadService.UploadSingle(file, user?._id);
-    if (!img.ok) throw new HttpException(img.errMessage, img.code);
+    if (!img.ok) ThrowRes(img);
     return img.body;
   }
 
+  //Upload file by getting the filesId from the user
   @Post(':id')
   @ApiSingleFiltered('file', true, MaxImageSize)
   @UseGuards(JwtGuard)
@@ -59,6 +62,7 @@ export class UploadController {
     const user: UserFromToken = req['user'];
 
     const res = await this.uploadService.UploadDraftImg(file, id, user._id);
+    if (!res.ok) ThrowRes(res);
     return res.body;
   }
 
@@ -78,6 +82,7 @@ export class UploadController {
       query['userId'] = user._id;
     }
     const res = await this.uploadService.UpdateSingle(file, query, user._id);
+    if (!res.ok) ThrowRes(res);
     return res.body;
   }
 
@@ -92,6 +97,7 @@ export class UploadController {
       query['userId'] = user._id;
     }
     const res = await this.uploadService.findOneAndUpdate(query, updateDto);
+    if (!res.ok) ThrowRes(res);
     return res.body;
   }
 
@@ -106,7 +112,7 @@ export class UploadController {
       query['userId'] = user._id;
     }
     const deleteResp = await this.uploadService.deleteFileByQuery(query);
-    if (!deleteResp.ok) throw new HttpException(deleteResp.errMessage, deleteResp.code);
+    if (!deleteResp.ok) if (!deleteResp.ok) ThrowRes(deleteResp);
     return deleteResp.body;
   }
 
@@ -129,6 +135,7 @@ export class UploadController {
     return imageObj.body;
   }
 
+  //Upload many files by getting the filesId from the user
   @UseGuards(JwtGuard)
   @Post('multi/:id')
   @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
@@ -187,4 +194,7 @@ export class UploadController {
     }
     return urls;
   }
+}
+function ThrowRes(img: Resp<Upload>) {
+  throw new Error('Function not implemented.');
 }

@@ -15,6 +15,7 @@ export enum UploadModel {
 
 export enum UploadStatus {
   Draft = 'draft',
+  Uploaded = 'uploaded',
   Active = 'active',
 }
 

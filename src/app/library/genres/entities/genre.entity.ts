@@ -29,6 +29,8 @@ export class Genre {
   @Prop({ type: Number, required: false, default: 0 })
   count: number;
 
+  //===========================   File Related ===============
+
   @Prop({ type: String })
   coverImage?: string;
 
@@ -42,6 +44,7 @@ export class Genre {
     enum: Object.values(ItemStatus),
   })
   status: ItemStatus;
+  //======================   end file related ==========
 
   @IsOptional()
   @Prop({ type: String, unique: true, sparse: true })
@@ -56,7 +59,13 @@ export const GenreSchema = SchemaFactory.createForClass(Genre);
 // Create indexes
 GenreSchema.index({ name: 'text' });
 
-export class CreateGenreInput extends PickType(Genre, ['name', 'desc', 'restricted', 'fileId']) {
+export class CreateGenreInput extends PickType(Genre, [
+  'name',
+  'desc',
+  'restricted',
+  'fileId',
+  'status',
+]) {
   @IsOptional()
   @ApiHideProperty()
   slug?: string;

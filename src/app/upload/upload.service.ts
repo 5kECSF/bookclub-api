@@ -1,7 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { UpdateBody, Upload, UploadDocument, UploadStatus } from './upload.entity';
+import { UpdateBody, Upload, UploadDocument, UploadModel, UploadStatus } from './upload.entity';
 
 import { FileProviderService } from '@/app/upload/file-provider.service';
 import { RoleType, UserFromToken } from '@/common/common.types.dto';
@@ -41,15 +41,21 @@ export class UploadService extends MongoGenericRepository<Upload> {
   }
 
   //upload single takes file, the uid, userId then upload the file then save it to database
-  public async CreateDraftImg(userId: string): Promise<Resp<Upload>> {
+  public async CreateDraftImg(userId: string, model: UploadModel): Promise<Resp<Upload>> {
     const imgName = generateUniqName('file.ext');
 
-    const upload = await this.createOne({ userId, uid: imgName.uid, status: UploadStatus.Draft });
+    const upload = await this.createOne({
+      userId,
+      uid: imgName.uid,
+      status: UploadStatus.Draft,
+      model,
+    });
     if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
 
     return Succeed(upload.body);
   }
 
+  //get the draft files id & upload the file to it
   public async UploadDraftImg(
     file: Express.Multer.File,
     id: string,
@@ -58,7 +64,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
     if (!file) return FAIL('Image Must not be empty', 400);
     //Find the image from the database
     const draftImg = await this.findOne({ _id: id, userId: userId, status: UploadStatus.Draft });
-    if (!draftImg.ok) return FAIL(draftImg.errMessage, draftImg.code);
+    if (!draftImg.ok) return FAIL('Draft Image Not Found', draftImg.code);
 
     // Create a new image, we dont care about the name
     const uploaded = await this.fileService.IUploadWithNewName(file);
@@ -67,7 +73,7 @@ export class UploadService extends MongoGenericRepository<Upload> {
     //TODO: update the upload hash and size
     const res = await this.updateById(id, {
       ...uploaded.body,
-      status: UploadStatus.Active,
+      status: UploadStatus.Uploaded,
       userId,
     });
     if (!res.ok) return FAIL(res.errMessage, res.code);
@@ -141,7 +147,6 @@ export class UploadService extends MongoGenericRepository<Upload> {
     },
     fileId: string,
     userId: string,
-
   ): Promise<Resp<Upload>> {
     if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
 

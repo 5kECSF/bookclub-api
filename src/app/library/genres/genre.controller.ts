@@ -1,4 +1,4 @@
-import { UploadModel } from '@/app/upload/upload.entity';
+import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
 import { Endpoint } from '@/common/constants/model.consts';
@@ -23,6 +23,7 @@ import {
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { ThrowRes } from '../book/book.controller';
+import { ItemStatus } from '../book/entities/book.entity';
 import {
   CreateGenreInput,
   Genre,
@@ -65,6 +66,54 @@ export class GenreController {
     if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
     //this is for testing purposes
     // resp.val.img.fullImg = img.val.fullImg;
+    return resp.body;
+  }
+
+  @Post('draft')
+  @Roles(RoleType.USER)
+  @UseGuards(JwtGuard)
+  async createDraft(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
+    const user: UserFromToken = req['user'];
+    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Genre);
+    if (!draftImg.ok) ThrowRes(draftImg);
+    createDto.fileId = draftImg.body._id.toString();
+    createDto.status = ItemStatus.Draft;
+    createDto.upload = draftImg.body;
+    createDto.slug = generateSlug(createDto.name);
+    const resp = await this.genreService.createOne(createDto);
+    if (!resp.ok) ThrowRes(resp);
+    return resp.body;
+  }
+
+  @Post(':id')
+  // @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
+  async activateDraft(@Req() req: Request, @Param('id') id: string): Promise<Genre> {
+    const user: UserFromToken = req['user'];
+    const genre = await this.genreService.findById(id);
+    if (!genre.ok) ThrowRes(genre);
+
+    const updateImg = await this.uploadService.findOneAndUpdate(
+      {
+        _id: genre.body.fileId,
+        // status: UploadStatus.Uploaded,
+      },
+      {
+        status: UploadStatus.Active,
+        refId: genre.body._id,
+      },
+    );
+    if (!updateImg.ok) ThrowRes(updateImg);
+    const upload: EmbedUpload = {
+      fileName: updateImg.body.fileName,
+      pathId: updateImg.body.pathId,
+      uid: updateImg.body.uid,
+    };
+    if (!updateImg.ok) ThrowRes(updateImg);
+    const resp = await this.genreService.updateById(id, {
+      status: ItemStatus.Active,
+      upload: upload,
+    });
     return resp.body;
   }
 

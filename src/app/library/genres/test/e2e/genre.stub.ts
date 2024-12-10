@@ -1,11 +1,10 @@
-import { CreateGenreInput } from '@/app/library/genres/entities/genre.entity';
 
-export const mockGenre: CreateGenreInput = {
+export const mockGenre = {
   name: 'new tag',
   restricted: false,
 };
 
-export const mockUpdateGenre: CreateGenreInput = {
+export const mockUpdateGenre = {
   name: 'new tag 2',
   restricted: true,
 };

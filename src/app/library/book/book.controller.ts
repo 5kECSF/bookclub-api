@@ -14,9 +14,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { ActivateBookInput, BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
+import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
 
-import { EmbedUpload, UploadModel } from '@/app/upload/upload.entity';
+import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.consts';
 import { Resp } from '@/common/constants/return.consts';
@@ -37,7 +37,7 @@ export const JsonRes = (res: Response, resp: Resp<any>) => {
   return res.status(resp.code).json(resp);
 };
 
-export function ThrowRes(resp: Resp<any>, log = false) {
+export function ThrowRes(resp: Resp<any>, log = true) {
   if (log) {
     logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3);
   }
@@ -59,7 +59,7 @@ export class BookController {
   @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
-    const draftImg = await this.uploadService.CreateDraftImg(user._id);
+    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Book);
     if (!draftImg.ok) ThrowRes(draftImg);
     createDto.slug = generateSlug(createDto.title);
     createDto.fileId = draftImg.body._id.toString();
@@ -75,29 +75,25 @@ export class BookController {
   @Post(':id')
   // @Roles(RoleType.ADMIN, RoleType.USER)
   @UseGuards(JwtGuard)
-  async activateBook(
-    @Req() req: Request,
-    @Body() createDto: ActivateBookInput,
-    @Param('id') id: string,
-  ): Promise<Book> {
+  async activateBook(@Req() req: Request, @Param('id') id: string): Promise<Book> {
     const user: UserFromToken = req['user'];
     //find the book
     const book = await this.bookService.findById(id);
-    if (!book.ok) throw new HttpException(book.errMessage, book.code);
+    if (!book.ok) ThrowRes(book);
     //update the images model & ref id
     const updateImg = await this.uploadService.findOneAndUpdate(
       {
         _id: book.body.fileId,
         //TODO, this is for testing, remove in production, also use the groupId
-        // model: UploadModel.NotAssigned,
+        // status: UploadModel.NotAssigned,
         //userId: user._id,
       },
       {
-        model: UploadModel.Book,
+        status: UploadStatus.Active,
         refId: id,
       },
     );
-    if (!updateImg.ok) throw new HttpException(updateImg.errMessage, updateImg.code);
+    if (!updateImg.ok) ThrowRes(updateImg);
 
     const upload: EmbedUpload = {
       fileName: updateImg.body.fileName,
@@ -109,7 +105,7 @@ export class BookController {
       { _id: id },
       { status: ItemStatus.Active, upload: upload },
     );
-    if (!resp.ok || resp.body == null) throw new HttpException(resp.errMessage, resp.code);
+    if (!resp.ok || resp.body == null) ThrowRes(resp);
 
     //===============>>     TODO: update this using count, to make it always accurate
     await Promise.all([
