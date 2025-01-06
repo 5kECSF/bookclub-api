@@ -50,7 +50,7 @@ describe('borrows Controller (e2e)', () => {
       .expect(201);
     // logTrace('response', response.body);
     expect(response.status).toBe(201);
-    expect(response.body.name).toBe(mockBorrow.name);
+    expect(response.body.name).toBe(mockBorrow.status);
     createdTag = response.body;
   });
   it('borrows-T04: FetchMany /borrows (GET) to have one borrow', async () => {
@@ -67,7 +67,7 @@ describe('borrows Controller (e2e)', () => {
 
     // expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockBorrow.name);
+    expect(response.body.name).toBe(mockBorrow.status);
   });
 
   it('borrows-T06: UpdateOne /borrows/:id (PATCH) -> 200', async () => {
@@ -80,7 +80,7 @@ describe('borrows Controller (e2e)', () => {
       .expect(200);
     // logTrace('response', response.body);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe(mockUpdateBorrow.name);
+    expect(response.body.name).toBe(mockUpdateBorrow.status);
     // createdTag = response.body;
   });
   it('borrows-T07: Delete /borrows/:id (Delete) 200', async () => {
