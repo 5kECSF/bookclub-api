@@ -38,6 +38,7 @@ import { GenreService } from './genre.service';
 export class GenreController {
   constructor(private readonly genreService: GenreService, private uploadService: UploadService) {}
 
+  //================createOne is for  Old one's Where Image is uploaded first
   @Post()
   // @Roles(RoleType.ADMIN)
   // @UseGuards(JwtGuard)
@@ -69,6 +70,7 @@ export class GenreController {
     return resp.body;
   }
 
+  //================createDraft is P1:  for  New Ones where the draft is created first
   @Post('draft')
   @Roles(RoleType.USER)
   @UseGuards(JwtGuard)
@@ -85,6 +87,7 @@ export class GenreController {
     return resp.body;
   }
 
+  //================activateDraft is P2:  for  New Ones where the draft is created 1st then activated
   @Post(':id')
   // @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)

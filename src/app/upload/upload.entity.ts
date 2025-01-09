@@ -115,19 +115,19 @@ export class UploadDto extends PickType(Upload, [
 @Schema({ _id: false })
 export class EmbedUpload {
   @Prop({ type: String })
-  _id?: string;
+  _id?: string; //this is put in the image's model
 
   @Prop({ type: String, unique: true, sparse: true })
   @IsString()
-  fileName: string;
+  fileName: string; // this is also put in the images model
 
   @IsNotEmpty()
   @Prop({ type: String })
-  pathId?: string;
+  pathId?: string; //this is also put in the images model
 
   @Prop({ type: String })
   @IsString()
-  uid?: string;
+  uid?: string; //for delete purposes we could, query the whole image
 
   @IsOptional()
   @Prop({ type: [{ type: String }], default: undefined })

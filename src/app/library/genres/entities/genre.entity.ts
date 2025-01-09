@@ -44,11 +44,11 @@ export class Genre {
     enum: Object.values(ItemStatus),
   })
   status: ItemStatus;
-  //======================   end file related ==========
 
   @IsOptional()
   @Prop({ type: String, unique: true, sparse: true })
   fileId?: string;
+  //======================   end file related ==========
 
   @Prop({ type: String, select: false, required: false, default: false })
   restricted? = false;
