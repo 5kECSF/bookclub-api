@@ -1,21 +1,20 @@
+import { Endpoint } from '@/common/constants/model.names';
+import { PaginatedRes } from '@/common/types/common.types.dto';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpException,
-  UseGuards,
+  Param,
+  Patch,
+  Post,
   Query,
 } from '@nestjs/common';
-import { UserService } from './users.service';
-import { CreateUser, FilterUser, UpdateUserWithRole } from './dto/user.mut.dto';
-import { User } from './entities/user.entity';
-import { PaginatedRes } from '@/common/common.types.dto';
-import { Endpoint } from '@/common/constants/model.consts';
 import { ApiTags } from '@nestjs/swagger';
+import { CreateUser, FilterUser, UpdateUserWithRole, UserFilter } from './dto/user.mut.dto';
+import { User } from './entities/user.entity';
+import { UserService } from './users.service';
 
 // import { Roles } from '../../providers/guards/roles.decorators';
 // import { RoleType } from '../../common/common.types.dto';
@@ -48,6 +47,7 @@ export class UsersController {
     const res = await this.usersService.searchManyAndPaginate(
       ['email', 'firstName', 'lastName'],
       inputQuery,
+      UserFilter,
     );
     if (!res.ok) throw new HttpException(res.errMessage, 500);
     return res.body;

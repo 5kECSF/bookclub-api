@@ -4,12 +4,11 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
-import { RoleType } from '../imports.user';
-
 import { EmbedUpload } from '@/app/upload/upload.entity';
 
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
+import { RoleType } from '@/common/types/enums';
 export const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 
 @Schema({

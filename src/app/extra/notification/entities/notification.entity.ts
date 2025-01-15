@@ -1,7 +1,6 @@
-import mongoose, { Document, Types } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { User } from '../../../account/users';
+import { ApiProperty } from '@nestjs/swagger';
+import { Document } from 'mongoose';
 
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
@@ -41,3 +40,5 @@ export type NotificationDocument = Notification & Document;
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
 // Create indexes
 NotificationSchema.index({ name: 'text' });
+
+export const NotificationFilter: (keyof Notification)[] = ['_id', 'userId', 'body', 'type'];

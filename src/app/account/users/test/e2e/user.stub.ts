@@ -1,6 +1,6 @@
-import { CreateUser } from '../../dto/user.mut.dto';
-import { RoleType } from '../../../../../common/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import { LoginUserInput } from '../../../auth/dto/auth.input.dto';
+import { CreateUser } from '../../dto/user.mut.dto';
 
 export const defaultAdmin: CreateUser = {
   active: true,

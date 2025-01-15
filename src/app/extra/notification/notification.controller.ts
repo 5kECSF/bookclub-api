@@ -1,3 +1,5 @@
+import { PaginatedRes } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import {
   Body,
   Controller,
@@ -10,15 +12,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { NotificationService } from './notification.service';
 import { CreateNotificationInput, NotificationQuery, UpdateDto } from './entities/notification.dto';
-import { pagiKeys, PaginatedRes, RoleType } from '@/common/common.types.dto';
+import { NotificationService } from './notification.service';
 
-import { Notification } from './entities/notification.entity';
+import { Endpoint } from '@/common/constants/model.names';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
-import { Endpoint } from '@/common/constants/model.consts';
 import { ApiTags } from '@nestjs/swagger';
+import { Notification, NotificationFilter } from './entities/notification.entity';
 
 @Controller(Endpoint.Notification)
 @ApiTags(Endpoint.Notification)
@@ -57,7 +58,11 @@ export class NotificationController {
   async filterAndPaginate(
     @Query() inputQuery: NotificationQuery,
   ): Promise<PaginatedRes<Notification>> {
-    const res = await this.notificationService.searchManyAndPaginate(['title'], inputQuery);
+    const res = await this.notificationService.searchManyAndPaginate(
+      ['title'],
+      inputQuery,
+      NotificationFilter,
+    );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }

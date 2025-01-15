@@ -1,12 +1,11 @@
-import { PaginationInput } from '@/app/library/author/imports.author';
 import { EmbedUpload } from '@/app/upload/upload.entity';
+import { PaginationInputs } from '@/common/types/common.types.dto';
+import { ItemStatus } from '@/common/types/enums';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiHideProperty, ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
-import { ItemStatus } from '../../book/entities/book.entity';
-
 @Schema({ timestamps: true, versionKey: false })
 export class Author {
   @ApiProperty({ name: 'id' })
@@ -68,8 +67,10 @@ export class CreateAuthorInput extends OmitType(Author, ['_id', 'slug']) {
 
 export class UpdateDto extends PartialType(OmitType(CreateAuthorInput, ['slug'])) {}
 
-export class AuthorQuery extends PaginationInput {
+export class AuthorQuery extends PaginationInputs {
   // ======== Pagination fields
   @IsOptional()
   sort?: string = 'name';
 }
+
+export const AuthorFilter: (keyof Author)[] = ['name', 'status', 'fileId', '_id'];

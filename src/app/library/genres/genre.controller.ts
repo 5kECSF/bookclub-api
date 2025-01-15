@@ -1,9 +1,10 @@
 import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
-import { Endpoint } from '@/common/constants/model.consts';
+import { Endpoint } from '@/common/constants/model.names';
 import { ReqParamPipe } from '@/common/lib/pipes';
 import { logTrace } from '@/common/logger';
+import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
+import { ItemStatus, RoleType } from '@/common/types/enums';
 import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
@@ -23,7 +24,6 @@ import {
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { ThrowRes } from '../book/book.controller';
-import { ItemStatus } from '../book/entities/book.entity';
 import {
   CreateGenreInput,
   Genre,
@@ -112,11 +112,11 @@ export class GenreController {
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
     };
-    if (!updateImg.ok) ThrowRes(updateImg);
     const resp = await this.genreService.updateById(id, {
       status: ItemStatus.Active,
       upload: upload,
     });
+    if (!resp.ok) ThrowRes(updateImg);
     return resp.body;
   }
 
@@ -129,15 +129,16 @@ export class GenreController {
     @Body() updateDto: UpdateDto,
   ): Promise<Genre> {
     const user: UserFromToken = req['user'];
-    const genre = await this.genreService.findById(id);
-    if (!genre.ok) throw new HttpException(genre.errMessage, genre.code);
+
     if (updateDto?.fileId) {
-      const file = await this.uploadService.findById(genre.body.upload._id);
-      if (!file.ok) throw new HttpException(file.errMessage, file.code);
+      const genre = await this.genreService.findById(id);
+      if (!genre.ok) ThrowRes(genre);
+      const file = await this.uploadService.findById(genre.body.fileId);
+      if (!file.ok) ThrowRes(file);
       updateDto.upload = file.body;
     }
     const res = await this.genreService.updateById(id, updateDto);
-    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    if (!res.ok) ThrowRes(res);
     return res.body;
   }
 
@@ -152,7 +153,7 @@ export class GenreController {
       // throw new HttpException('file Not Found', result.code);
     }
     const res = await this.genreService.findByIdAndDelete(id);
-    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    if (!res.ok) ThrowRes(res);
 
     return res.body;
   }

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { verify, JwtPayload, sign, decode } from 'jsonwebtoken';
-import { UserFromToken } from '@/common/common.types.dto';
-import { ENV_TYPES } from '@/common/config/config.utills';
 import { EnvVar } from '@/common/config/config.instances';
+import { ENV_TYPES } from '@/common/config/config.utills';
+import { UserFromToken } from '@/common/types/common.types.dto';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
 
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { logTrace } from '@/common/logger';

@@ -1,3 +1,5 @@
+import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import {
   Body,
   Controller,
@@ -12,28 +14,27 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BorrowService } from './borrow.service';
-import { BorrowQuery, CreateBorrowInput, UpdateDto } from './entities/borrow.dto';
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
+import { BorrowFilter, BorrowQuery, CreateBorrowInput, UpdateDto } from './entities/borrow.dto';
 
+import { Endpoint } from '@/common/constants/model.names';
+import { errCode } from '@/common/constants/response.consts';
+import { JwtGuard } from '@/providers/guards/guard.rest';
+import { Roles } from '@/providers/guards/roles.decorators';
+import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { UserService } from '../../account/users';
+import { NotificationEnum } from '../../extra/notification/entities/notification.entity';
+import { NotificationService } from '../../extra/notification/notification.service';
+import { BookService } from '../book/book.service';
+import { DonationService } from '../donation/donation.service';
+import { bookStatus } from '../donation/entities/donation.entity';
 import {
-  BorrowAccept,
   BookReturned,
   BookTaken,
   Borrow,
+  BorrowAccept,
   BorrowStatus,
 } from './entities/borrow.entity';
-import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Roles } from '@/providers/guards/roles.decorators';
-import { Endpoint } from '@/common/constants/model.consts';
-import { Request } from 'express';
-import { BookService } from '../book/book.service';
-import { UserService } from '../../account/users';
-import { errCode } from '@/common/constants/response.consts';
-import { NotificationService } from '../../extra/notification/notification.service';
-import { NotificationEnum } from '../../extra/notification/entities/notification.entity';
-import { DonationService } from '../donation/donation.service';
-import { bookStatus } from '../donation/entities/donation.entity';
-import { ApiTags } from '@nestjs/swagger';
 
 @Controller(Endpoint.Borrow)
 @ApiTags(Endpoint.Borrow)
@@ -194,7 +195,11 @@ export class BorrowController {
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
-    const res = await this.borrowService.searchManyAndPaginate(['userName'], inputQuery);
+    const res = await this.borrowService.searchManyAndPaginate(
+      ['userName'],
+      inputQuery,
+      BorrowFilter,
+    );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }

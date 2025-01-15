@@ -1,15 +1,8 @@
 import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
-import { RoleType } from '../imports.user';
-import {
-  IsEmail,
-  IsMobilePhone,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MinLength,
-  IsBoolean,
-} from 'class-validator';
+
 import { EmbedUpload } from '@/app/upload/upload.entity';
+import { RoleType } from '@/common/types/enums';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterUserInput {
   @IsNotEmpty()
@@ -56,3 +49,10 @@ export class UpdateEmailInput {
   @IsEmail()
   newEmail: string;
 }
+export const UserFilter: (keyof CreateUser)[] = [
+  'email',
+  'firstName',
+  'active',
+  'lastName',
+  'role',
+];

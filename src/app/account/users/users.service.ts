@@ -9,7 +9,8 @@ import { FilterQuery, Model } from 'mongoose';
 import { ErrConst } from '../../../common/constants';
 import { ChangePasswordInput } from '../auth/dto/auth.input.dto';
 import { CreateUser } from './dto/user.mut.dto';
-import { logTrace, MongoGenericRepository } from './imports.user';
+import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
+import { logTrace } from '@/common/logger';
 
 @Injectable()
 export class UserService extends MongoGenericRepository<User> {

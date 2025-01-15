@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 
-import { Author, AuthorDocument } from './entities/author.entity';
+import { Author, AuthorDocument } from './author.entity';
 
-import { MongoGenericRepository } from './imports.author';
+import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import mongoose, { Model } from 'mongoose';
 
 @Injectable()

@@ -1,3 +1,5 @@
+import { PaginatedRes } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import {
   Body,
   Controller,
@@ -12,19 +14,23 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { DonationService } from './donation.service';
-import { CreateDonationInput, DonationQuery, UpdateDonationDto } from './entities/donation.dto';
-import { PaginatedRes, RoleType } from '@/common/common.types.dto';
+import {
+  CreateDonationInput,
+  DonationFilter,
+  DonationQuery,
+  UpdateDonationDto,
+} from './entities/donation.dto';
 
-import { Donation } from './entities/donation.entity';
 import { JwtGuard } from '@/providers/guards/guard.rest';
-import { Request } from 'express';
 import { Roles } from '@/providers/guards/roles.decorators';
+import { Request } from 'express';
 import { BookService } from '../book/book.service';
+import { Donation } from './entities/donation.entity';
 
 import { UserService } from '../../account/users';
 
+import { Endpoint } from '@/common/constants/model.names';
 import { errCode } from '@/common/constants/response.consts';
-import { Endpoint } from '@/common/constants/model.consts';
 import { ApiTags } from '@nestjs/swagger';
 
 @Controller(Endpoint.Donation)
@@ -113,6 +119,7 @@ export class DonationController {
     const res = await this.donationService.searchManyAndPaginate(
       ['donorName', 'bookName'],
       inputQuery,
+      DonationFilter,
     );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;

@@ -1,4 +1,4 @@
-import { Endpoint } from '@/common/constants/model.consts';
+import { Endpoint } from '@/common/constants/model.names';
 import {
   Body,
   Controller,
@@ -17,16 +17,22 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-import { UpdateBody, UpdateDto, Upload, UploadQuery } from '@/app/upload/upload.entity';
+import {
+  UpdateBody,
+  UpdateDto,
+  Upload,
+  UploadFilter,
+  UploadQuery,
+} from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
-import { Resp } from '@/common/constants/return.consts';
 import { MaxImageSize } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
+import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { ToBeAdded } from '@/providers/upload/firebase';
 import { ApiTags } from '@nestjs/swagger';
-import { JsonRes } from '../library/book/book.controller';
+import { JsonRes, ThrowRes } from '../library/book/book.controller';
 import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 
 @Controller(Endpoint.File)
@@ -174,7 +180,11 @@ export class UploadController {
 
   @Get('')
   async filterAndPaginate(@Query() inputQuery: UploadQuery): Promise<PaginatedRes<Upload>> {
-    const res = await this.uploadService.searchManyAndPaginate(['fileName'], inputQuery);
+    const res = await this.uploadService.searchManyAndPaginate(
+      ['fileName'],
+      inputQuery,
+      UploadFilter,
+    );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
@@ -194,7 +204,4 @@ export class UploadController {
     }
     return urls;
   }
-}
-function ThrowRes(img: Resp<Upload>) {
-  throw new Error('Function not implemented.');
 }

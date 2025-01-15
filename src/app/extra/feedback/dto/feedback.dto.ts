@@ -1,7 +1,8 @@
-import { OmitType, PartialType, ApiHideProperty } from '@nestjs/swagger';
-import { PaginationInput, RoleType } from '../feedback.dependencies';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiHideProperty, PartialType } from '@nestjs/swagger';
 
+import { PaginationInputs } from '@/common/types/common.types.dto';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { FeedBack } from '../entities/feedback.entity';
 export class CreateFeedbackInput {
   @IsNotEmpty()
   @IsString()
@@ -27,7 +28,16 @@ export class UpdateFeedbackDto extends PartialType(CreateFeedbackInput) {
   seen?: boolean;
 }
 
-export class FeedbackQuery extends PaginationInput {
+export class FeedbackQuery extends PaginationInputs {
   @IsOptional()
   seen?: boolean = false;
 }
+export const FeedbackFilter: (keyof FeedBack)[] = [
+  'count',
+  '_id',
+  'userName',
+  'userId',
+  'email',
+  'read',
+  'body',
+];

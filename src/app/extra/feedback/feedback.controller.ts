@@ -1,3 +1,4 @@
+import { RoleType } from '@/common/types/enums';
 import {
   Body,
   Controller,
@@ -11,18 +12,23 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { PaginatedRes, UserFromToken } from '../../../common/types/common.types.dto';
+import {
+  CreateFeedbackInput,
+  FeedbackFilter,
+  FeedbackQuery,
+  UpdateFeedbackDto,
+} from './dto/feedback.dto';
 import { FeedbackService } from './feedback.service';
-import { CreateFeedbackInput, FeedbackQuery, UpdateFeedbackDto } from './dto/feedback.dto';
-import { pagiKeys, PaginatedRes, RoleType, UserFromToken } from '../../../common/common.types.dto';
 
-import { FeedBack } from './entities/feedback.entity';
+import { Endpoint } from '@/common/constants/model.names';
+import { errCode } from '@/common/constants/response.consts';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
-import { errCode } from '@/common/constants/response.consts';
-import { UserService } from '../../account/users';
-import { Request } from 'express';
-import { Endpoint } from '@/common/constants/model.consts';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { UserService } from '../../account/users';
+import { FeedBack } from './entities/feedback.entity';
 
 @Controller(Endpoint.Feedback)
 @ApiTags(Endpoint.Feedback)
@@ -73,7 +79,11 @@ export class FeedbackController {
   @Get()
   @Roles(RoleType.ADMIN)
   async filterAndPaginate(@Query() inputQuery: FeedbackQuery): Promise<PaginatedRes<FeedBack>> {
-    const res = await this.feedbackService.searchManyAndPaginate(['title'], inputQuery);
+    const res = await this.feedbackService.searchManyAndPaginate(
+      ['title'],
+      inputQuery,
+      FeedbackFilter,
+    );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }

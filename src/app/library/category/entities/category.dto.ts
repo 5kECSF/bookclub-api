@@ -1,11 +1,17 @@
 import { ApiHideProperty, PartialType, PickType } from '@nestjs/swagger';
-import { PaginationInput, RoleType } from '../category.dependencies';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { OmitType } from '@nestjs/swagger';
-import { Category } from './category.entity';
-import { EmbedUpload } from '@/app/upload/upload.entity';
 
-export class CategoryInput extends PickType(Category, ['name', 'desc', 'restricted', 'fileId']) {
+import { EmbedUpload } from '@/app/upload/upload.entity';
+import { PaginationInputs } from '@/common/types/common.types.dto';
+import { OmitType } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
+import { Category } from './category.entity';
+export class CategoryInput extends PickType(Category, [
+  'name',
+  'desc',
+  'restricted',
+  'fileId',
+  'status',
+]) {
   @IsString()
   @IsOptional()
   @ApiHideProperty()
@@ -18,7 +24,7 @@ export class CategoryInput extends PickType(Category, ['name', 'desc', 'restrict
 
 export class UpdateCategoryDto extends PartialType(OmitType(CategoryInput, ['slug'])) {}
 
-export class CategoryQuery extends PaginationInput {
+export class CategoryQuery extends PaginationInputs {
   @IsOptional()
   searchText?: string;
 
@@ -29,3 +35,4 @@ export class CategoryQuery extends PaginationInput {
   @IsOptional()
   sort?: string = 'count';
 }
+export const CategoryFilter: (keyof Category)[] = ['name', 'status', 'fileId', '_id'];

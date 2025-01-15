@@ -1,8 +1,8 @@
 import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
-import { PaginationInput } from '../imports.borrow';
-import { IsOptional, IsString } from 'class-validator';
-import { Borrow } from './borrow.entity';
 
+import { PaginationInputs } from '@/common/types/common.types.dto';
+import { IsOptional } from 'class-validator';
+import { Borrow } from './borrow.entity';
 export class CreateBorrowInput extends OmitType(Borrow, ['_id']) {}
 
 export class RequestBorrowInput extends PickType(Borrow, ['bookId', 'userName', 'bookName']) {
@@ -13,7 +13,7 @@ export class RequestBorrowInput extends PickType(Borrow, ['bookId', 'userName', 
 
 export class UpdateDto extends PartialType(CreateBorrowInput) {}
 
-export class BorrowQuery extends PaginationInput {
+export class BorrowQuery extends PaginationInputs {
   @IsOptional()
   searchText?: string;
 
@@ -21,3 +21,16 @@ export class BorrowQuery extends PaginationInput {
   @IsOptional()
   sort?: string = 'count';
 }
+export const BorrowFilter: (keyof Borrow)[] = [
+  'bookId',
+  'bookName',
+  'status',
+  '_id',
+  'dueDate',
+  'instanceId',
+  'instanceUid',
+  'returnedDate',
+  'takenDate',
+  'userId',
+  'userName',
+];

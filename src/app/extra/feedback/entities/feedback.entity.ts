@@ -1,8 +1,7 @@
-import mongoose, { Document, Types } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+import { Document } from 'mongoose';
 
-import { User } from '../../../account/users';
 
 @Schema()
 export class FeedBack {
@@ -31,7 +30,7 @@ export class FeedBack {
   read: boolean;
 }
 
-export type Feedback = FeedBack & Document;
+export type FeedBackDocument = FeedBack & Document;
 export const FeedbackSchema = SchemaFactory.createForClass(FeedBack);
 // Create indexes
 FeedbackSchema.index({ title: 'text' });

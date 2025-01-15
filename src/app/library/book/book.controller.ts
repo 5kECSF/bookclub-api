@@ -1,4 +1,5 @@
-import { PaginatedRes, RoleType, UserFromToken } from '@/common/common.types.dto';
+import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import {
   Body,
   Controller,
@@ -18,9 +19,10 @@ import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
 
 import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
-import { Endpoint } from '@/common/constants/model.consts';
+import { Endpoint } from '@/common/constants/model.names';
 import { Resp } from '@/common/constants/return.consts';
-import { ColorEnums } from '@/common/logger';
+import { ColorEnums, logTrace } from '@/common/logger';
+import { ItemStatus } from '@/common/types/enums';
 import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
@@ -28,8 +30,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
-import { Book, BookFilter, ItemStatus } from './entities/book.entity';
-import { logTrace } from './imports.book';
+import { Book, BookFilter } from './entities/book.entity';
+
 import { SequenceService } from './sequence/sequence.entity';
 
 export const JsonRes = (res: Response, resp: Resp<any>) => {

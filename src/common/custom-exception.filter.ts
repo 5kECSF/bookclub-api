@@ -12,7 +12,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
     try {
       const status = exception.getStatus();
       const respMessage = exception.getResponse();
-      logTrace(status, exception.getResponse(), ColorEnums.FgGreen);
+      logTrace(status, exception.getResponse(), ColorEnums.FgGreen, 3);
       if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
         // Customize your error message here
         response.status(status).json({ message: errorMessage });

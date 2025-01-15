@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 
 import { Notification, NotificationDocument } from './entities/notification.entity';
 
-import { MongoGenericRepository } from './notification.dependencies';
+import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import mongoose, { Model } from 'mongoose';
 
 @Injectable()

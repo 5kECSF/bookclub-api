@@ -3,7 +3,7 @@ import { IntegrationTestManager } from '../../../../../../test/setup/Integration
 
 import { mockAuthor, mockUpdateAuthor } from './author.stub';
 // import { logTrace } from '../../../../common/logger';
-import { Endpoint } from '../../../../../common/constants/model.consts';
+import { Endpoint } from '../../../../../common/constants/model.names';
 
 describe('authors Controller (e2e)', () => {
   // let app;

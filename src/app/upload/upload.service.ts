@@ -4,9 +4,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UpdateBody, Upload, UploadDocument, UploadModel, UploadStatus } from './upload.entity';
 
 import { FileProviderService } from '@/app/upload/file-provider.service';
-import { RoleType, UserFromToken } from '@/common/common.types.dto';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { logTrace } from '@/common/logger';
+import { UserFromToken } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 import { generateUniqName, removeSubArr } from '@/common/util/functions';
 import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import { Model } from 'mongoose';

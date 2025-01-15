@@ -5,5 +5,5 @@
   
 ## validation code
 
-- "phoneOrEmail": "a@b.co",
+- "phoneOrEmail": "<a@b.co>",
 - "code": "0000"

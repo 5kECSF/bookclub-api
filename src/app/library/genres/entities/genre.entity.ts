@@ -1,12 +1,11 @@
-import { PaginationInput } from '@/app/library/genres/imports.genre';
 import { EmbedUpload } from '@/app/upload/upload.entity';
+import { PaginationInputs } from '@/common/types/common.types.dto';
+import { ItemStatus } from '@/common/types/enums';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiHideProperty, ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
-import { ItemStatus } from '../../book/entities/book.entity';
-
 @Schema({ timestamps: true, versionKey: false })
 export class Genre {
   @ApiProperty({ name: 'id' })
@@ -29,7 +28,7 @@ export class Genre {
   @Prop({ type: Number, required: false, default: 0 })
   count: number;
 
-  //===========================   File Related ===============
+  // ===============   File Related ===============
 
   @Prop({ type: String })
   coverImage?: string;
@@ -75,11 +74,20 @@ export class CreateGenreInput extends PickType(Genre, [
   upload?: EmbedUpload;
 }
 
-export const GenreFilter: (keyof Genre)[] = ['count', 'name', 'fileId', 'restricted', '_id'];
+export const GenreFilter: (keyof Genre)[] = [
+  'count',
+  'status',
+  'name',
+  'fileId',
+  'restricted',
+  '_id',
+];
 
 export class UpdateDto extends PartialType(OmitType(CreateGenreInput, ['slug'])) {}
 
-export class GenreQuery extends PaginationInput {
+export class GenreQuery extends PaginationInputs {
+  status: ItemStatus;
+
   @IsOptional()
   searchText?: string;
 

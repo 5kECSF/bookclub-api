@@ -1,9 +1,8 @@
-import { PaginationInput } from '@/app/extra/feedback/feedback.dependencies';
+import { PaginationInputs } from '@/common/types/common.types.dto';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
-
 export enum UploadModel {
   Category = 'Category',
   Genre = 'Genre',
@@ -138,7 +137,7 @@ export class UpdateBody {
   removedImages?: string[];
 }
 
-export class UploadQuery extends PaginationInput {
+export class UploadQuery extends PaginationInputs {
   @IsOptional()
   fileName?: string;
 
@@ -151,3 +150,17 @@ export class UploadQuery extends PaginationInput {
   @IsOptional()
   userId?: string;
 }
+
+export const UploadFilter: (keyof Upload)[] = [
+  'fileName',
+  'model',
+  'refId',
+  'hash',
+  'isPrimary',
+  'pathId',
+  'uid',
+  'url',
+  'userId',
+  'status',
+  '_id',
+];

@@ -2,9 +2,12 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IncomingMessage } from 'http';
 //crypto
-import { CustomJwtService, RoleType, UserFromToken } from './guards.dependencies';
+
 
 import { ROLES_KEY } from './roles.decorators';
+import { CustomJwtService } from '../crypto/jwt.service';
+import { UserFromToken } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
 
 // this Guard is for non Graphql endpoints - this  verifies the `jwt Token & the Roles`  This is Enough for our app
 @Injectable()

@@ -1,8 +1,8 @@
-import { UserFromToken } from '@/common/common.types.dto';
 import { EnvVar } from '@/common/config/config.instances';
-import { Endpoint } from '@/common/constants/model.consts';
+import { Endpoint } from '@/common/constants/model.names';
 import { SystemConst } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
+import { UserFromToken } from '@/common/types/common.types.dto';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import {
   Body,

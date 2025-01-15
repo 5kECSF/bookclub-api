@@ -5,6 +5,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { EmbedUpload } from '@/app/upload/upload.entity';
+import { ItemStatus } from '@/common/types/enums';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export enum BookLanguage {
@@ -13,12 +14,6 @@ export enum BookLanguage {
   AffanOrommo = 'AfanOromo',
   Tigrna = 'Tigrna',
 }
-export enum ItemStatus {
-  Active = 'active',
-  Draft = 'draft',
-  Deactivated = 'deactivated',
-}
-
 @Schema({ timestamps: true })
 export class Book {
   @ApiProperty({ name: 'id' })

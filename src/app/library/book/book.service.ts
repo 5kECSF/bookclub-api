@@ -4,10 +4,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { Book, BookDocument } from './entities/book.entity';
-import { logTrace, MongoGenericRepository } from './imports.book';
 
-import { UserService } from '../../account/users';
+import { logTrace } from '@/common/logger';
+import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import { UpdateResponse } from '../../../providers/database/base/mongo.entity';
+import { UserService } from '../../account/users';
 
 @Injectable()
 export class BookService extends MongoGenericRepository<Book> {
@@ -16,6 +17,10 @@ export class BookService extends MongoGenericRepository<Book> {
     private usersService: UserService,
   ) {
     super(bookModel);
+  }
+
+  public async CountCtg(categoryId: string) {
+    // const bookCnt = await this.co
   }
 
   public async Like(bookId: string, userId) {

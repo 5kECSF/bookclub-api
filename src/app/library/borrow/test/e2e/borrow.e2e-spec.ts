@@ -3,7 +3,7 @@ import { IntegrationTestManager } from '../../../../../../test/setup/Integration
 
 import { mockBorrow, mockUpdateBorrow } from './borrow.stub';
 // import { logTrace } from '../../../../common/logger';
-import { Endpoint } from '../../../../../common/constants/model.consts';
+import { Endpoint } from '../../../../../common/constants/model.names';
 
 describe('borrows Controller (e2e)', () => {
   // let app;

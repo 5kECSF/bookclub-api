@@ -1,10 +1,10 @@
 import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 // import { IGenericRepository } from './IGenericRepo';
-import { pagiKeys, PaginatedRes } from '@/common/common.types.dto';
 import { ErrConst } from '@/common/constants';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
-import { pickKeys } from '@/common/util/util';
+import { pagiKeys, PaginatedRes } from '@/common/types/common.types.dto';
+import { pickKeys } from '@/common/util/object-functions';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
 
 export abstract class MongoGenericRepository<T> {
@@ -46,9 +46,9 @@ export abstract class MongoGenericRepository<T> {
   // }
 
   public async searchManyAndPaginate(
-    fieldsToSearch: string[],
+    fieldsToSearch: (keyof T)[],
     filter: FilterQuery<T>,
-    keysToFilter: string[] = [],
+    keysToFilter: string[],
     additionalQuery: Record<string, any> = {},
   ): Promise<Resp<PaginatedRes<T>>> {
     try {
@@ -109,6 +109,11 @@ export abstract class MongoGenericRepository<T> {
       logTrace(`${this._repository.modelName}--findManyError=`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);
     }
+  }
+
+  async countDoc(filter: FilterQuery<T>): Promise<Resp<number>> {
+    const count = await this._repository.countDocuments(filter);
+    return Succeed(count);
   }
 
   //-----  find One Query

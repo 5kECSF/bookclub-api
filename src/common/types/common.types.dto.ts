@@ -1,5 +1,6 @@
 import { IsOptional } from 'class-validator';
 import { Request, Response } from 'express';
+import { RoleType } from './enums';
 
 export interface HttpContext {
   req: Request;
@@ -28,12 +29,6 @@ export class PaginationInputs {
 
   @IsOptional()
   sortOrder?: SortOrder = 1;
-}
-
-export enum RoleType {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  KID = 'KID',
 }
 
 export class UserFromToken {

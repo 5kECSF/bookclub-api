@@ -9,17 +9,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { FileProviderService } from '@/app/upload/file-provider.service';
+import { ApiSingleFiltered } from '@/app/upload/fileParser';
+import { UploadService } from '@/app/upload/upload.service';
+import { Endpoint } from '@/common/constants/model.names';
+import { MaxImageSize } from '@/common/constants/system.consts';
+import { UserFromToken } from '@/common/types/common.types.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { User } from '../users';
 import { UpdateMeDto } from '../users/dto/user.mut.dto';
 import { JwtGuardPr, UserServicePr } from './dependencies.profile';
-import { Express, Request } from 'express';
-import { User } from '../users';
-import { UserFromToken } from '@/common/common.types.dto';
-import { Endpoint } from '@/common/constants/model.consts';
-import { ApiSingleFiltered } from '@/app/upload/fileParser';
-import { MaxImageSize } from '@/common/constants/system.consts';
-import { FileProviderService } from '@/app/upload/file-provider.service';
-import { UploadService } from '@/app/upload/upload.service';
-import { ApiTags } from '@nestjs/swagger';
 
 @Controller(Endpoint.Profile)
 @ApiTags(Endpoint.Profile)

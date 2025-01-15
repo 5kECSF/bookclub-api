@@ -2,13 +2,13 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 // import { Request } from 'express';
 
 //- users
-import { UserFromToken } from '@/common/common.types.dto';
 import { logTrace } from '@/common/logger';
+import { UserFromToken } from '@/common/types/common.types.dto';
 import { CustomJwtService } from '@/providers/crypto/jwt.service';
 import { ErrConst } from '../../../common/constants';
 import { VerificationService } from '../../../providers/verification';
 
-import { removeKeys } from '@/common/util/util';
+import { removeKeys } from '@/common/util/object-functions';
 import { CryptoService } from '@/providers/crypto/crypto.service';
 import { RegisterUserInput, User, UserRes, UserService } from '../users';
 

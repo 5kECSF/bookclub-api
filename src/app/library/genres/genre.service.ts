@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 
 import { Genre, GenreDocument } from './entities/genre.entity';
 
-import { MongoGenericRepository } from './imports.genre';
+import { MongoGenericRepository } from '../../../providers/database/base/mongo.base.repo';
 import mongoose, { Model } from 'mongoose';
 
 @Injectable()

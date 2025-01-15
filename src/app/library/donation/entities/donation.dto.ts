@@ -1,6 +1,6 @@
 import { ApiHideProperty, PartialType, PickType } from '@nestjs/swagger';
 
-import { PaginationInputs } from '@/common/common.types.dto';
+import { PaginationInputs } from '@/common/types/common.types.dto';
 import { IsOptional } from 'class-validator';
 
 import { bookStatus, Donation } from './donation.entity';
@@ -47,3 +47,16 @@ export class DonationQuery extends PaginationInputs {
   @IsOptional()
   status: bookStatus;
 }
+
+export const DonationFilter: (keyof Donation)[] = [
+  'bookId',
+  'bookName',
+  'borrowerId',
+  'borrowerName',
+  'donorId',
+  'donorName',
+  'instanceNo',
+  'status',
+
+  '_id',
+];
