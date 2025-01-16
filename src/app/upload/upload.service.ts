@@ -92,6 +92,8 @@ export class UploadService extends MongoGenericRepository<Upload> {
     const oldFile = await this.findOne(query);
     if (!oldFile.ok) return FAIL(oldFile.errMessage, oldFile.code);
     // Delete The old Image File
+    if (!oldFile.body.fileName || oldFile.body.fileName.length < 3)
+      return FAIL('fileName Not found', 400);
     const resp = await this.fileService.IDeleteImageByPrefix(oldFile.body.fileName);
     if (!resp.ok) return FAIL(resp.errMessage, resp.code);
     // Create a new image, we dont care about the name
@@ -296,12 +298,31 @@ export class UploadService extends MongoGenericRepository<Upload> {
     if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
   }
 
-  public async deleteFileById(id: string) {
+  public async deleteFileByIdPrefix(id: string) {
     const file = await this.findById(id);
     if (!file.ok) throw new HttpException(file.errMessage, file.code);
 
     const resp = await this.fileService.IDeleteImageByPrefix(file.body.uid);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    const upload = await this.deleteMany({ uid: file.body.uid });
+    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+    return upload;
+  }
+
+  public async deleteFileById(id: string) {
+    const file = await this.findById(id);
+    if (!file.ok) throw new HttpException(file.errMessage, file.code);
+
+    const resp = await this.fileService.IDeleteImageByName(file.body.fileName);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    if (file?.body?.images && file.body.images.length > 0) {
+      for (const img of file.body.images) {
+        const resp = await this.fileService.IDeleteImageByName(img);
+        if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+      }
+    }
 
     const upload = await this.deleteMany({ uid: file.body.uid });
     if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);

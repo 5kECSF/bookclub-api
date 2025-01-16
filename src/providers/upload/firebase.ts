@@ -1,9 +1,9 @@
+import { UploadDto } from '@/app/upload/upload.entity';
+import { Injectable } from '@nestjs/common';
 import admin from 'firebase-admin';
 import { EnvVar } from '../../common/config/config.instances';
 import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
-import { Injectable } from '@nestjs/common';
-import { UploadDto } from '@/app/upload/upload.entity';
 
 const fbConfig = {
   type: EnvVar.getInstance.FIREBASE_TYPE,
@@ -70,6 +70,19 @@ export class FirebaseService implements FileServiceInterface {
     }
   }
 
+  async deleteImageByFileName(fileName: string): Promise<Resp<boolean>> {
+    try {
+      // Reference the specific file using its name
+      const file = storageRef.file(fileName);
+      // Delete the file
+      await file.delete();
+      return Succeed(true);
+    } catch (e) {
+      console.error(`Failed to delete file: ${fileName}`, e.message);
+      return FAIL('failed to delete firebase image');
+    }
+  }
+
   async firebaseVerifyToken(idToken: string): Promise<Resp<any>> {
     try {
       const decodedToken = await admin.auth().verifyIdToken(idToken);
@@ -86,6 +99,7 @@ export interface FileServiceInterface {
   firebaseVerifyToken(token: string): Promise<Resp<any>>;
 
   deleteImageByPrefix(id: string): Promise<Resp<boolean>>;
+  deleteImageByFileName(id: string): Promise<Resp<boolean>>;
 
   UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>>;
 }
@@ -97,6 +111,10 @@ export class MockFile implements FileServiceInterface {
   }
 
   deleteImageByPrefix(id: string): Promise<Resp<boolean>> {
+    return Promise.resolve(undefined);
+  }
+
+  deleteImageByFileName(id: string): Promise<Resp<boolean>> {
     return Promise.resolve(undefined);
   }
 

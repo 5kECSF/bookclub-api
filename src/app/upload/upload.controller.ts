@@ -29,10 +29,10 @@ import { MaxImageSize } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
 import { RoleType } from '@/common/types/enums';
+import { JsonRes, ThrowRes } from '@/common/util/responseFunctions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { ToBeAdded } from '@/providers/upload/firebase';
 import { ApiTags } from '@nestjs/swagger';
-import { JsonRes, ThrowRes } from '../library/book/book.controller';
 import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 
 @Controller(Endpoint.File)

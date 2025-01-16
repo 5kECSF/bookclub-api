@@ -20,8 +20,7 @@ import { BookQuery, CreateBookInput, UpdateBookDto } from './entities/book.dto';
 import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.names';
-import { Resp } from '@/common/constants/return.consts';
-import { ColorEnums, logTrace } from '@/common/logger';
+import { logTrace } from '@/common/logger';
 import { ItemStatus } from '@/common/types/enums';
 import { generateSlug } from '@/common/util/functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
@@ -32,19 +31,9 @@ import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
 import { Book, BookFilter } from './entities/book.entity';
 
+import { ThrowRes } from '@/common/util/responseFunctions';
 import { SequenceService } from './sequence/sequence.entity';
 
-export const JsonRes = (res: Response, resp: Resp<any>) => {
-  logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3);
-  return res.status(resp.code).json(resp);
-};
-
-export function ThrowRes(resp: Resp<any>, log = true) {
-  if (log) {
-    logTrace(resp.code, resp.message, ColorEnums.FgGreen, 3);
-  }
-  throw new HttpException(resp.message, resp.code);
-}
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
 export class BookController {
@@ -160,7 +149,7 @@ export class BookController {
     //TODO: iterate and remove all the files
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileById(res.body.fileId);
+    const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
     if (!result.ok) throw new HttpException(result.errMessage, result.code);
 
     await Promise.all([

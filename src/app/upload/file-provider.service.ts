@@ -38,8 +38,13 @@ export class FileProviderService {
     return this.fileUploadProvider.UploadOne(fName, res.body);
   }
 
-  public async IDeleteImageByPrefix(id): Promise<Resp<any>> {
+  public async IDeleteImageByPrefix(id: string): Promise<Resp<any>> {
+    if (!id || id.length < 3) return FAIL('file not defined', 400);
     return this.fileUploadProvider.deleteImageByPrefix(id);
+  }
+
+  public async IDeleteImageByName(id): Promise<Resp<any>> {
+    return this.fileUploadProvider.deleteImageByFileName(id);
   }
 
   // resizing image

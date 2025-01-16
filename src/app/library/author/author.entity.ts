@@ -20,7 +20,7 @@ export class Author {
   @IsOptional()
   @IsString()
   @Prop({ type: String })
-  info?: string;
+  bio?: string;
 
   @Prop({ type: String, unique: true, sparse: true })
   slug: string;
