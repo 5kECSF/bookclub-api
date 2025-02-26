@@ -40,21 +40,6 @@ import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 export class UploadController {
   constructor(private uploadService: UploadService) {}
 
-  //Upload file with out the fileName from the user
-  @UseGuards(JwtGuard)
-  @Post('single')
-  @ApiSingleFiltered('file', true, MaxImageSize)
-  async createSingle(
-    @Req() req: Request,
-    @UploadedFile(ParseFile) file: Express.Multer.File,
-  ): Promise<Upload> {
-    const user: UserFromToken = req['user'];
-    logTrace('user is', user);
-    const img = await this.uploadService.UploadSingle(file, user?._id);
-    if (!img.ok) ThrowRes(img);
-    return img.body;
-  }
-
   //Upload file by getting the filesId from the user
   @Post(':id')
   @ApiSingleFiltered('file', true, MaxImageSize)
@@ -124,23 +109,6 @@ export class UploadController {
 
   //===============================     Muti Operations ==========
 
-  // @Roles(RoleType.ADMIN)
-  @UseGuards(JwtGuard)
-  @Post('multi')
-  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
-  async createWithCover(
-    @Req() req: Request,
-    @UploadedFiles()
-    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
-  ) {
-    const user: UserFromToken = req['user'];
-    const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
-    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
-    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
-
-    return imageObj.body;
-  }
-
   //Upload many files by getting the filesId from the user
   @UseGuards(JwtGuard)
   @Post('multi/:id')
@@ -203,5 +171,39 @@ export class UploadController {
       urls.push(`${ToBeAdded}${img}?alt=media`);
     }
     return urls;
+  }
+
+  // ===========================    UNUSED =====================
+
+  //Upload file with out the fileName from the user
+  @UseGuards(JwtGuard)
+  @Post('single')
+  @ApiSingleFiltered('file', true, MaxImageSize)
+  async createSingle(
+    @Req() req: Request,
+    @UploadedFile(ParseFile) file: Express.Multer.File,
+  ): Promise<Upload> {
+    const user: UserFromToken = req['user'];
+    logTrace('user is', user);
+    const img = await this.uploadService.UploadSingle(file, user?._id);
+    if (!img.ok) ThrowRes(img);
+    return img.body;
+  }
+
+  // @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
+  @Post('multi')
+  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
+  async createWithCover(
+    @Req() req: Request,
+    @UploadedFiles()
+    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
+  ) {
+    const user: UserFromToken = req['user'];
+    const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
+    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
+    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
+
+    return imageObj.body;
   }
 }

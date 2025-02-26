@@ -47,6 +47,8 @@
 ## integration tasks
 
 - [] integrate category api
+- [] integrate genere api
+- [] integrate author api
 - [] integrate book api
 
 ## book club

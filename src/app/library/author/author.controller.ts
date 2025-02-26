@@ -12,17 +12,17 @@ import { ThrowRes } from '@/common/util/responseFunctions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpException,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpException,
+    Param,
+    Patch,
+    Post,
+    Query,
+    Req,
+    UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Author, AuthorFilter, AuthorQuery, CreateAuthorInput, UpdateDto } from './author.entity';
@@ -40,7 +40,7 @@ export class AuthorController {
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CreateAuthorInput): Promise<Author> {
     const user: UserFromToken = req['user'];
-    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Genre);
+    const draftImg = await this.uploadService.CreateEmptyDraftImg(user._id, UploadModel.Author);
     if (!draftImg.ok) ThrowRes(draftImg);
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;

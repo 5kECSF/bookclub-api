@@ -187,7 +187,7 @@ export class AuthService {
     const userToLogin = await this.usersService.activeUserExists(info);
     logTrace('usr', userToLogin);
     if (!userToLogin) return null;
-    logTrace('usere exis', userToLogin);
+    // logTrace('usere exis', userToLogin);
     // Check password hash
     const pwdHashMatch = await this.cryptoService.verifyHash(userToLogin.password, password);
     if (!pwdHashMatch) return null;

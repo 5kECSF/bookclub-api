@@ -21,28 +21,10 @@ export class UploadService extends MongoGenericRepository<Upload> {
     super(uploadModel);
   }
 
-  //upload single takes file, the uid, userId then upload the file then save it to database
-  public async UploadSingle(
-    file: Express.Multer.File,
-    userId: string,
-    uid = '', //the uid for multi image upload function
-    ctr = 0, //the counter for multi image upload function
-  ): Promise<Resp<Upload>> {
-    if (!file) return FAIL('File Must not be empty', 400);
-    const imgName = generateUniqName(file.originalname, uid, ctr);
-    const uploaded = await this.fileService.IUploadSingleImage(file.buffer, imgName.name);
-    if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+  //===========================   Start of draft model =========
 
-    const upload = await this.createOne({ ...uploaded.body, userId, uid: imgName.uid });
-    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
-
-    // logTrace('val', data);
-    // logTrace('val', uploaded.val);
-    return Succeed(upload.body);
-  }
-
-  //upload single takes file, the uid, userId then upload the file then save it to database
-  public async CreateDraftImg(userId: string, model: UploadModel): Promise<Resp<Upload>> {
+  //CreateDraftImg creates empty database object for that model
+  public async CreateEmptyDraftImg(userId: string, model: UploadModel): Promise<Resp<Upload>> {
     const imgName = generateUniqName('file.ext');
 
     const upload = await this.createOne({
@@ -78,8 +60,73 @@ export class UploadService extends MongoGenericRepository<Upload> {
       userId,
     });
     if (!res.ok) return FAIL(res.errMessage, res.code);
-    // upload.val.fullImg = uploaded.val.fullImg;
+    //TODO update the status of the model here
+
     return Succeed(res.body);
+  }
+
+  /**
+   * this is used by model one that uploads an image & multiple images
+   * @param files
+   * @param userId
+   */
+  public async UploadDraftWithCover(
+    files: {
+      cover?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
+    fileId: string,
+    userId: string,
+  ): Promise<Resp<Upload>> {
+    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
+    const draftImg = await this.findOne({
+      _id: fileId,
+      userId: userId,
+      status: UploadStatus.Draft,
+    });
+    if (!draftImg.ok) return FAIL('Draft Image Not Found', draftImg.code);
+    let imgs = [];
+    if (files.images) {
+      const images = await this.uploadManyWithNewNames(files.images, userId, draftImg.body.uid);
+      if (!images.ok) return FAIL(images.errMessage, images.code);
+      imgs = images.body;
+      // single = await this.updateById(single.body._id, { images: images.body });
+      // single.body.images = images.body;
+    }
+    const uploaded = await this.fileService.IUploadWithNewName(files.cover[0]);
+    if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+    const res = await this.updateById(fileId, {
+      ...uploaded.body,
+      status: UploadStatus.Uploaded,
+      userId,
+      images: imgs,
+    });
+    if (!res.ok) return FAIL(res.errMessage, res.code);
+    //TODO update the status of the model here
+
+    return Succeed(res.body);
+  }
+
+  //=  ==========================   End of draft model =========
+
+  //upload single takes (file, the uid, userId) then upload the file then save it to database
+  public async UploadSingle(
+    file: Express.Multer.File,
+    userId: string,
+    uid = '', //the uid for multi image upload function
+    ctr = 0, //the counter for multi image upload function
+  ): Promise<Resp<Upload>> {
+    if (!file) return FAIL('File Must not be empty', 400);
+    const imgName = generateUniqName(file.originalname, uid, ctr);
+    const uploaded = await this.fileService.IUploadSingleImage(file.buffer, imgName.name);
+    if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+
+    const upload = await this.createOne({ ...uploaded.body, userId, uid: imgName.uid });
+    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
+
+    // logTrace('val', data);
+    // logTrace('val', uploaded.val);
+    return Succeed(upload.body);
   }
 
   public async UpdateSingle(
@@ -111,59 +158,6 @@ export class UploadService extends MongoGenericRepository<Upload> {
   }
 
   //======================================   Multi Images ===============
-
-  /**
-   * this is used by model one that uploads an image & multiple images
-   * @param files
-   * @param userId
-   */
-  public async UploadWithCover(
-    files: {
-      cover?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
-    userId: string,
-  ): Promise<Resp<Upload>> {
-    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
-
-    const single = await this.UploadSingle(files.cover[0], userId);
-    if (!single.ok) return single;
-    logTrace('upload single finished', single.body._id);
-    if (files.images) {
-      const images = await this.uploadManyWithNewNames(files.images, userId, single.body.uid);
-      if (!images.ok) return FAIL(images.errMessage, images.code);
-      await this.updateById(single.body._id, { images: images.body });
-      single.body.images = images.body;
-    }
-    return Succeed(single.body);
-  }
-
-  /**
-   * this is used by model one that uploads an image & multiple images
-   * @param files
-   * @param userId
-   */
-  public async UploadDraftWithCover(
-    files: {
-      cover?: Express.Multer.File[];
-      images?: Express.Multer.File[];
-    },
-    fileId: string,
-    userId: string,
-  ): Promise<Resp<Upload>> {
-    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
-
-    let single = await this.UploadDraftImg(files.cover[0], fileId, userId);
-    if (!single.ok) return single;
-    logTrace('upload single finished', single.body._id);
-    if (files.images) {
-      const images = await this.uploadManyWithNewNames(files.images, userId, single.body.uid);
-      if (!images.ok) return FAIL(images.errMessage, images.code);
-      single = await this.updateById(single.body._id, { images: images.body });
-      // single.body.images = images.body;
-    }
-    return Succeed(single.body);
-  }
 
   /**
    * this is used by model one that uploads an image & multiple images
@@ -253,6 +247,40 @@ export class UploadService extends MongoGenericRepository<Upload> {
     return imageObj;
   }
 
+  //Finds a file via a query and delete the imgData and all related sub images
+  public async deleteFileByQuery(query) {
+    const file = await this.findOne(query);
+    if (!file.ok) return FAIL(file.errMessage, file.code);
+
+    if (file?.body?.images && file.body.images.length > 0) {
+      for (const img of file.body.images) {
+        const resp = await this.fileService.IDeleteImageByPrefix(img);
+        if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+      }
+    }
+    const resp = await this.fileService.IDeleteImageByPrefix(file.body.fileName);
+    if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+
+    const upload = await this.findByIdAndDelete(file.body._id);
+    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
+    return upload;
+  }
+
+  public async deleteFileByIdPrefix(id: string) {
+    const file = await this.findById(id);
+    if (!file.ok) throw new HttpException(file.errMessage, file.code);
+
+    const resp = await this.fileService.IDeleteImageByPrefix(file.body.uid);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    const upload = await this.deleteMany({ uid: file.body.uid });
+    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+    return upload;
+  }
+
+  //============================  Helper Functions ================
+  //==============================================================
+
   public async uploadManyWithNewNames(
     files: Express.Multer.File[],
     userId: string,
@@ -273,22 +301,33 @@ export class UploadService extends MongoGenericRepository<Upload> {
     }
   }
 
-  public async deleteFileByQuery(query) {
-    const file = await this.findOne(query);
-    if (!file.ok) return FAIL(file.errMessage, file.code);
+  //============================   UNUSED  ================
+  //==============================================================
 
-    if (file?.body?.images && file.body.images.length > 0) {
-      for (const img of file.body.images) {
-        const resp = await this.fileService.IDeleteImageByPrefix(img);
-        if (!resp.ok) return FAIL(resp.errMessage, resp.code);
-      }
+  /**
+   * this is used by model one that uploads an image & multiple images: create a New ImgModel
+   * @param files
+   * @param userId
+   */
+  public async UploadWithCover(
+    files: {
+      cover?: Express.Multer.File[];
+      images?: Express.Multer.File[];
+    },
+    userId: string,
+  ): Promise<Resp<Upload>> {
+    if (!files.cover || files.cover.length < 1) return FAIL('Image Must not be empty');
+
+    const single = await this.UploadSingle(files.cover[0], userId);
+    if (!single.ok) return single;
+    logTrace('upload single finished', single.body._id);
+    if (files.images) {
+      const images = await this.uploadManyWithNewNames(files.images, userId, single.body.uid);
+      if (!images.ok) return FAIL(images.errMessage, images.code);
+      await this.updateById(single.body._id, { images: images.body });
+      single.body.images = images.body;
     }
-    const resp = await this.fileService.IDeleteImageByPrefix(file.body.fileName);
-    if (!resp.ok) return FAIL(resp.errMessage, resp.code);
-
-    const upload = await this.findByIdAndDelete(file.body._id);
-    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
-    return upload;
+    return Succeed(single.body);
   }
 
   public async deleteByUid(uid: string) {
@@ -296,18 +335,6 @@ export class UploadService extends MongoGenericRepository<Upload> {
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const upload = await this.deleteMany({ uid });
     if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
-  }
-
-  public async deleteFileByIdPrefix(id: string) {
-    const file = await this.findById(id);
-    if (!file.ok) throw new HttpException(file.errMessage, file.code);
-
-    const resp = await this.fileService.IDeleteImageByPrefix(file.body.uid);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-
-    const upload = await this.deleteMany({ uid: file.body.uid });
-    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
-    return upload;
   }
 
   public async deleteFileById(id: string) {

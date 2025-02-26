@@ -1,24 +1,24 @@
 import { ItemStatus, RoleType } from '@/common/types/enums';
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpException,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpException,
+    Param,
+    Patch,
+    Post,
+    Query,
+    Req,
+    UseGuards,
 } from '@nestjs/common';
 import { pagiKeys, PaginatedRes, UserFromToken } from '../../../common/types/common.types.dto';
 import { CategoryService } from './category.service';
 import {
-  CategoryFilter,
-  CategoryInput,
-  CategoryQuery,
-  UpdateCategoryDto,
+    CategoryFilter,
+    CategoryInput,
+    CategoryQuery,
+    UpdateCategoryDto,
 } from './entities/category.dto';
 
 import { Endpoint } from '@/common/constants/model.names';
@@ -46,7 +46,7 @@ export class CategoryController {
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CategoryInput): Promise<Category> {
     const user: UserFromToken = req['user'];
-    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Genre);
+    const draftImg = await this.uploadService.CreateEmptyDraftImg(user._id, UploadModel.Category);
     if (!draftImg.ok) ThrowRes(draftImg);
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;

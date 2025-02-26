@@ -50,7 +50,7 @@ export class BookController {
   @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
-    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Book);
+    const draftImg = await this.uploadService.CreateEmptyDraftImg(user._id, UploadModel.Book);
     if (!draftImg.ok) ThrowRes(draftImg);
     createDto.slug = generateSlug(createDto.title);
     createDto.fileId = draftImg.body._id.toString();

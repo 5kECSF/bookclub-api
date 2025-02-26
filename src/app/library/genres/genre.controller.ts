@@ -43,7 +43,7 @@ export class GenreController {
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
     const user: UserFromToken = req['user'];
-    const draftImg = await this.uploadService.CreateDraftImg(user._id, UploadModel.Genre);
+    const draftImg = await this.uploadService.CreateEmptyDraftImg(user._id, UploadModel.Genre);
     if (!draftImg.ok) ThrowRes(draftImg);
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;
