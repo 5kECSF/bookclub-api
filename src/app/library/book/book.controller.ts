@@ -101,7 +101,7 @@ export class BookController {
     //===============>>     TODO: update this using count, to make it always accurate
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
-        { _id: resp.body.categoryId },
+        { name: resp.body.categoryName },
         { $inc: { count: 1 } },
       ),
       this.genreService.updateMany({ name: { $in: resp.body.genres } }, { $inc: { count: 1 } }),
@@ -154,7 +154,7 @@ export class BookController {
 
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(
-        { _id: res.body.categoryId },
+        { name: res.body.categoryName },
         { $inc: { count: -1 } },
       ),
       this.genreService.updateMany({ name: { $in: res.body.genres } }, { $inc: { count: -1 } }),

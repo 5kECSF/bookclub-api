@@ -42,7 +42,7 @@ export class Book {
   @IsNotEmpty()
   @IsString()
   @Prop({ type: String, required: true, ref: 'Category' })
-  categoryId: string;
+  categoryName: string;
 
   @IsNotEmpty()
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
@@ -79,11 +79,6 @@ export class Book {
   @Prop({ type: Number, required: false })
   pageNo?: number;
 
-  @IsString()
-  @IsOptional()
-  @Prop({ type: String, required: false, ref: 'User' })
-  authorId: string;
-
   @IsOptional()
   @IsString()
   @Prop({ type: String })
@@ -119,11 +114,11 @@ export const BookFilter: (keyof Book)[] = [
   'title',
   'authorName',
   'fileId',
-  'authorId',
+  'authorName',
   '_id',
   'status',
   'language',
-  'categoryId',
+  'categoryName',
   'active',
   'pageNo',
 ];
