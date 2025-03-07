@@ -64,13 +64,19 @@ export class DonationController {
     const resp = await this.donationService.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
-    const ctg = await this.bookService.updateOneAndReturnCount(
+    const instanceCnt = await this.donationService.countDoc({ bookId: createDto.bookId });
+    if (!instanceCnt.ok) throw new HttpException(instanceCnt.errMessage, instanceCnt.code);
+
+    const dontedCnt = await this.donationService.countDoc({ donorId: createDto.donorId });
+    if (!dontedCnt.ok) throw new HttpException(dontedCnt.errMessage, dontedCnt.code);
+
+    await this.bookService.updateOneAndReturnCount(
       { _id: createDto.bookId },
-      { $inc: { instanceCnt: 1, availableCnt: 1 } },
+      { instanceCnt: instanceCnt.body, availableCnt: book.body.availableCnt + 1 },
     );
-    const donor = await this.userService.updateOneAndReturnCount(
+    await this.userService.updateOneAndReturnCount(
       { _id: createDto.donorId },
-      { $inc: { donatedCount: 1 } },
+      { donatedCount: dontedCnt.body },
     );
     return resp.body;
   }

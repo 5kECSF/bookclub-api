@@ -99,17 +99,17 @@ export class BorrowController {
     /**
      * mark the instance book as reserved and update the id of the user who have taken it
      */
-    const updateInstance = await this.donationService.updateById(message.instanceId, {
+    await this.donationService.updateById(message.instanceId, {
       status: bookStatus.Reserved,
       borrowerId: resp.body.userId,
       borrowerName: resp.body.userName,
     });
-    const updateBook = await this.bookService.updateById(resp.body.bookId, {
+    await this.bookService.updateById(resp.body.bookId, {
       $inc: { availableCnt: -1 },
     });
     // const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    const notification = await this.notificationService.createOne({
+    await this.notificationService.createOne({
       title: `Your request to borrow ${resp.body.bookName} have been accepted`,
       body: message.body,
       type: NotificationEnum.Individual,

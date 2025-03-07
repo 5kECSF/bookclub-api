@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { JwtGuard } from './guard.rest';
 
 import { CryptoModule } from '../crypto/crypto.module';

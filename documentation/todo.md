@@ -7,7 +7,7 @@
 - [x] upload api
 - [] book api
   - create:
-    - [ ] page, author, language, status
+    - [x] page, author, language, status
 - [] donation api(book instance)
 
 - [] user api

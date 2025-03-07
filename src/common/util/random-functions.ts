@@ -36,29 +36,38 @@ export function generateUniqName(fileName: string, uid = '', ctr = 0): Img {
   return { name: `${uid}-${slug}-${ctr}.${ext}`, uid: uid };
 }
 
-export const removeSubArr = (mainArr: string[], arrToBeRemoved: string[]) => {
-  return mainArr.filter((name) => {
-    return !arrToBeRemoved.includes(name);
-  });
-};
-
 export function generateRandom(len: number) {
   return crypto
     .randomBytes(Math.ceil(len / 2))
     .toString('hex')
     .slice(0, len);
 }
+
+const CapitalLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const SmallLetters = 'abcdefghijklmnopqrstuvwxyz';
+const NumberChars = '0123456789';
+// const AlphabetOnly = CapitalLetters + SmallLetters;
+const AlphaNumeric = CapitalLetters + SmallLetters + NumberChars;
+
 /**
  * a function to generate a random string of length len
  * @param len
  */
 export function generateRandoms(len: number) {
   let pass = '';
-  const str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz0123456789';
 
   for (let i = 1; i <= len; i++) {
-    const char = Math.floor(Math.random() * str.length + 1);
-    pass += str.charAt(char);
+    const char = Math.floor(Math.random() * AlphaNumeric.length + 1);
+    pass += AlphaNumeric.charAt(char);
+  }
+  return pass;
+}
+export function generateRandomNum(len: number) {
+  let pass = '';
+
+  for (let i = 1; i <= len; i++) {
+    const char = Math.floor(Math.random() * NumberChars.length + 1);
+    pass += NumberChars.charAt(char);
   }
   return pass;
 }

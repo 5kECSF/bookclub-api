@@ -10,12 +10,12 @@ import { VerificationService } from '../../../providers/verification';
 
 import { removeKeys } from '@/common/util/object-functions';
 import { CryptoService } from '@/providers/crypto/crypto.service';
-import { RegisterUserInput, User, UserRes, UserService } from '../users';
+import { RegisterUserInput, User, UserService } from '../users';
 
 //--self
 import { ResponseConsts } from '@/common/constants/response.consts';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
-import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import { UpdateEmailInput } from '../users/entities/user.dto';
 import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
 
@@ -110,7 +110,7 @@ export class AuthService {
   /**
      AuSr-2: - checks user exists, - check if the hash of codes matches & is not expired, - activates user
      */
-  public async activateAccountByCode(phoneOrEmail: string, code: string): Promise<Resp<UserRes>> {
+  public async activateAccountByCode(phoneOrEmail: string, code: string): Promise<Resp<User>> {
     /**
      * verify the code, user is not active
      */
@@ -127,7 +127,7 @@ export class AuthService {
     );
     if (!updatedUser.ok) return FAIL(updatedUser.errMessage, updatedUser.code);
     // await this.emailService.sendWelcome(newUser.email)
-    return Succeed({ error: '', user: updatedUser.body });
+    return Succeed(updatedUser.body);
   }
 
   /**

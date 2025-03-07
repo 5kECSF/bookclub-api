@@ -11,8 +11,9 @@ export class CreateDonationInput extends PickType(Donation, [
   'bookId',
   'donorId',
   'status',
-  'desc',
+  'note',
   'bookImg',
+  'donatedDate',
 ]) {
   @ApiHideProperty()
   @IsOptional()

@@ -1,8 +1,8 @@
 import { RoleType } from '@/common/types/enums';
 import { LoginUserInput } from '../../../auth/dto/auth.input.dto';
-import { CreateUser } from '../../dto/user.mut.dto';
+import { CreateUserDto } from '../../entities/user.dto';
 
-export const defaultAdmin: CreateUser = {
+export const defaultAdmin: CreateUserDto = {
   active: true,
   role: RoleType.ADMIN,
 
@@ -12,7 +12,7 @@ export const defaultAdmin: CreateUser = {
   password: '123qwe',
 };
 
-export const defaultUser1: CreateUser = {
+export const defaultUser1: CreateUserDto = {
   active: true,
   role: RoleType.USER,
 
@@ -30,7 +30,7 @@ export const userLogin: LoginUserInput = {
   password: defaultUser1.password,
 };
 
-export const testUser1: CreateUser = {
+export const testUser1: CreateUserDto = {
   active: true,
   role: RoleType.USER,
 
@@ -40,7 +40,7 @@ export const testUser1: CreateUser = {
   password: '123qwe',
 };
 
-export const testAdmin1: CreateUser = {
+export const testAdmin1: CreateUserDto = {
   active: true,
   role: RoleType.ADMIN,
 

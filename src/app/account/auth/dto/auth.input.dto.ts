@@ -1,12 +1,12 @@
 // import { UserExitsValidator } from '@common/decorators/user-exists.validator'
 import {
   IsBoolean,
+  IsEmail,
   IsMobilePhone,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MinLength,
-  IsEmail,
-  IsOptional,
 } from 'class-validator';
 
 export class TokenInput {
@@ -44,17 +44,6 @@ export class LoginUserInput {
   @IsString()
   @MinLength(3)
   password: string;
-}
-
-// User change password directly on website
-
-export class ChangePasswordInput {
-  @IsString()
-  oldPassword: string;
-
-  @MinLength(6)
-  @IsString()
-  newPassword: string;
 }
 
 /** user's input when verifying token to change password

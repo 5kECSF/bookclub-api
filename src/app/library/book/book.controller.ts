@@ -22,7 +22,7 @@ import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.names';
 import { logTrace } from '@/common/logger';
 import { ItemStatus } from '@/common/types/enums';
-import { generateSlug } from '@/common/util/functions';
+import { generateSlug } from '@/common/util/random-functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
@@ -150,7 +150,9 @@ export class BookController {
     const res = await this.bookService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
-    if (!result.ok) throw new HttpException(result.errMessage, result.code);
+    if (!result.ok) {
+      console.log('deleting the file error');
+    }
 
     await Promise.all([
       this.categoryService.updateOneAndReturnCount(

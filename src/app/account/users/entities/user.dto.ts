@@ -32,24 +32,26 @@ export class UpdateMeDto extends PartialType(OmitType(RegisterUserInput, ['email
 /**
  * for admins updating and creating a user
  */
-export class CreateUser extends RegisterUserInput {
+export class CreateUserDto extends RegisterUserInput {
   @IsNotEmpty()
   role: RoleType;
 
+  @IsOptional()
   @IsBoolean()
-  @IsNotEmpty()
   active: boolean;
 }
 
-export class UpdateUserWithRole extends PartialType(OmitType(CreateUser, ['email', 'password'])) {}
+export class UpdateUserWithRole extends PartialType(
+  OmitType(CreateUserDto, ['email', 'password']),
+) {}
 
-export class FilterUser extends PartialType(OmitType(CreateUser, ['avatar', 'password'])) {}
+export class FilterUser extends PartialType(OmitType(CreateUserDto, ['avatar', 'password'])) {}
 
 export class UpdateEmailInput {
   @IsEmail()
   newEmail: string;
 }
-export const UserFilter: (keyof CreateUser)[] = [
+export const UserFilter: (keyof CreateUserDto)[] = [
   'email',
   'firstName',
   'active',

@@ -3,7 +3,7 @@
 import { UploadDto } from '@/app/upload/upload.entity';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
-import { generateUniqName } from '@/common/util/functions';
+import { generateUniqName } from '@/common/util/random-functions';
 import { Injectable } from '@nestjs/common';
 import * as sharp from 'sharp';
 import { Worker } from 'worker_threads';

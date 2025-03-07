@@ -8,7 +8,8 @@ import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { logTrace } from '@/common/logger';
 import { UserFromToken } from '@/common/types/common.types.dto';
 import { RoleType } from '@/common/types/enums';
-import { generateUniqName, removeSubArr } from '@/common/util/functions';
+import { removeSubArr } from '@/common/util/array-functions';
+import { generateUniqName } from '@/common/util/random-functions';
 import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import { Model } from 'mongoose';
 
@@ -266,15 +267,16 @@ export class UploadService extends MongoGenericRepository<Upload> {
     return upload;
   }
 
-  public async deleteFileByIdPrefix(id: string) {
-    const file = await this.findById(id);
-    if (!file.ok) throw new HttpException(file.errMessage, file.code);
+  public async deleteFileByIdPrefix(id: string): Promise<Resp<any>> {
+    if (id === undefined) return FAIL('id is undefined');
 
+    const file = await this.findById(id);
+    if (!file.ok) return FAIL(file.errMessage, file.code);
     const resp = await this.fileService.IDeleteImageByPrefix(file.body.uid);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    if (!resp.ok) return FAIL(resp.errMessage, resp.code);
 
     const upload = await this.deleteMany({ uid: file.body.uid });
-    if (!upload.ok) throw new HttpException(upload.errMessage, upload.code);
+    if (!upload.ok) return FAIL(upload.errMessage, upload.code);
     return upload;
   }
 

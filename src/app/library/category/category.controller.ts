@@ -1,29 +1,29 @@
 import { ItemStatus, RoleType } from '@/common/types/enums';
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpException,
-    Param,
-    Patch,
-    Post,
-    Query,
-    Req,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { pagiKeys, PaginatedRes, UserFromToken } from '../../../common/types/common.types.dto';
 import { CategoryService } from './category.service';
 import {
-    CategoryFilter,
-    CategoryInput,
-    CategoryQuery,
-    UpdateCategoryDto,
+  CategoryFilter,
+  CategoryInput,
+  CategoryQuery,
+  UpdateCategoryDto,
 } from './entities/category.dto';
 
 import { Endpoint } from '@/common/constants/model.names';
-import { generateSlug } from '@/common/util/functions';
 import { removeKeys } from '@/common/util/object-functions';
+import { generateSlug } from '@/common/util/random-functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { Request } from 'express';

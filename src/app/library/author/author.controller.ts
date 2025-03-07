@@ -7,22 +7,22 @@ import { ReqParamPipe } from '@/common/lib/pipes';
 import { logTrace } from '@/common/logger';
 import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
 import { ItemStatus, RoleType } from '@/common/types/enums';
-import { generateSlug } from '@/common/util/functions';
+import { generateSlug } from '@/common/util/random-functions';
 import { ThrowRes } from '@/common/util/responseFunctions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpException,
-    Param,
-    Patch,
-    Post,
-    Query,
-    Req,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Author, AuthorFilter, AuthorQuery, CreateAuthorInput, UpdateDto } from './author.entity';

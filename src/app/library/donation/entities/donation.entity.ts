@@ -47,11 +47,15 @@ export class Donation {
 
   @IsOptional()
   @Prop({ type: String })
-  desc: string;
+  note: string;
 
   @IsOptional()
   @Prop({ type: EmbedUpload, _id: false })
   bookImg?: EmbedUpload;
+
+  @IsOptional()
+  @Prop({ type: Date, required: false })
+  donatedDate?: Date; //Created Date
 
   /**
    * the count of this specific book, instance Number

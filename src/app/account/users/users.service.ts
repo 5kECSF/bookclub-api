@@ -4,13 +4,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { emailRegex, User, UserDocument } from './entities/user.entity';
 
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
-import { CryptoService } from '@/providers/crypto/crypto.service';
-import { FilterQuery, Model } from 'mongoose';
-import { ErrConst } from '../../../common/constants';
-import { ChangePasswordInput } from '../auth/dto/auth.input.dto';
-import { CreateUser } from './dto/user.mut.dto';
-import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import { logTrace } from '@/common/logger';
+import { CryptoService } from '@/providers/crypto/crypto.service';
+import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
+import { FilterQuery, Model } from 'mongoose';
+import { CreateUserDto } from './entities/user.dto';
 
 @Injectable()
 export class UserService extends MongoGenericRepository<User> {
@@ -21,7 +19,7 @@ export class UserService extends MongoGenericRepository<User> {
     super(userModel);
   }
 
-  public async createUser(createDto: CreateUser) {
+  public async createUser(createDto: CreateUserDto) {
     createDto.password = await this.cryptoService.createHash(createDto.password);
     return this.createOne(createDto);
   }
@@ -65,24 +63,15 @@ export class UserService extends MongoGenericRepository<User> {
     return user;
   }
 
-  async changePassword(id: string, input: ChangePasswordInput): Promise<Resp<string>> {
-    const { newPassword, oldPassword } = input;
-    if (newPassword === oldPassword) return FAIL('Old password cant be same as new one', 400);
-    const changePwdUser = await this.findOneWithPwd({ _id: id, active: true });
-    if (!changePwdUser) return FAIL(ErrConst.USER_NOT_FOUND, 404);
-
-    const pwdHashMatch = await this.cryptoService.verifyHash(changePwdUser.password, oldPassword);
-    if (!pwdHashMatch) return FAIL('Password dont Match', 400);
-
-    const newHash = await this.cryptoService.createHash(newPassword);
+  async resetPwd(userId: string, pwd: string): Promise<Resp<string>> {
+    const newHash = await this.cryptoService.createHash(pwd);
     const usr = await this.upsertOne(
-      { _id: id },
+      { _id: userId },
       {
         password: newHash,
       },
     );
     if (!usr.ok) return FAIL('Failed to update Pwd', 500);
-
-    return Succeed('Successfully changed password');
+    return Succeed(pwd);
   }
 }

@@ -1,10 +1,10 @@
+import { UploadModule } from '@/app/upload/upload.module';
+import { GuardsModule } from '@/providers/guards/guards.module';
 import { Module } from '@nestjs/common';
-import { ProfileService } from './profile.service';
-import { ProfileController } from './profile.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema, UsersModule } from '../users';
-import { GuardsModule } from '@/providers/guards/guards.module';
-import { UploadModule } from '@/app/upload/upload.module';
+import { ProfileController } from './profile.controller';
+import { ProfileService } from './profile.service';
 
 @Module({
   imports: [
@@ -15,5 +15,6 @@ import { UploadModule } from '@/app/upload/upload.module';
   ],
   controllers: [ProfileController],
   providers: [ProfileService],
+  exports: [ProfileService],
 })
 export class ProfileModule {}

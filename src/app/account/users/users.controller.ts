@@ -1,5 +1,9 @@
 import { Endpoint } from '@/common/constants/model.names';
 import { PaginatedRes } from '@/common/types/common.types.dto';
+import { RoleType } from '@/common/types/enums';
+import { generateRandomNum } from '@/common/util/random-functions';
+import { JwtGuard } from '@/providers/guards/guard.rest';
+import { Roles } from '@/providers/guards/roles.decorators';
 import {
   Body,
   Controller,
@@ -10,15 +14,12 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateUser, FilterUser, UpdateUserWithRole, UserFilter } from './dto/user.mut.dto';
+import { CreateUserDto, FilterUser, UpdateUserWithRole, UserFilter } from './entities/user.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './users.service';
-
-// import { Roles } from '../../providers/guards/roles.decorators';
-// import { RoleType } from '../../common/common.types.dto';
-// import { JwtGuard } from '../../providers/guards/guard.rest';
 
 @Controller(Endpoint.Users)
 @ApiTags(Endpoint.Users)
@@ -29,14 +30,13 @@ export class UsersController {
   @Post()
   // @Roles(RoleType.ADMIN)
   // @UseGuards(JwtGuard)
-  async createUser(@Body() createDto: CreateUser): Promise<User> {
+  async createUser(@Body() createDto: CreateUserDto): Promise<User> {
     /**
      * this is to prevent errors, if admin wants to create active users he can update their status later
      */
     createDto.active = false;
     const resp = await this.usersService.createUser(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    resp.body.password = '';
     return resp.body;
   }
 
@@ -76,6 +76,15 @@ export class UsersController {
   // @UseGuards(JwtGuard)
   async remove(@Param('id') id: string): Promise<User> {
     const res = await this.usersService.findByIdAndDelete(id);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.body;
+  }
+
+  @Patch(':id')
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
+  async resetPwd(@Param('id') id: string): Promise<string> {
+    const res = await this.usersService.resetPwd(id, generateRandomNum(6));
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }

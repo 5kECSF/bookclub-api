@@ -1,7 +1,7 @@
 export enum RoleType {
   USER = 'USER',
   ADMIN = 'ADMIN',
-  KID = 'KID',
+  ROOT = 'ROOT',
 }
 export enum ItemStatus {
   Active = 'active',

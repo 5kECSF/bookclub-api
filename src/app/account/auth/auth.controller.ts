@@ -1,5 +1,6 @@
 import { EnvVar } from '@/common/config/config.instances';
 import { Endpoint } from '@/common/constants/model.names';
+import { Resp } from '@/common/constants/return.consts';
 import { SystemConst } from '@/common/constants/system.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { UserFromToken } from '@/common/types/common.types.dto';
@@ -18,10 +19,9 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { RegisterUserInput, UserService } from '../users';
-import { UpdateEmailInput } from '../users/dto/user.mut.dto';
+import { UpdateEmailInput } from '../users/entities/user.dto';
 import { AuthService } from './auth.service';
 import {
-  ChangePasswordInput,
   EmailInput,
   LoginUserInput,
   ResetPasswordInput,
@@ -131,10 +131,10 @@ export class AuthController {
 
   //Au.C-6 forgotPassword
   @Post('forgotPassword')
-  async forgotPassword(@Body() input: EmailInput): Promise<boolean> {
+  async forgotPassword(@Body() input: EmailInput): Promise<Resp<boolean>> {
     const res = await this.authService.sendResetCode(input.email);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    return res.body;
+    return res;
   }
 
   //Au.C-7 resetPassword
@@ -142,18 +142,6 @@ export class AuthController {
   async resetPassword(@Body() input: ResetPasswordInput): Promise<boolean> {
     const resp = await this.authService.resetPassword(input);
     return resp.ok;
-  }
-
-  //AuC-8 change password
-  @Patch('changePassword')
-  @UseGuards(JwtGuard)
-  async ChangePassword(@Req() req: Request, @Body() input: ChangePasswordInput) {
-    const user: UserFromToken = req['user'];
-
-    const ans = await this.usersService.changePassword(user._id, input);
-    if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
-    return ans.body;
-    // return this.profileService.update(user._id, input);
   }
 
   //AuC-9 change Email

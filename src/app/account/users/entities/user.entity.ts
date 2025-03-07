@@ -6,9 +6,9 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 import { EmbedUpload } from '@/app/upload/upload.entity';
 
+import { RoleType } from '@/common/types/enums';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ACCOUNT_STATUS, GENDER } from '../../profile/dto/profile.dto';
-import { RoleType } from '@/common/types/enums';
 export const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 
 @Schema({
@@ -46,6 +46,7 @@ export class User {
   @Prop({ type: String })
   lastName: string;
 
+  @Prop({ type: String })
   fullName?: string;
 
   @Prop({ type: String, select: false })
@@ -127,6 +128,10 @@ UserSchema.pre('save', setDefaultFullName);
 UserSchema.virtual('id').get(function () {
   return this._id;
 });
+
+// UserSchema.virtual('fullName').get(function () {
+//   return this.firstName + ' ' + this.lastName;
+// });
 
 async function setDefaultFullName(this: User, next) {
   try {
