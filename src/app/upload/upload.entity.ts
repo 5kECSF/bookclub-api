@@ -116,7 +116,7 @@ export class EmbedUpload {
   @Prop({ type: String })
   _id?: string; //this is put in the image's model
 
-  @Prop({ type: String, unique: true, sparse: true })
+  @Prop({ type: String })
   @IsString()
   fileName: string; // this is also put in the images model
 
