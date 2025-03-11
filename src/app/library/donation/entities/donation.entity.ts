@@ -28,6 +28,13 @@ export class Donation {
   @Prop({ type: String, unique: true, spares: true })
   uid?: string;
 
+  /**
+   * the count of this specific book, instance Number
+   */
+  @IsOptional()
+  @Prop({ type: Number, required: false, default: 0 })
+  instanceNo?: number;
+
   @IsNotEmpty()
   @Prop({ type: String, required: true, ref: 'User' })
   donorId: string;
@@ -56,13 +63,6 @@ export class Donation {
   @IsOptional()
   @Prop({ type: Date, required: false })
   donatedDate?: Date; //Created Date
-
-  /**
-   * the count of this specific book, instance Number
-   */
-  @IsOptional()
-  @Prop({ type: Number, required: false, default: 0 })
-  instanceNo?: number;
 
   @MProp({
     type: String,

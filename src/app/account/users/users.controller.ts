@@ -29,7 +29,7 @@ export class UsersController {
   //FIXME this function is used by admins to add other admins and also users
   @Post()
   // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard)
   async createUser(@Body() createDto: CreateUserDto): Promise<User> {
     /**
      * this is to prevent errors, if admin wants to create active users he can update their status later

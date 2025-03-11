@@ -45,7 +45,7 @@ export class AuthorController {
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;
     createDto.upload = draftImg.body;
-    createDto.slug = generateSlug(createDto.name);
+    createDto.slug = generateSlug(createDto.name, true);
     const resp = await this.service.createOne(createDto);
     if (!resp.ok) ThrowRes(resp);
     return resp.body;
@@ -147,7 +147,7 @@ export class AuthorController {
       pathId: img.body.pathId,
     };
     createDto.upload = upload;
-    createDto.slug = generateSlug(createDto.name);
+    createDto.slug = generateSlug(createDto.name, true);
 
     const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);

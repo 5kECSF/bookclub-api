@@ -1,17 +1,28 @@
+# Tasks
 
-- [ ] category api
-  - [ ] make it use name
+## Todo
+
+- [] borrow logic
+- [] make every refrential use slug
+
+## later tasks
+
+- [] notification api
+- [] feedback api
+- [] fixing authorizations for each api
+- [] fix the filter of id to display the name
+
+## Done tasks
+
+- [x] category api
+  - [x] make it use name
 - [x] genre api
 - [x] author api
-  - [ ] make it use slug
+  - [x] make it use slug
 - [x] upload api
 - [] book api
   - create:
     - [x] page, author, language, status
-- [] donation api(book instance)
+- [x] donation api(book instance)
 
-- [] user api
-
-- [] notification api
-- [] feedback api
-
+- [x] user api

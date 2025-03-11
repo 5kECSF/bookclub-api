@@ -30,7 +30,6 @@ import { Donation } from './entities/donation.entity';
 import { UserService } from '../../account/users';
 
 import { Endpoint } from '@/common/constants/model.names';
-import { errCode } from '@/common/constants/response.consts';
 import { ApiTags } from '@nestjs/swagger';
 
 @Controller(Endpoint.Donation)
@@ -46,39 +45,10 @@ export class DonationController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async createOne(@Req() req: Request, @Body() createDto: CreateDonationInput): Promise<Donation> {
-    // const user: UserFromToken = req['user'];
-    // createDto.userName=user.f
     // logTrace('input', createDto, ColorEnums.BgCyan);
-    const usr = await this.userService.findById(createDto.donorId);
-    if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
-
-    const book = await this.bookService.findById(createDto.bookId);
-    if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
-
-    createDto.donorName = `${usr.body.firstName} ${usr.body.lastName}`;
-    createDto.instanceNo = (book.body.instanceCnt || 0) + 1;
-    createDto.bookName = book.body.title;
-    createDto.bookImg = book.body.upload;
-    if (book.body.uid) createDto.uid = `${book.body.uid}-${createDto.instanceNo}`;
-
-    const resp = await this.donationService.createOne(createDto);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-
-    const instanceCnt = await this.donationService.countDoc({ bookId: createDto.bookId });
-    if (!instanceCnt.ok) throw new HttpException(instanceCnt.errMessage, instanceCnt.code);
-
-    const dontedCnt = await this.donationService.countDoc({ donorId: createDto.donorId });
-    if (!dontedCnt.ok) throw new HttpException(dontedCnt.errMessage, dontedCnt.code);
-
-    await this.bookService.updateOneAndReturnCount(
-      { _id: createDto.bookId },
-      { instanceCnt: instanceCnt.body, availableCnt: book.body.availableCnt + 1 },
-    );
-    await this.userService.updateOneAndReturnCount(
-      { _id: createDto.donorId },
-      { donatedCount: dontedCnt.body },
-    );
-    return resp.body;
+    const result = await this.donationService.CreateDonation(createDto);
+    if (!result.ok) throw new HttpException(result.errMessage, result.code);
+    return result.body;
   }
 
   @Patch(':id')

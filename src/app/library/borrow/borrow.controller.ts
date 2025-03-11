@@ -156,20 +156,45 @@ export class BorrowController {
       status: BorrowStatus.Returned,
       returnedDate: body.returnedDate,
     });
-    const updateBook = await this.bookService.updateById(resp.body.bookId, {
-      $inc: { availableCnt: 1 },
+    const updateInstance = await this.donationService.updateById(resp.body.instanceId, {
+      status: bookStatus.Available,
     });
-    // const resp = await this.service.createOne(createDto);
-    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    if (!updateInstance.ok) throw new HttpException(resp.errMessage, resp.code);
+
+    const instanceCnt = await this.donationService.countDoc({
+      bookId: resp.body.bookId,
+      status: bookStatus.Available,
+    });
+    const updateBook = await this.bookService.updateById(resp.body.bookId, {
+      availableCnt: instanceCnt.body,
+    });
+    if (!updateBook.ok) throw new HttpException(resp.errMessage, resp.code);
     //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
     return resp.body;
   }
+
+  //===================  Generice Functions
 
   @Post()
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createOne(@Body() createDto: CreateBorrowInput): Promise<Borrow> {
-    const resp = await this.borrowService.createOne(createDto);
+    const usr = await this.userService.findById(createDto.userId);
+    if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
+    const book = await this.bookService.findById(createDto.bookId);
+    if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
+
+    const instance = await this.donationService.findById(createDto.instanceId);
+    if (!instance.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
+
+    const createData: CreateBorrowInput = {
+      ...createDto,
+      bookName: book.body.title,
+      userName: usr.body.fullName,
+      instanceId: instance.body._id,
+      instanceUid: instance.body.uid,
+    };
+    const resp = await this.borrowService.createOne(createData);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     return resp.body;
   }

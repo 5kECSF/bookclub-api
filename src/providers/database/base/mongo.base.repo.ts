@@ -1,4 +1,4 @@
-import { FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { ClientSession, FilterQuery, Model, UpdateQuery } from 'mongoose';
 // import { IGenericRepository } from './IGenericRepo';
 import { ErrConst } from '@/common/constants';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
@@ -117,9 +117,13 @@ export abstract class MongoGenericRepository<T> {
   }
 
   //-----  find One Query
-  async findById(id: string): Promise<Resp<T>> {
+  async findById(id: string, session?: ClientSession): Promise<Resp<T>> {
     try {
-      const item: T = await this._repository.findById(id).populate(this._populateOnFind).lean();
+      const item: T = await this._repository
+        .findById(id)
+        .session(session)
+        .populate(this._populateOnFind)
+        .lean();
       // logTrace(`FINDOne=====>>`, item, ColorEnums.BgBlue);
       if (!item) return FAIL(`${ErrConst.NOT_FOUND} ${id}`, 404);
       return Succeed(item);
@@ -129,7 +133,7 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  public async findOne(where: FilterQuery<T>): Promise<Resp<T>> {
+  public async findOne(where: FilterQuery<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
       const user: T = await this._repository.findOne(where).populate(this._populateOnFind).lean();
       if (!user) return FAIL(ErrConst.NOT_FOUND, 404);
@@ -153,12 +157,20 @@ export abstract class MongoGenericRepository<T> {
   }
 
   //Create Query
-  async createOne(input: Partial<T>): Promise<Resp<T>> {
+  async createOne(input: Partial<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
-      const created: T = await this._repository.create({ ...input });
+      const created: T[] = await this._repository.create([input], { session });
 
-      return Succeed(created);
+      return Succeed(created[0]);
     } catch (e) {
+      if ('code' in e && e.code === 11000) {
+        const field = Object.keys(e.keyValue)[0];
+        const value = e.keyValue[field];
+        const errMessage = `Duplicate key error: ${field} '${value}' already exists`;
+        logTrace(`${this._repository.modelName}--UpdateOneError=`, errMessage, ColorEnums.FgRed);
+        return FAIL(errMessage, 409);
+      }
+      // console.log(e);
       logTrace(`${this._repository.modelName}--CreateError =`, e.message, ColorEnums.FgRed);
 
       return FAIL(e.message, 400);
@@ -168,46 +180,83 @@ export abstract class MongoGenericRepository<T> {
   // ====================  UPDATING QUERIES
 
   //Update queries & returns the updated document
-  async updateById(_id: string, input: UpdateQuery<T>): Promise<Resp<T>> {
+  async updateById(_id: string, input: UpdateQuery<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
-      const updated: T = await this._repository.findByIdAndUpdate(_id, input, { new: true }).lean();
+      const updated: T = await this._repository
+        .findByIdAndUpdate(_id, input, { new: true, session })
+        .lean();
       // logTrace('UPDATED ONE >===>> ', updated, ColorEnums.BgCyan);
       if (!updated) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(updated);
     } catch (e) {
+      if ('code' in e && e.code === 11000) {
+        const field = Object.keys(e.keyValue)[0];
+        const value = e.keyValue[field];
+        const errMessage = `Duplicate key error: ${field} '${value}' already exists`;
+        logTrace(`${this._repository.modelName}--UpdateOneError=`, errMessage, ColorEnums.FgRed);
+        return FAIL(errMessage, 409);
+      }
       logTrace(`${this._repository.modelName}--UpdateByIdError =`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);
     }
   }
 
   // UPSERTS and returns teh matched, modified , upserted count
-  async upsertOne(filter: FilterQuery<T>, input: UpdateQuery<T>): Promise<Resp<UpdateResponse>> {
+  async upsertOne(
+    filter: FilterQuery<T>,
+    input: UpdateQuery<T>,
+    session?: ClientSession,
+  ): Promise<Resp<UpdateResponse>> {
     try {
       const updated: UpdateResponse = await this._repository
-        .updateOne(filter, input, { new: true, upsert: true })
+        .updateOne(filter, input, { new: true, upsert: true, session })
         .lean();
       return Succeed(updated);
     } catch (e) {
+      if ('code' in e && e.code === 11000) {
+        const field = Object.keys(e.keyValue)[0];
+        const value = e.keyValue[field];
+        const errMessage = `Duplicate key error: ${field} '${value}' already exists`;
+        logTrace(`${this._repository.modelName}--UpdateOneError=`, errMessage, ColorEnums.FgRed);
+        return FAIL(errMessage, 409);
+      }
       logTrace(`${this._repository.modelName}--updateOneError =`, e.message, ColorEnums.FgRed);
       return FAIL(e.message, 500);
     }
   }
 
   // Update and returns teh matched, modified , upserted count
-  async updateOneAndReturnCount(filter: FilterQuery<T>, input: UpdateQuery<T>) {
+  async updateOneAndReturnCount(
+    filter: FilterQuery<T>,
+    input: UpdateQuery<T>,
+    session?: ClientSession,
+  ) {
     try {
-      const updated: UpdateResponse = await this._repository.updateOne(filter, input).lean();
+      const updated: UpdateResponse = await this._repository
+        .updateOne(filter, input, { session })
+        .lean();
       return Succeed(updated);
     } catch (e) {
+      if ('code' in e && e.code === 11000) {
+        const field = Object.keys(e.keyValue)[0];
+        const value = e.keyValue[field];
+        const errMessage = `Duplicate key error: ${field} '${value}' already exists`;
+        logTrace(`${this._repository.modelName}--UpdateOneError=`, errMessage, ColorEnums.FgRed);
+        return FAIL(errMessage, 409);
+      }
       logTrace(`${this._repository.modelName}--updateOneError =`, e.message, ColorEnums.FgRed);
       return FAIL(e.message);
     }
   }
 
   //Update and return the updated document
-  async findOneAndUpdate(filter: FilterQuery<T>, input: UpdateQuery<T>): Promise<Resp<T>> {
+  async findOneAndUpdate(
+    filter: FilterQuery<T>,
+    input: UpdateQuery<T>,
+    session?: ClientSession,
+  ): Promise<Resp<T>> {
     try {
-      const updated: T = await this._repository.findOneAndUpdate(filter, input).lean();
+      const updated: T = await this._repository.findOneAndUpdate(filter, input, { session }).lean();
       if (!updated) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(updated);
     } catch (e) {
@@ -216,7 +265,7 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  public async updateMany(filter: FilterQuery<T>, input: UpdateQuery<T>) {
+  public async updateMany(filter: FilterQuery<T>, input: UpdateQuery<T>, session?: ClientSession) {
     try {
       const updated: UpdateResponse = await this._repository
         .updateMany(filter, input, { new: true })
@@ -229,7 +278,7 @@ export abstract class MongoGenericRepository<T> {
   }
 
   // ====================  Delete QUERIES
-  public async findByIdAndDelete(_id: string): Promise<Resp<T>> {
+  public async findByIdAndDelete(_id: string, session?: ClientSession): Promise<Resp<T>> {
     try {
       if (!_id) return FAIL('Id Is Required', 400);
       const deleted: T = await this._repository.findByIdAndDelete(_id).lean();
@@ -243,7 +292,7 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  async deleteOne(filter: FilterQuery<T>): Promise<Resp<RemovedModel>> {
+  async deleteOne(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<RemovedModel>> {
     try {
       const deleted: RemovedModel = await this._repository.deleteOne(filter);
       return Succeed(deleted);
@@ -253,7 +302,7 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  async findOneAndRemove(filter: FilterQuery<T>): Promise<Resp<T>> {
+  async findOneAndRemove(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
       const deleted = await this._repository.findOneAndRemove(filter);
       if (!deleted) return FAIL(ErrConst.NOT_FOUND, 404);

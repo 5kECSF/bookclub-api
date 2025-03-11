@@ -52,7 +52,7 @@ export class BookController {
     const user: UserFromToken = req['user'];
     const draftImg = await this.uploadService.CreateEmptyDraftImg(user._id, UploadModel.Book);
     if (!draftImg.ok) ThrowRes(draftImg);
-    createDto.slug = generateSlug(createDto.title);
+    createDto.slug = generateSlug(createDto.title, true);
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;
     createDto.uid = await this.sequenceService.getNextSequenceValue();
@@ -161,7 +161,6 @@ export class BookController {
       ),
       this.genreService.updateMany({ name: { $in: res.body.genres } }, { $inc: { count: -1 } }),
     ]);
-
     return res.body;
   }
 

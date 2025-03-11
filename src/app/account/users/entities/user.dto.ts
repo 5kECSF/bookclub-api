@@ -14,12 +14,14 @@ export class RegisterUserInput {
   @IsNotEmpty()
   password?: string;
 
-  @IsOptional()
   @IsString()
+  @MinLength(2)
+  @IsNotEmpty()
   firstName?: string;
 
-  @IsOptional()
   @IsString()
+  @MinLength(2)
+  @IsNotEmpty()
   lastName?: string;
 
   @ApiHideProperty()

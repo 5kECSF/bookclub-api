@@ -51,7 +51,7 @@ export class CategoryController {
     createDto.fileId = draftImg.body._id.toString();
     createDto.status = ItemStatus.Draft;
     createDto.upload = draftImg.body;
-    createDto.slug = generateSlug(createDto.name);
+    createDto.slug = generateSlug(createDto.name, true);
     const resp = await this.service.createOne(createDto);
     if (!resp.ok) ThrowRes(resp);
     return resp.body;
@@ -152,7 +152,7 @@ export class CategoryController {
     if (!img.ok) throw new HttpException('Image Not Found', img.code);
     createDto.upload = img.body;
 
-    createDto.slug = generateSlug(createDto.name, false, false);
+    createDto.slug = generateSlug(createDto.name, true);
     const resp = await this.service.createOne(createDto);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     const updatedImg = await this.uploadService.findOneAndUpdate(

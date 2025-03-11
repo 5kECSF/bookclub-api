@@ -1,7 +1,7 @@
-import { Document, Types } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Document } from 'mongoose';
 
 export enum BorrowStatus {
   Taken = 'BORROWED',
@@ -58,11 +58,11 @@ export class Borrow {
 
   @IsOptional()
   @Prop({ type: Date, required: false })
-  returnedDate?: Date;
+  dueDate?: Date;
 
   @IsOptional()
   @Prop({ type: Date, required: false })
-  dueDate?: Date;
+  returnedDate?: Date;
 }
 
 export type BorrowDocument = Borrow & Document;
