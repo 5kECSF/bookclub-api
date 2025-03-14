@@ -111,8 +111,8 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  async countDoc(filter: FilterQuery<T>): Promise<Resp<number>> {
-    const count = await this._repository.countDocuments(filter);
+  async countDoc(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<number>> {
+    const count = await this._repository.countDocuments(filter, { session });
     return Succeed(count);
   }
 

@@ -2,8 +2,11 @@
 
 ## Todo
 
+
 - [] borrow logic
-- [] make every refrential use slug
+  - [x] borrow transactions
+  - [] borrow actions on ui: accept borros{with list of instances}, marktaken & mark returned
+
 
 ## later tasks
 
@@ -11,6 +14,7 @@
 - [] feedback api
 - [] fixing authorizations for each api
 - [] fix the filter of id to display the name
+  - - [] make every refrential use slug for visible filter
 
 ## Done tasks
 

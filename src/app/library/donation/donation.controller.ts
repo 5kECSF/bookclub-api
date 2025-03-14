@@ -93,7 +93,7 @@ export class DonationController {
   @Get()
   async filterManyAndPaginate(@Query() inputQuery: DonationQuery): Promise<PaginatedRes<Donation>> {
     const res = await this.donationService.searchManyAndPaginate(
-      ['donorName', 'bookName'],
+      ['donorName', 'bookName', 'uid'],
       inputQuery,
       DonationFilter,
     );

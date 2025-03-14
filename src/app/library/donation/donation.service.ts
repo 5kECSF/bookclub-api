@@ -44,7 +44,7 @@ export class DonationService extends MongoGenericRepository<Donation> {
           //resp here
 
           //update the books instanceCnt
-          const instanceCnt = await this.countDoc({ bookId: createDto.bookId });
+          const instanceCnt = await this.countDoc({ bookId: createDto.bookId }, session);
           if (!instanceCnt.ok)
             return Promise.reject(FAIL(instanceCnt.errMessage, instanceCnt.code));
 
@@ -60,7 +60,7 @@ export class DonationService extends MongoGenericRepository<Donation> {
           if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
 
           //Update the users donation cnt
-          const dontedCnt = await this.countDoc({ donorId: createDto.donorId });
+          const dontedCnt = await this.countDoc({ donorId: createDto.donorId }, session);
           if (!dontedCnt.ok) throw new HttpException(dontedCnt.errMessage, dontedCnt.code);
           const DonorCnt = await this.userService.updateOneAndReturnCount(
             { _id: createDto.donorId },

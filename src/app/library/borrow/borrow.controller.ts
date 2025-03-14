@@ -18,16 +18,15 @@ import { BorrowFilter, BorrowQuery, CreateBorrowInput, UpdateDto } from './entit
 
 import { Endpoint } from '@/common/constants/model.names';
 import { errCode } from '@/common/constants/response.consts';
+import { Resp } from '@/common/constants/return.consts';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { UserService } from '../../account/users';
-import { NotificationEnum } from '../../extra/notification/entities/notification.entity';
 import { NotificationService } from '../../extra/notification/notification.service';
 import { BookService } from '../book/book.service';
 import { DonationService } from '../donation/donation.service';
-import { bookStatus } from '../donation/entities/donation.entity';
 import {
   BookReturned,
   BookTaken,
@@ -87,89 +86,31 @@ export class BorrowController {
   @Post('/acceptBorrow/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async acceptBorrow(@Param('id') id: string, @Body() message: BorrowAccept): Promise<Borrow> {
-    const instance = await this.donationService.findById(message.instanceId);
-    if (!instance.ok) throw new HttpException(instance.errMessage, instance.code);
-
-    const resp = await this.borrowService.updateById(id, {
-      status: BorrowStatus.Accepted,
-      instanceUid: instance.body.uid,
-      instanceId: message.instanceId,
-    });
-    /**
-     * mark the instance book as reserved and update the id of the user who have taken it
-     */
-    await this.donationService.updateById(message.instanceId, {
-      status: bookStatus.Reserved,
-      borrowerId: resp.body.userId,
-      borrowerName: resp.body.userName,
-    });
-    await this.bookService.updateById(resp.body.bookId, {
-      $inc: { availableCnt: -1 },
-    });
-    // const resp = await this.service.createOne(createDto);
+  async acceptBorrow(
+    @Param('id') id: string,
+    @Body() message: BorrowAccept,
+  ): Promise<Resp<Borrow>> {
+    // return this.borrowService.acceptBorrow(id, message);
+    const resp = await this.borrowService.AcceptBorrow(id, message);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    await this.notificationService.createOne({
-      title: `Your request to borrow ${resp.body.bookName} have been accepted`,
-      body: message.body,
-      type: NotificationEnum.Individual,
-      userId: resp.body.userId,
-    });
-    //TODO: add email notifications
-
-    return resp.body;
+    return resp;
   }
 
   @Post('/markTaken/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async markTaken(@Param('id') id: string, @Body() body: BookTaken): Promise<Borrow> {
-    const resp = await this.borrowService.updateById(id, {
-      status: BorrowStatus.Taken,
-      takenDate: body.takenDate,
-      dueDate: body.dueDate,
-      note: body.note,
-    });
+  async markTaken(@Param('id') id: string, @Body() body: BookTaken): Promise<Resp<Borrow>> {
+    const resp = await this.borrowService.MarkTaken(id, body);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-    const updateInstance = await this.donationService.updateById(resp.body.instanceId, {
-      status: bookStatus.Taken,
-    });
-    if (!updateInstance.ok) throw new HttpException(resp.errMessage, resp.code);
-
-    const notification = await this.notificationService.createOne({
-      title: `The ${resp.body.bookName} book is marked as taken by you`,
-      body: `The book ${resp.body.bookName} has been marked as taken by You. if it is a mistake, contact us`,
-      type: NotificationEnum.Individual,
-      userId: resp.body.userId,
-    });
-
-    return resp.body;
+    return resp;
   }
 
   @Post('/markReturned/:id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async markReturned(@Param('id') id: string, @Body() body: BookReturned): Promise<Borrow> {
-    //TODO: Add taken date here
-    //TODO: update the instance & book count
-    const resp = await this.borrowService.updateById(id, {
-      status: BorrowStatus.Returned,
-      returnedDate: body.returnedDate,
-    });
-    const updateInstance = await this.donationService.updateById(resp.body.instanceId, {
-      status: bookStatus.Available,
-    });
-    if (!updateInstance.ok) throw new HttpException(resp.errMessage, resp.code);
-
-    const instanceCnt = await this.donationService.countDoc({
-      bookId: resp.body.bookId,
-      status: bookStatus.Available,
-    });
-    const updateBook = await this.bookService.updateById(resp.body.bookId, {
-      availableCnt: instanceCnt.body,
-    });
-    if (!updateBook.ok) throw new HttpException(resp.errMessage, resp.code);
-    //TODO: SEND NOTIFICATION MESSAGE HERE TO the User, you have borrowed a book & return date is ...
+    const resp = await this.borrowService.MarkReturned(id, body);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     return resp.body;
   }
 
@@ -221,7 +162,7 @@ export class BorrowController {
   @Get()
   async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
     const res = await this.borrowService.searchManyAndPaginate(
-      ['userName'],
+      ['userName', 'instanceId'],
       inputQuery,
       BorrowFilter,
     );
