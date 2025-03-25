@@ -91,6 +91,7 @@ export class BookController {
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
       images: updateImg.body.images,
+      url: updateImg.body.url
     };
     const resp = await this.bookService.findOneAndUpdate(
       { _id: id },

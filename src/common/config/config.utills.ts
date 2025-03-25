@@ -89,10 +89,10 @@ export const ENV_DEFAULT = {
   CLIENT_URL: 'http://localhost:3000',
   //Token secrets
   JWT_ACCESS_SECRET: 'some long secret',
-  JWT_EXPIRY_TIME: 1000*60*3, //  1000ms *60sec *3min  == 3min
+  JWT_EXPIRY_TIME: 3*60*1000, //  1000ms *60sec *3min  == 3min
   JWT_REFRESH_SECRET: 'some-very-strong-jwt-refresh-secret',
-  JWT_REFRESH_EXPIRY_TIME: 60*60*24*7, // 7 days - 60sec * 60min *  24hrs * 7days
-  JWT_REFRESH_HALF_LIFE: 60*60*24*3, //3 days
+  JWT_REFRESH_EXPIRY_TIME: 60*60*24*7*1000, // 7 days - 60sec * 60min *  24hrs * 7days
+  JWT_REFRESH_HALF_LIFE: 60*60*24*3*1000, //3 days
   ENCRYPTION_KEY: 'someEncryption-Key',
   SESSION_SECRET: 'some-very-strong-session-secret',
   COOKIE_SECRET: 'some-very-strong-cookie-secret',

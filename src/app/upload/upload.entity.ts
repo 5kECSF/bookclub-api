@@ -85,9 +85,8 @@ export class Upload {
   /**
    * URL < Full path of the image, it is what is returned to the user includes all the prefix and suffix
    */
-  @IsOptional()
   @Prop({ type: String })
-  url?: string;
+  url: string;
 }
 
 export class UpdateDto extends PartialType(OmitType(Upload, ['_id'])) {}
@@ -101,6 +100,7 @@ export class UploadDto extends PickType(Upload, [
   'fileName',
   'suffix',
   'pathId',
+  'url',
   'uid',
   'images',
   'status',
@@ -108,7 +108,7 @@ export class UploadDto extends PickType(Upload, [
   @Prop({ type: String })
   _id?: string;
 
-  url?: string;
+
 }
 //this is the model embeded in the other models
 @Schema({ _id: false })
@@ -119,6 +119,11 @@ export class EmbedUpload {
   @Prop({ type: String })
   @IsString()
   fileName: string; // this is also put in the images model
+
+  @Prop({ type: String })
+  @IsNotEmpty()
+  @IsString()
+  url: string; // this is also put in the images model
 
   @IsNotEmpty()
   @Prop({ type: String })

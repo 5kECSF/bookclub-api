@@ -76,6 +76,7 @@ export class AuthorController {
       fileName: updateImg.body.fileName,
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
+      url: updateImg.body.url
     };
     const resp = await this.service.updateById(id, {
       status: ItemStatus.Active,
@@ -145,6 +146,7 @@ export class AuthorController {
       _id: img.body._id,
       fileName: img.body.fileName,
       pathId: img.body.pathId,
+      url: img.body.url
     };
     createDto.upload = upload;
     createDto.slug = generateSlug(createDto.name, true);

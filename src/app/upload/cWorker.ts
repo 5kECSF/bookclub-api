@@ -54,7 +54,7 @@ parentPort?.on('message', async ({ file }: ImageResizeRequest) => {
     }
 
     const compressedImageBuffer = await imageSharp.toBuffer();
-    logTrace('after', Buffer.byteLength(compressedImageBuffer), ColorEnums.BgCyan);
+    // logTrace('after', Buffer.byteLength(compressedImageBuffer), ColorEnums.BgCyan);
     parentPort?.postMessage({ buffer: compressedImageBuffer });
   } catch (error) {
     parentPort?.postMessage({ error: error.message });

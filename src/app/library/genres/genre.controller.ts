@@ -77,6 +77,7 @@ export class GenreController {
       fileName: updateImg.body.fileName,
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
+      url: updateImg.body.url
     };
     const resp = await this.service.updateById(id, {
       status: ItemStatus.Active,

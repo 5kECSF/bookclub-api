@@ -25,8 +25,8 @@ export class FileProviderService {
   ): Promise<Resp<UploadDto>> {
     const imgName = generateUniqName(file.originalname, uid, ctr);
     const uploaded = await this.IUploadSingleImage(file.buffer, imgName.name);
-    uploaded.body.uid = imgName.uid;
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);
+    uploaded.body.uid = imgName.uid;
     return Succeed(uploaded.body);
   }
 
@@ -35,7 +35,8 @@ export class FileProviderService {
     const res = await this.resizeSinglePicW(file);
     if (!res.ok) return FAIL('resizing failed');
     // return await FUploadToFirebaseFunc(fName, res.val);
-    return this.fileUploadProvider.UploadOne(fName, res.body);
+    const resp =await this.fileUploadProvider.UploadOne(fName, res.body);
+    return resp
   }
 
   //IDeleteImageByPrefix this delete images given a prifix
@@ -70,7 +71,7 @@ export class FileProviderService {
       }
 
       const compressedImageBuffer = await imageSharp.toBuffer();
-      logTrace('after', Buffer.byteLength(compressedImageBuffer), ColorEnums.BgCyan);
+      // logTrace('after', Buffer.byteLength(compressedImageBuffer), ColorEnums.BgCyan);
       return Succeed(compressedImageBuffer);
       // const data = await sharp(upload)
       //   .toFormat('jpeg')
