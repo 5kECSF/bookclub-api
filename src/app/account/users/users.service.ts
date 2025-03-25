@@ -63,6 +63,7 @@ export class UserService extends MongoGenericRepository<User> {
     return user;
   }
 
+  //admin operations
   async resetPwd(userId: string, pwd: string): Promise<Resp<string>> {
     const newHash = await this.cryptoService.createHash(pwd);
     const usr = await this.upsertOne(
