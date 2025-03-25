@@ -72,7 +72,7 @@ BorrowSchema.index({ name: 'text' });
 
 export class BorrowAccept {
   @IsOptional()
-  body: string;
+  note: string;
 
   @IsNotEmpty()
   instanceId: string;

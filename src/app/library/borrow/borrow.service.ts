@@ -82,7 +82,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
 
           await this.notificationService.createOne({
             title: `Your request to borrow ${resp.body.bookName} have been accepted`,
-            body: message.body,
+            body: message.note,
             type: NotificationEnum.Individual,
             userId: resp.body.userId,
           });

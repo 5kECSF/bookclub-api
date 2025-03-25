@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+import { ColorEnums, logTrace } from '../logger';
 import {
   ENV_DEFAULT,
   ENV_NAMES,
@@ -6,8 +8,6 @@ import {
   getMongoUri,
   tryReadEnv,
 } from './config.utills';
-import { ColorEnums, logTrace } from '../logger';
-import * as dotenv from 'dotenv';
 // import fs from 'fs';
 
 export const LOAD_ENVS = (req = false): ENV_TYPES => {
@@ -36,9 +36,14 @@ export const LOAD_ENVS = (req = false): ENV_TYPES => {
     //   google console envs
     GMAIL_APP_PWD: tryReadEnv(ENV_NAMES.GMAIL_APP_PWD, req),
     EMAIL_FROM: tryReadEnv(ENV_NAMES.EMAIL_FROM, req),
+ 
     // GOOGLE_CLIENT_ID: tryReadEnv(ENV_NAMES.GOOGLE_CLIENT_ID, req),
     // GOOGLE_CLIENT_SECRET: tryReadEnv(ENV_NAMES.GOOGLE_CLIENT_SECRET, req),
     // GOOGLE_GMAIL_REFRESH_TOKEN: tryReadEnv(ENV_NAMES.GOOGLE_GMAIL_REFRESH_TOKEN, req),
+    //======Cloudinary
+    CLOUDINARY_CLOUD_NAME: tryReadEnv(ENV_NAMES.CLOUDINARY_CLOUD_NAME, req),
+    CLOUDINARY_API_KEY: tryReadEnv(ENV_NAMES.CLOUDINARY_API_KEY, req),
+    CLOUDINARY_API_SECRET: tryReadEnv(ENV_NAMES.CLOUDINARY_API_SECRET, req),
   };
 };
 

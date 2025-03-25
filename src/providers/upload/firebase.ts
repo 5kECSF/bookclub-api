@@ -96,7 +96,7 @@ export class FirebaseService implements FileServiceInterface {
 }
 
 export interface FileServiceInterface {
-  firebaseVerifyToken(token: string): Promise<Resp<any>>;
+  // firebaseVerifyToken(token: string): Promise<Resp<any>>;
 
   deleteImageByPrefix(id: string): Promise<Resp<boolean>>;
   deleteImageByFileName(id: string): Promise<Resp<boolean>>;

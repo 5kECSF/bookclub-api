@@ -124,4 +124,8 @@ export const ENV_DEFAULT = {
   GOOGLE_CLIENT_ID: 'some secret',
   GOOGLE_CLIENT_SECRET: '...',
   GOOGLE_GMAIL_REFRESH_TOKEN: '..',
+  //Cloudinary
+  CLOUDINARY_CLOUD_NAME:"",
+  CLOUDINARY_API_KEY:"",
+  CLOUDINARY_API_SECRET:"",
 };

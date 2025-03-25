@@ -114,7 +114,7 @@ export class BorrowController {
     return resp.body;
   }
 
-  //===================  Generice Functions
+  //===================  Generice Functions ============
 
   @Post()
   @Roles(RoleType.ADMIN)
