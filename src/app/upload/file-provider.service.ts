@@ -35,8 +35,8 @@ export class FileProviderService {
     const res = await this.resizeSinglePicW(file);
     if (!res.ok) return FAIL('resizing failed');
     // return await FUploadToFirebaseFunc(fName, res.val);
-    const resp =await this.fileUploadProvider.UploadOne(fName, res.body);
-    return resp
+    const resp = await this.fileUploadProvider.UploadOne(fName, res.body);
+    return resp;
   }
 
   //IDeleteImageByPrefix this delete images given a prifix

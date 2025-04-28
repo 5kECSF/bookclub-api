@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 
+import { getMongoUri } from '@/common/config/config.utills';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DatabaseService } from './database.service';
-import { EnvVar } from '../../common/config/config.instances';
 import { ColorEnums, logTrace } from '../../common/logger';
+import { DatabaseService } from './database.service';
 
 @Module({
   imports: [
     MongooseModule.forRootAsync({
       useFactory: async () => {
-        const mongoUri = EnvVar.getInstance.MONGODB_URI;
+        const mongoUri = getMongoUri();
         logTrace('monogUri', mongoUri.substring(0, 20), ColorEnums.BgGreen);
         logTrace('monogUri', mongoUri, ColorEnums.BgGreen);
         try {

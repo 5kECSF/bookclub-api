@@ -8,7 +8,6 @@ import {
   getMongoUri,
   tryReadEnv,
 } from './config.utills';
-// import fs from 'fs';
 
 export const LOAD_ENVS = (req = false): ENV_TYPES => {
   return {
@@ -16,16 +15,20 @@ export const LOAD_ENVS = (req = false): ENV_TYPES => {
     NODE_ENV: tryReadEnv('NODE_ENV'),
     PORT: tryReadEnv(ENV_NAMES.PORT, req),
     //Database
-    MONGODB_URI: getMongoUri(ENV_NAMES.MONGODB_URI, req, tryReadEnv(ENV_NAMES.IS_MONGO_REMOTE)),
+    MONGODB_URI: getMongoUri(),
     //Jwt Related
     JWT_ACCESS_SECRET: tryReadEnv(ENV_NAMES.JWT_ACCESS_SECRET, req),
     JWT_REFRESH_SECRET: tryReadEnv(ENV_NAMES.JWT_REFRESH_SECRET, req),
     JWT_EXPIRY_TIME: tryReadEnv(ENV_NAMES.JWT_EXPIRY_TIME, req, ENV_DEFAULT.JWT_EXPIRY_TIME),
-    JWT_REFRESH_HALF_LIFE: tryReadEnv(ENV_NAMES.JWT_REFRESH_HALF_LIFE, req, ENV_DEFAULT.JWT_REFRESH_HALF_LIFE),
+    JWT_REFRESH_HALF_LIFE: tryReadEnv(
+      ENV_NAMES.JWT_REFRESH_HALF_LIFE,
+      req,
+      ENV_DEFAULT.JWT_REFRESH_HALF_LIFE,
+    ),
     JWT_REFRESH_EXPIRY_TIME: tryReadEnv(
       ENV_NAMES.JWT_REFRESH_EXPIRY_TIME,
       req,
-     ENV_DEFAULT.JWT_REFRESH_EXPIRY_TIME,
+      ENV_DEFAULT.JWT_REFRESH_EXPIRY_TIME,
     ),
     ENCRYPTION_KEY: tryReadEnv(ENV_NAMES.ENCRYPTION_KEY, req),
     //  Firebase envs
@@ -37,7 +40,7 @@ export const LOAD_ENVS = (req = false): ENV_TYPES => {
     //   google console envs
     GMAIL_APP_PWD: tryReadEnv(ENV_NAMES.GMAIL_APP_PWD, req),
     EMAIL_FROM: tryReadEnv(ENV_NAMES.EMAIL_FROM, req),
- 
+
     // GOOGLE_CLIENT_ID: tryReadEnv(ENV_NAMES.GOOGLE_CLIENT_ID, req),
     // GOOGLE_CLIENT_SECRET: tryReadEnv(ENV_NAMES.GOOGLE_CLIENT_SECRET, req),
     // GOOGLE_GMAIL_REFRESH_TOKEN: tryReadEnv(ENV_NAMES.GOOGLE_GMAIL_REFRESH_TOKEN, req),

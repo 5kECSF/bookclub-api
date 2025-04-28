@@ -16,18 +16,24 @@ const fbConfig = {
   token_uri: EnvVar.getInstance.FIREBASE_TOKEN_URI,
   auth_provider_x509_cert_url: EnvVar.getInstance.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: EnvVar.getInstance.FIREBASE_CLIENT_X509_CERT_URL,
+  projectId: '',
+  clientEmail: '',
+  privateKey: '',
 };
 
 const FirebaseProjectName = EnvVar.getInstance.FIREBASE_PROJECT_NAME;
-
-admin.initializeApp({
-  // credential: admin.credential.cert(serviceAccount),
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  credential: admin.credential.cert(fbConfig),
+const appConfig: any = {
   databaseURL: `https://${FirebaseProjectName}.firebaseio.com`,
   storageBucket: `gs://${FirebaseProjectName}.appspot.com`,
-});
+};
+// Use explicit credentials if private_key is present, otherwise use ADC
+if (fbConfig.private_key && fbConfig.private_key.trim() !== '') {
+  appConfig.credential = admin.credential.cert(fbConfig);
+} else {
+  appConfig.credential = admin.credential.applicationDefault();
+}
+
+admin.initializeApp(appConfig);
 
 const storageRef = admin.storage().bucket(`gs://${FirebaseProjectName}.appspot.com`);
 

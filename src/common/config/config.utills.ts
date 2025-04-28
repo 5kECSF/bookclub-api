@@ -1,30 +1,25 @@
 import { ColorEnums, logTrace } from '../logger';
 
-// === for reading mongodb urls
-export function getMongoUri(uri: string, required = false, isRemote = 'false', defaultVal = '') {
+export function getMongoUri() {
   const MONGO_USER_NAME = tryReadEnv(ENV_NAMES.MONGO_USER_NAME);
   const MONGO_PASS = tryReadEnv(ENV_NAMES.MONGO_PASSWORD);
   const MONGO_DATABASE_NAME = tryReadEnv(ENV_NAMES.MONGO_DATABASE_NAME);
   const MONGO_HOST = tryReadEnv(ENV_NAMES.MONGO_HOSTNAME);
+  const MONGO_PREFIX = tryReadEnv(ENV_NAMES.MONGO_PREFIX);
+  const MONGO_PARAMS = tryReadEnv(ENV_NAMES.MONGO_PARAMS);
 
-  const IS_MONGO_REMOTE = tryReadEnv(ENV_NAMES.IS_MONGO_REMOTE);
-  const MONGO_REMOTE_STRING = `mongodb+srv://${MONGO_USER_NAME}:${MONGO_PASS}@${MONGO_HOST}/${MONGO_DATABASE_NAME}?retryWrites=true&w=majority`;
-
-  // console.log(ENV_NAMES.IS_MONGO_REMOTE, isRemote, MONGO_USER_NAME, isRemote);
-  // console.log(MONGO_REMOTE_STRING);
-  if (IS_MONGO_REMOTE == 'true') return MONGO_REMOTE_STRING;
-  //local test and dev databases
-  if (process.env['NODE_ENV'] == 'test') {
-    return tryReadEnv(ENV_NAMES.MONGO_TEST_DATABASE, required);
+  const authStr = getAuthStr(MONGO_USER_NAME, MONGO_PASS);
+  return `${MONGO_PREFIX}://${authStr}${MONGO_HOST}/${MONGO_DATABASE_NAME}?${MONGO_PARAMS}`;
+}
+function getAuthStr(username: string, password: string) {
+  if (username === '' && password === '') {
+    return '';
   }
-  logTrace('getting mongo Uri', uri);
-  logTrace('getting mongo Uri', ENV_DEFAULT[uri]);
-
-  return tryReadEnv(uri, required, defaultVal);
+  return `${username}:${password}@`;
 }
 
 // for reading enviroment variables
-export function tryReadEnv(variableId: string, required = false, _defaultVal?: string| number) {
+export function tryReadEnv(variableId: string, required = false, _defaultVal?: string | number) {
   if (variableId in process.env) {
     return process.env[variableId]!;
   }
@@ -36,12 +31,14 @@ export function tryReadEnv(variableId: string, required = false, _defaultVal?: s
   }
   if (_defaultVal) return _defaultVal;
   if (ENV_DEFAULT[variableId]) return ENV_DEFAULT[variableId];
-  logTrace('failed to read', variableId, ColorEnums.BgRed);
-  throw new Error(`failed to read '${variableId}' environment variable`);
+  logTrace('failed to read', variableId, ColorEnums.BgRed, 3);
+  return '';
+  // throw new Error(`failed to read '${variableId}' environment variable`);
 }
 
 export const getFireBasePrivateKey = () => {
   const pkey = tryReadEnv(ENV_NAMES.FIREBASE_PRIVATE_KEY, false, '');
+  if (!pkey) return '';
   try {
     const result = pkey.replace(/'/g, '"');
     const privateKey = JSON.parse(result);
@@ -77,22 +74,22 @@ export const ENV_DEFAULT = {
   NODE_ENV: 'dev',
   PORT: '4000',
   //mongodb
-  MONGO_USER_NAME: '',
-  MONGO_PASSWORD: '',
   MONGO_HOSTNAME: '',
   MONGO_DATABASE_NAME: '',
-  MONGODB_URI: 'mongodb://127.0.0.1:27017/book-club-dev',
-  MONGO_TEST_DATABASE: 'mongodb://127.0.0.1:27017/book-club-e2e-test-db',
-  IS_MONGO_REMOTE: 'false',
+  MONGO_PREFIX: 'mongodb',
+  MONGO_PASSWORD: '',
+  MONGO_USER_NAME: '',
+  MONGO_PARAMS: '',
+  MONGODB_URI: '',
   //app urls
   SERVER_URL: 'http://localhost:4000',
   CLIENT_URL: 'http://localhost:3000',
   //Token secrets
   JWT_ACCESS_SECRET: 'some long secret',
-  JWT_EXPIRY_TIME: 3*60*1000, //  1000ms *60sec *3min  == 3min
+  JWT_EXPIRY_TIME: 3 * 60 * 1000, //  1000ms *60sec *3min  == 3min
   JWT_REFRESH_SECRET: 'some-very-strong-jwt-refresh-secret',
-  JWT_REFRESH_EXPIRY_TIME: 60*60*24*7*1000, // 7 days - 60sec * 60min *  24hrs * 7days
-  JWT_REFRESH_HALF_LIFE: 60*60*24*3*1000, //3 days
+  JWT_REFRESH_EXPIRY_TIME: 60 * 60 * 24 * 7 * 1000, // 7 days - 60sec * 60min *  24hrs * 7days
+  JWT_REFRESH_HALF_LIFE: 60 * 60 * 24 * 3 * 1000, //3 days
   ENCRYPTION_KEY: 'someEncryption-Key',
   SESSION_SECRET: 'some-very-strong-session-secret',
   COOKIE_SECRET: 'some-very-strong-cookie-secret',
@@ -104,7 +101,7 @@ export const ENV_DEFAULT = {
   EMAIL_PASSWORD: '',
   //Firebase
   FIREBASE_PRIVATE_KEY: '',
-  FIREBASE_PRIVATE_KEY_STRING: 'd',
+  FIREBASE_PRIVATE_KEY_STRING: '',
   FIREBASE_CLIENT_EMAIL: 'email@gserviceaccount.com',
   FIREBASE_PROJECT_NAME: 'dd',
   FIREBASE_PROJECT_ID: 'some id',
@@ -126,7 +123,7 @@ export const ENV_DEFAULT = {
   GOOGLE_CLIENT_SECRET: '...',
   GOOGLE_GMAIL_REFRESH_TOKEN: '..',
   //Cloudinary
-  CLOUDINARY_CLOUD_NAME:"",
-  CLOUDINARY_API_KEY:"",
-  CLOUDINARY_API_SECRET:"",
+  CLOUDINARY_CLOUD_NAME: '',
+  CLOUDINARY_API_KEY: '',
+  CLOUDINARY_API_SECRET: '',
 };
