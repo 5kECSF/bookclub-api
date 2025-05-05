@@ -25,6 +25,7 @@
     "test:login": "jest --config src/app/account/auth/test/login/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.800.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/mongoose": "^9.2.2",

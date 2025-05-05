@@ -81,9 +81,11 @@ export const ENV_DEFAULT = {
   MONGO_USER_NAME: '',
   MONGO_PARAMS: '',
   MONGODB_URI: '',
+
   //app urls
   SERVER_URL: 'http://localhost:4000',
   CLIENT_URL: 'http://localhost:3000',
+
   //Token secrets
   JWT_ACCESS_SECRET: 'some long secret',
   JWT_EXPIRY_TIME: 3 * 60 * 1000, //  1000ms *60sec *3min  == 3min
@@ -122,8 +124,16 @@ export const ENV_DEFAULT = {
   GOOGLE_CLIENT_ID: 'some secret',
   GOOGLE_CLIENT_SECRET: '...',
   GOOGLE_GMAIL_REFRESH_TOKEN: '..',
+  //Storage Service
+  STORAGE_PROVIDER: '',
   //Cloudinary
   CLOUDINARY_CLOUD_NAME: '',
   CLOUDINARY_API_KEY: '',
   CLOUDINARY_API_SECRET: '',
+  //S#
+  S3_BUCKET: '',
+  S3_ENDPOINT: '',
+  S3_ACCESS_KEY: '',
+  S3_SECRET_KEY: '',
+  S3_REGION: 'garage',
 };

@@ -5,6 +5,7 @@ import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { pagiKeys, PaginatedRes } from '@/common/types/common.types.dto';
 import { pickKeys } from '@/common/util/object-functions';
+import { isEmpty } from 'class-validator';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
 
 export abstract class MongoGenericRepository<T> {
@@ -181,6 +182,9 @@ export abstract class MongoGenericRepository<T> {
 
   //Update queries & returns the updated document
   async updateById(_id: string, input: UpdateQuery<T>, session?: ClientSession): Promise<Resp<T>> {
+    if (isEmpty(input)) {
+      return FAIL('Empty object');
+    }
     try {
       const updated: T = await this._repository
         .findByIdAndUpdate(_id, input, { new: true, session })

@@ -4,17 +4,22 @@ import { UploadDto } from '@/app/upload/upload.entity';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { ColorEnums, logTrace } from '@/common/logger';
 import { generateUniqName } from '@/common/util/random-functions';
-import { Injectable } from '@nestjs/common';
+import { FILE_SERVICE } from '@/providers/upload/file.module';
+import { FileServiceInterface } from '@/providers/upload/firebase';
+import { Inject, Injectable } from '@nestjs/common';
 import * as sharp from 'sharp';
 import { Worker } from 'worker_threads';
-import { FileUploadProvider } from '../../providers/upload';
+// import { FileUploadProvider } from '../../providers/upload';
 interface ImageResizeResponse {
   buffer?: Buffer;
   error?: string;
 }
 @Injectable()
 export class FileProviderService {
-  constructor(private fileUploadProvider: FileUploadProvider) {}
+  constructor(
+    // private fileUploadProvider: FileUploadProvider,
+    @Inject(FILE_SERVICE) private readonly fileService: FileServiceInterface,
+  ) {}
 
   //generate new name & IUploadSingleImage ||
   //dont need it for the new function because the image is generated first
@@ -35,18 +40,18 @@ export class FileProviderService {
     const res = await this.resizeSinglePicW(file);
     if (!res.ok) return FAIL('resizing failed');
     // return await FUploadToFirebaseFunc(fName, res.val);
-    const resp = await this.fileUploadProvider.UploadOne(fName, res.body);
+    const resp = await this.fileService.UploadOne(fName, res.body);
     return resp;
   }
 
   //IDeleteImageByPrefix this delete images given a prifix
   public async IDeleteImageByPrefix(id: string): Promise<Resp<any>> {
     if (!id || id.length < 3) return FAIL('file not defined', 400);
-    return this.fileUploadProvider.deleteImageByPrefix(id);
+    return this.fileService.deleteFileByPrefix(id);
   }
 
   public async IDeleteImageByName(id): Promise<Resp<any>> {
-    return this.fileUploadProvider.deleteImageByFileName(id);
+    return this.fileService.deleteFileByName(id);
   }
 
   // resizing image
@@ -126,7 +131,7 @@ export class FileProviderService {
         if ('buffer' in data) {
           // const res = await this.resizeSinglePic(data.buffer);
           // if (!res.ok) return FAIL('resizing failed');
-          return this.fileUploadProvider.UploadOne(fName, data.buffer);
+          return this.fileService.UploadOne(fName, data.buffer);
         } else if ('error' in data) {
           reject(new Error(data.error));
         }

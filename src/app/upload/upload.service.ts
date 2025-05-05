@@ -139,11 +139,12 @@ export class UploadService extends MongoGenericRepository<Upload> {
     //Find the image from the database
     const oldFile = await this.findOne(query);
     if (!oldFile.ok) return FAIL(oldFile.errMessage, oldFile.code);
-    // Delete The old Image File
-    if (!oldFile.body.fileName || oldFile.body.fileName.length < 3)
-      return FAIL('fileName Not found', 400);
-    const resp = await this.fileService.IDeleteImageByPrefix(oldFile.body.fileName);
-    if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+    // Delete The old Image File if it exists
+    if (oldFile.body.fileName && oldFile.body.fileName.length > 3) {
+      const resp = await this.fileService.IDeleteImageByPrefix(oldFile.body.fileName);
+      if (!resp.ok) return FAIL(resp.errMessage, resp.code);
+    }
+
     // Create a new image, we dont care about the name
     const uploaded = await this.fileService.IUploadWithNewName(file, oldFile.body.uid);
     if (!uploaded.ok) return FAIL(uploaded.errMessage, uploaded.code);

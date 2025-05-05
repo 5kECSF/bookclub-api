@@ -66,7 +66,7 @@ export class FirebaseService implements FileServiceInterface {
     }
   }
 
-  async deleteImageByPrefix(id): Promise<Resp<boolean>> {
+  async deleteFileByPrefix(id): Promise<Resp<boolean>> {
     try {
       const res = await storageRef.deleteFiles({ prefix: id });
       logTrace('successfully deleted an image', res, ColorEnums.BgGreen);
@@ -76,7 +76,7 @@ export class FirebaseService implements FileServiceInterface {
     }
   }
 
-  async deleteImageByFileName(fileName: string): Promise<Resp<boolean>> {
+  async deleteFileByName(fileName: string): Promise<Resp<boolean>> {
     try {
       // Reference the specific file using its name
       const file = storageRef.file(fileName);
@@ -104,8 +104,8 @@ export class FirebaseService implements FileServiceInterface {
 export interface FileServiceInterface {
   // firebaseVerifyToken(token: string): Promise<Resp<any>>;
 
-  deleteImageByPrefix(id: string): Promise<Resp<boolean>>;
-  deleteImageByFileName(id: string): Promise<Resp<boolean>>;
+  deleteFileByPrefix(id: string): Promise<Resp<boolean>>;
+  deleteFileByName(id: string): Promise<Resp<boolean>>;
 
   UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>>;
 }
@@ -116,11 +116,11 @@ export class MockFile implements FileServiceInterface {
     return Promise.resolve(undefined);
   }
 
-  deleteImageByPrefix(id: string): Promise<Resp<boolean>> {
+  deleteFileByPrefix(id: string): Promise<Resp<boolean>> {
     return Promise.resolve(undefined);
   }
 
-  deleteImageByFileName(id: string): Promise<Resp<boolean>> {
+  deleteFileByName(id: string): Promise<Resp<boolean>> {
     return Promise.resolve(undefined);
   }
 
