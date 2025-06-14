@@ -49,13 +49,13 @@ export abstract class MongoGenericRepository<T> {
   public async searchManyAndPaginate(
     fieldsToSearch: (keyof T)[],
     filter: FilterQuery<T>,
-    keysToFilter: string[],
+    keysToFilter: (keyof T)[],
     additionalQuery: Record<string, any> = {},
   ): Promise<Resp<PaginatedRes<T>>> {
     try {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
       // logTrace('keys to remove', keysToRemove);
-      const query = pickKeys(filter, [...keysToFilter]);
+      const query = pickKeys(filter, [...(keysToFilter as string[])]);
       // logTrace('filter', filter);
 
       let mainQuery: Record<string, any> = additionalQuery;
@@ -72,7 +72,9 @@ export abstract class MongoGenericRepository<T> {
       }
       // logTrace('query', mainQuery, filter.searchText);
       Object.keys(query).forEach((key) => {
-        mainQuery[key] = query[key];
+        if (query[key]) {
+          mainQuery[key] = query[key];
+        }
       });
       //--- the above function with out text search
 
@@ -81,6 +83,7 @@ export abstract class MongoGenericRepository<T> {
       const limit = parseInt(paginateQuery?.limit) || 25;
       const page = parseInt(paginateQuery?.page) || 1;
       const sort = paginateQuery?.sort || '_id';
+      const sortDir = paginateQuery?._sortDir === 'desc' ? -1 : 1;
 
       // logTrace('main!', mainQuery);
 
@@ -88,7 +91,8 @@ export abstract class MongoGenericRepository<T> {
         .find(mainQuery)
         .skip((page - 1) * limit)
         .limit(limit + 1)
-        .sort(sort)
+        .collation({ locale: 'en', strength: 2 })
+        .sort({ [sort]: sortDir })
         .lean();
       let hasNext = false;
       if (items.length > limit) {

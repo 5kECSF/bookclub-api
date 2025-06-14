@@ -8,6 +8,7 @@ export enum GENDER {
 export enum ACCOUNT_STATUS {
   REGISTERED = 'REGISTERED',
   EMAIL_VERIFIED = 'EMAIL_VERIFIED',
+  ACCOUNT_APPROVED = 'ACCOUNT_APPROVED',
 }
 // User change password directly on website
 

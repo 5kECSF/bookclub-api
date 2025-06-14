@@ -16,10 +16,7 @@ interface ImageResizeResponse {
 }
 @Injectable()
 export class FileProviderService {
-  constructor(
-    // private fileUploadProvider: FileUploadProvider,
-    @Inject(FILE_SERVICE) private readonly fileService: FileServiceInterface,
-  ) {}
+  constructor(@Inject(FILE_SERVICE) private readonly fileService: FileServiceInterface) {}
 
   //generate new name & IUploadSingleImage ||
   //dont need it for the new function because the image is generated first
@@ -53,6 +50,42 @@ export class FileProviderService {
   public async IDeleteImageByName(id): Promise<Resp<any>> {
     return this.fileService.deleteFileByName(id);
   }
+
+  public async resizeSinglePicW(file: Buffer): Promise<Resp<Buffer>> {
+    // console.log(__dirname);
+    const worker = new Worker(__dirname + '/cWorker.js', {
+      workerData: {
+        value: file,
+        path: './cWorker.ts',
+      },
+    });
+    return new Promise((resolve, reject) => {
+      worker.on('message', async (data: ImageResizeResponse) => {
+        if ('buffer' in data) {
+          // const res = await this.resizeSinglePic(data.buffer);
+          // if (!res.ok) return FAIL('resizing failed');
+          resolve(Succeed(data.buffer));
+        } else if ('error' in data) {
+          reject(new Error(data.error));
+        }
+      });
+
+      worker.on('error', (err) => {
+        reject(err);
+      });
+
+      worker.on('exit', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Worker stopped with exit code ${code}`));
+        }
+      });
+
+      worker.postMessage({ file });
+    });
+  }
+
+  //==========================   UNUSED ====================
+  //========================================================
 
   // resizing image
   public async resizeSinglePic(file: Buffer): Promise<Resp<Buffer>> {
@@ -89,39 +122,6 @@ export class FileProviderService {
     } catch (e) {
       return FAIL(e.message);
     }
-  }
-
-  public async resizeSinglePicW(file: Buffer): Promise<Resp<Buffer>> {
-    // console.log(__dirname);
-    const worker = new Worker(__dirname + '/cWorker.js', {
-      workerData: {
-        value: file,
-        path: './cWorker.ts',
-      },
-    });
-    return new Promise((resolve, reject) => {
-      worker.on('message', async (data: ImageResizeResponse) => {
-        if ('buffer' in data) {
-          // const res = await this.resizeSinglePic(data.buffer);
-          // if (!res.ok) return FAIL('resizing failed');
-          resolve(Succeed(data.buffer));
-        } else if ('error' in data) {
-          reject(new Error(data.error));
-        }
-      });
-
-      worker.on('error', (err) => {
-        reject(err);
-      });
-
-      worker.on('exit', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Worker stopped with exit code ${code}`));
-        }
-      });
-
-      worker.postMessage({ file });
-    });
   }
 
   public async IUploadSingleImageW(file: Buffer, fName: string): Promise<Resp<UploadDto>> {

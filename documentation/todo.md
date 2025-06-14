@@ -2,11 +2,9 @@
 
 ## Todo
 
-
 - [] borrow logic
   - [x] borrow transactions
   - [] borrow actions on ui: accept borros{with list of instances}, marktaken & mark returned
-
 
 ## later tasks
 

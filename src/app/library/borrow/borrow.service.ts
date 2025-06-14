@@ -13,12 +13,14 @@ import {
 import { UserService } from '@/app/account/users';
 import { NotificationEnum } from '@/app/extra/notification/entities/notification.entity';
 import { NotificationService } from '@/app/extra/notification/notification.service';
+import { errCode } from '@/common/constants/response.consts';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
 import mongoose, { Model } from 'mongoose';
 import { BookService } from '../book/book.service';
 import { DonationService } from '../donation/donation.service';
 import { bookStatus } from '../donation/entities/donation.entity';
+import { CreateBorrowInput } from './entities/borrow.dto';
 
 @Injectable()
 export class BorrowService extends MongoGenericRepository<Borrow> {
@@ -33,14 +35,117 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
     super(tagModel);
   }
 
+  //accept a users request to borrow
+  async RequestBorrow(id: string, userId: string): Promise<Resp<Borrow>> {
+    const session = await this.connection.startSession();
+    try {
+      let result: Borrow;
+      await session.withTransaction(
+        async () => {
+          const usr = await this.userService.findById(userId);
+          if (!usr.ok) Promise.reject(FAIL(usr.errMessage, errCode.USER_NOT_FOUND));
+          const book = await this.bookService.findById(id);
+          if (!book.ok) Promise.reject(FAIL(usr.errMessage, errCode.NOT_FOUND));
+          const createDto: CreateBorrowInput = {
+            status: BorrowStatus.WaitList,
+            userId: userId,
+            bookId: id,
+            bookName: book.body.title,
+            userName: `${usr.body.firstName} ${usr.body.lastName}`,
+          };
+          const resp = await this.createOne(createDto, session);
+          if (!resp.ok) Promise.reject(FAIL(resp.errMessage, resp.code));
+
+          const userUpdate = await this.userService.updateById(
+            resp.body.userId,
+            {
+              $addToSet: { requestedBooks: id },
+            },
+            session,
+          );
+          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
+
+          result = resp.body;
+        },
+        {
+          readConcern: { level: 'snapshot' },
+          writeConcern: { w: 'majority' },
+          maxTimeMS: 5000,
+        },
+      );
+      return Succeed(result);
+    } catch (e: any) {
+      if (e instanceof Error) {
+        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
+      }
+      if (e && 'ok' in e && e.ok === false) {
+        return e as Resp<Borrow>;
+      }
+      // Handle unexpected errors (e.g., database connection issues)
+      return FAIL('An unexpected error occurred during the transaction', 500);
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async cancleRequest(id: string, userId: string): Promise<Resp<Borrow>> {
+    const session = await this.connection.startSession();
+    try {
+      let result: Borrow;
+      await session.withTransaction(
+        async () => {
+          const res = await this.findOneAndRemove(
+            {
+              userId: userId,
+              _id: id,
+              status: BorrowStatus.WaitList,
+            },
+            session,
+          );
+          if (!res.ok) return Promise.reject(FAIL(res.errMessage, res.code));
+
+          const userUpdate = await this.userService.updateById(
+            res.body.userId,
+            {
+              $pull: { requestedBooks: res.body.bookId },
+            },
+            session,
+          );
+          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
+
+          result = res.body;
+        },
+        {
+          readConcern: { level: 'snapshot' },
+          writeConcern: { w: 'majority' },
+          maxTimeMS: 5000,
+        },
+      );
+      return Succeed(result);
+    } catch (e: any) {
+      if (e instanceof Error) {
+        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
+      }
+      if (e && 'ok' in e && e.ok === false) {
+        return e as Resp<Borrow>;
+      }
+      // Handle unexpected errors (e.g., database connection issues)
+      return FAIL('An unexpected error occurred during the transaction', 500);
+    } finally {
+      await session.endSession();
+    }
+  }
+
   async AcceptBorrow(id: string, message: BorrowAccept): Promise<Resp<Borrow>> {
     const session = await this.connection.startSession();
     try {
       let result: Borrow;
       await session.withTransaction(
         async () => {
+          //Get the specific instance
           const instance = await this.donationService.findById(message.instanceId, session);
           if (!instance.ok) return Promise.reject(FAIL(instance.errMessage, instance.code));
+          //mark the request as accepted
           const resp = await this.updateById(
             id,
             {
@@ -52,7 +157,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
           );
           if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
           /**
-           * mark the instance book as reserved and update the id of the user who have taken it
+           * ======  mark the instance book as reserved and update the id of the user who have taken it
            */
           const instanceUpdate = await this.donationService.updateById(message.instanceId, {
             status: bookStatus.Reserved,
@@ -61,7 +166,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
           });
           if (!instanceUpdate.ok)
             return Promise.reject(FAIL(instanceUpdate.errMessage, instanceUpdate.code));
-
+          //count the available items for this book
           const instanceCnt = await this.countDoc(
             {
               bookId: resp.body.bookId,
@@ -71,6 +176,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
           );
           if (!instanceCnt.ok)
             return Promise.reject(FAIL(instanceCnt.errMessage, instanceCnt.code));
+          //update the books available items
           const bookUpdate = await this.bookService.updateById(
             resp.body.bookId,
             {
@@ -79,6 +185,16 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
             session,
           );
           if (!bookUpdate.ok) Promise.reject(FAIL(bookUpdate.errMessage, bookUpdate.code));
+          //update the users requested and accepted books
+          const userUpdate = await this.userService.updateById(
+            resp.body.userId,
+            {
+              $pull: { requestedBooks: resp.body.bookId },
+              $addToSet: { approvedBooks: resp.body.bookId },
+            },
+            session,
+          );
+          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
 
           await this.notificationService.createOne({
             title: `Your request to borrow ${resp.body.bookName} have been accepted`,
@@ -117,6 +233,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
       let result: Borrow;
       await session.withTransaction(
         async () => {
+          //update the borrow model
           const resp = await this.updateById(
             id,
             {
@@ -128,6 +245,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
             session,
           );
           if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
+          //update the book instance
           const updateInstance = await this.donationService.updateById(
             resp.body.instanceId,
             {
@@ -137,7 +255,16 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
           );
           if (!updateInstance.ok)
             return Promise.reject(FAIL(updateInstance.errMessage, updateInstance.code));
-
+          //Update the users list of borrowed books
+          const userUpdate = await this.userService.updateById(
+            resp.body.userId,
+            {
+              $pull: { approvedBooks: resp.body.bookId },
+              $addToSet: { borrowedBooks: resp.body.bookId },
+            },
+            session,
+          );
+          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
           await this.notificationService.createOne({
             title: `The book ${resp.body.bookName} is marked as taken by you`,
             body: `You have taken The book ${resp.body.bookName}, if it is a mistake, contact us`,
@@ -212,6 +339,15 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
             session,
           );
           if (!updateBook.ok) return Promise.reject(FAIL(updateBook.errMessage, updateBook.code));
+          const userUpdate = await this.userService.updateById(
+            resp.body.userId,
+            {
+              $pull: { borrowedBooks: resp.body.bookId },
+              $addToSet: { returnedBooks: resp.body.bookId },
+            },
+            session,
+          );
+          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
 
           result = resp.body;
         },

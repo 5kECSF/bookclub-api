@@ -27,13 +27,7 @@ import { UserService } from '../../account/users';
 import { NotificationService } from '../../extra/notification/notification.service';
 import { BookService } from '../book/book.service';
 import { DonationService } from '../donation/donation.service';
-import {
-  BookReturned,
-  BookTaken,
-  Borrow,
-  BorrowAccept,
-  BorrowStatus,
-} from './entities/borrow.entity';
+import { BookReturned, BookTaken, Borrow, BorrowAccept } from './entities/borrow.entity';
 
 @Controller(Endpoint.Borrow)
 @ApiTags(Endpoint.Borrow)
@@ -48,39 +42,20 @@ export class BorrowController {
 
   @Post('/request/:bookId')
   @UseGuards(JwtGuard)
-  async requestBorrow(@Req() req: Request, @Param('bookId') id: string): Promise<Borrow> {
+  async requestBorrow(@Req() req: Request, @Param('bookId') id: string): Promise<Resp<Borrow>> {
     const user: UserFromToken = req['user'];
-    const usr = await this.userService.findById(user._id);
-    if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
-    const book = await this.bookService.findById(id);
-    if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
-
-    const createDto: CreateBorrowInput = {
-      status: BorrowStatus.WaitList,
-      userId: user._id,
-      bookId: id,
-      bookName: book.body.title,
-      userName: `${usr.body.firstName} ${usr.body.lastName}`,
-    };
-
-    const resp = await this.borrowService.createOne(createDto);
+    const resp = await this.borrowService.RequestBorrow(id, user._id);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
-
-    return resp.body;
+    return resp;
   }
 
   @Post('/cancle/:borrowId')
   @UseGuards(JwtGuard)
-  async cancelRequest(@Req() req: Request, @Param('borrowId') id: string): Promise<any> {
+  async cancelRequest(@Req() req: Request, @Param('borrowId') id: string): Promise<Resp<Borrow>> {
     const user: UserFromToken = req['user'];
-    const res = await this.borrowService.deleteOne({
-      userId: user._id,
-      _id: id,
-      status: BorrowStatus.WaitList,
-    });
-    if (!res.ok) throw new HttpException(res.errMessage, res.code);
-
-    return res.body;
+    const resp = await this.borrowService.cancleRequest(id, user._id);
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    return resp;
   }
 
   @Post('/acceptBorrow/:id')
@@ -171,7 +146,7 @@ export class BorrowController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<Borrow> {
     const res = await this.borrowService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;

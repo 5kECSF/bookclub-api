@@ -12,6 +12,6 @@ export class AuthorService extends MongoGenericRepository<Author> {
     @InjectModel(Author.name) private tagModel: Model<AuthorDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
   ) {
-    super(tagModel);
+    super(tagModel, []);
   }
 }

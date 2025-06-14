@@ -7,11 +7,11 @@ export interface HttpContext {
   res: Response;
 }
 
-export const pagiKeys = ['limit', 'sort', 'page', 'sortOrder'];
+export const pagiKeys = ['limit', 'sort', 'page', '_sortDir'];
 
-enum SortOrder {
-  asc = 1,
-  desc = -1,
+enum SortDir {
+  asc = 'asc',
+  desc = 'desc',
 }
 
 export class PaginationInputs {
@@ -28,7 +28,7 @@ export class PaginationInputs {
   sort?: string = '_id';
 
   @IsOptional()
-  sortOrder?: SortOrder = 1;
+  _sortDir?: SortDir = SortDir.desc;
 }
 
 export class UserFromToken {

@@ -63,6 +63,8 @@ export class User {
   })
   role: RoleType = RoleType.USER;
 
+  //===============  Account Related
+
   @ApiHideProperty()
   @Prop({ type: String, select: false })
   hashedRefreshToken: string;
@@ -75,12 +77,25 @@ export class User {
   @ApiHideProperty()
   verificationCodeExpires: number;
 
-  //profile related
+  //===============profile related
+
   @Prop({ type: [{ type: String, ref: 'Book._id' }] })
   likedBooks: string[];
 
-  @Prop({ type: [{ type: String, ref: 'Book._id' }] })
+  @Prop({ type: [{ type: String }] })
   dislikedBooks: string[];
+
+  @Prop({ type: [{ type: String }] })
+  requestedBooks: string[];
+
+  @Prop({ type: [{ type: String }] })
+  approvedBooks: string[];
+
+  @Prop({ type: [{ type: String }] })
+  borrowedBooks: string[];
+
+  @Prop({ type: [{ type: String }] })
+  returnedBooks: string[];
 
   @Prop({ required: false })
   donatedCount: number;
@@ -106,7 +121,7 @@ export class User {
   @Prop({
     type: String,
     enum: Object.values(ACCOUNT_STATUS),
-  })
+  }) //to see if the user can request to borrow books & etc
   accountStatus: ACCOUNT_STATUS;
 
   @Prop({

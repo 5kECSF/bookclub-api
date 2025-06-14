@@ -185,7 +185,7 @@ export class AuthService {
   async loginValidateUser(input: LoginUserInput): Promise<User> {
     const { info, password } = input;
     const userToLogin = await this.usersService.activeUserExists(info);
-    logTrace('usr', userToLogin);
+    // logTrace('usr', userToLogin);
     if (!userToLogin) return null;
     // logTrace('usere exis', userToLogin);
     // Check password hash
