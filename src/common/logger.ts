@@ -23,7 +23,7 @@ export const enum ColorEnums {
   BgCyan = '\x1b[46m',
   BgWhite = '\x1b[47m',
 }
-
+//num 2 shows the line this is called,
 export const logTrace = (name: any, value: any, color = ColorEnums.FgBlue, num = 2) => {
   console.log(
     color,

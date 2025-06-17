@@ -4,7 +4,7 @@ import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 
 export enum BorrowStatus {
-  Taken = 'BORROWED',
+  Borrowed = 'BORROWED',
   WaitList = 'WAITLIST',
   Accepted = 'ACCEPTED',
   Returned = 'RETURNED',
@@ -49,8 +49,16 @@ export class Borrow {
 
   @IsOptional()
   @Prop({ type: String })
+  imgUrl?: string;
+
+  @IsOptional()
+  @Prop({ type: String })
   note?: string;
   //requested date is got from timestamp
+
+  @IsOptional()
+  @Prop({ type: Date, required: false })
+  acceptedDate?: Date; //Created Date
 
   @IsOptional()
   @Prop({ type: Date, required: false })

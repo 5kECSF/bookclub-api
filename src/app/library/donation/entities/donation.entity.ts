@@ -4,7 +4,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-import { EmbedUpload } from '@/app/upload/upload.entity';
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
@@ -57,8 +56,8 @@ export class Donation {
   note: string;
 
   @IsOptional()
-  @Prop({ type: EmbedUpload, _id: false })
-  bookImg?: EmbedUpload;
+  @Prop({ type: String })
+  imgUrl?: string;
 
   @IsOptional()
   @Prop({ type: Date, required: false })

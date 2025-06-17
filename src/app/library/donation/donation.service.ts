@@ -37,7 +37,7 @@ export class DonationService extends MongoGenericRepository<Donation> {
           createDto.donorName = `${usr.body.firstName} ${usr.body.lastName}`;
 
           createDto.bookName = book.body.title;
-          createDto.bookImg = book.body.upload;
+          createDto.imgUrl = book.body.upload.url;
 
           //Count all instances(donations) of this book
           const instanceCnt = await this.countDoc({ bookId: createDto.bookId }, session);

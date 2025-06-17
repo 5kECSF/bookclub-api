@@ -52,6 +52,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
             bookId: id,
             bookName: book.body.title,
             userName: `${usr.body.firstName} ${usr.body.lastName}`,
+            imgUrl: book.body.upload.url,
           };
           const resp = await this.createOne(createDto, session);
           if (!resp.ok) Promise.reject(FAIL(resp.errMessage, resp.code));
@@ -152,6 +153,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
               status: BorrowStatus.Accepted,
               instanceUid: instance.body.uid,
               instanceId: message.instanceId,
+              acceptedDate: new Date(),
             },
             session,
           );
@@ -237,7 +239,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
           const resp = await this.updateById(
             id,
             {
-              status: BorrowStatus.Taken,
+              status: BorrowStatus.Borrowed,
               takenDate: body.takenDate,
               dueDate: body.dueDate,
               note: body.note,

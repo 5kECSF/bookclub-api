@@ -5,15 +5,15 @@ import { IsOptional } from 'class-validator';
 
 import { bookStatus, Donation } from './donation.entity';
 
-import { EmbedUpload } from '@/app/upload/upload.entity';
-
 export class CreateDonationInput extends PickType(Donation, [
   'bookId',
   'donorId',
   'status',
   'note',
-  'bookImg',
+
   'donatedDate',
+  ,
+  'imgUrl',
 ]) {
   @ApiHideProperty()
   @IsOptional()
@@ -29,7 +29,7 @@ export class CreateDonationInput extends PickType(Donation, [
 
   @ApiHideProperty()
   @IsOptional()
-  bookImg: EmbedUpload;
+  imgUrl: string;
 
   @ApiHideProperty()
   @IsOptional()

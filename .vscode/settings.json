@@ -20,5 +20,9 @@
     "tabsColor.activeTab": {
   "backgroundColor": "yellow",
   "fontColor": "black"
-}
+},
+"todomd.autoArchiveTasks": true,
+"todomd.defaultFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.md",
+"todomd.defaultArchiveFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.done.md",
+"todomd.defaultSomedayFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.later.md"
 }

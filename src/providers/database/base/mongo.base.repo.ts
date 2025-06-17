@@ -133,7 +133,7 @@ export abstract class MongoGenericRepository<T> {
       if (!item) return FAIL(`${ErrConst.NOT_FOUND} ${id}`, 404);
       return Succeed(item);
     } catch (e) {
-      logTrace(`${this._repository.modelName}--FindByIdError=`, e.message, ColorEnums.FgRed);
+      logTrace(`${this._repository.modelName}--FindByIdError=`, e.message, ColorEnums.FgRed, 3);
       return FAIL(e.message, 500);
     }
   }
@@ -144,7 +144,7 @@ export abstract class MongoGenericRepository<T> {
       if (!user) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(user);
     } catch (e) {
-      logTrace(`${this._repository.modelName}--FindOneError=`, e.message, ColorEnums.FgRed);
+      logTrace(`${this._repository.modelName}--FindOneError=`, e.message, ColorEnums.FgRed, 3);
       return FAIL(e.message, 500);
     }
   }
