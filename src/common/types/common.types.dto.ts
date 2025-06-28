@@ -1,3 +1,4 @@
+import { ACCOUNT_STATUS } from '@/app/account/profile/dto/profile.dto';
 import { IsOptional } from 'class-validator';
 import { Request, Response } from 'express';
 import { RoleType } from './enums';
@@ -36,6 +37,7 @@ export class UserFromToken {
   role?: RoleType;
   sessionId?: string;
   expiryDate?: number;
+  accountStatus: ACCOUNT_STATUS;
 }
 
 export interface IAuthToken {

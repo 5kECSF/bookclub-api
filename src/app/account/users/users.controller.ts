@@ -63,8 +63,8 @@ export class UsersController {
   }
 
   @Patch(':id')
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserWithRole): Promise<User> {
     const res = await this.usersService.updateById(id, updateUserDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);

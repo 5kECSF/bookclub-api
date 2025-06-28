@@ -10,7 +10,6 @@ import {
   Controller,
   HttpException,
   HttpStatus,
-  Patch,
   Post,
   Req,
   Res,
@@ -27,6 +26,7 @@ import {
   ResetPasswordInput,
   TokenInput,
   VerifyCodeInput,
+  VerifyEmailChangeInput,
 } from './dto/auth.input.dto';
 import { AuthTokenResponse } from './dto/auth.response.dto';
 
@@ -39,7 +39,7 @@ export class AuthController {
   //Au.C-1 RegisterAndSendCode
   @Post('register')
   async registerAndSendCode(@Body() input: RegisterUserInput) {
-    const resp = await this.authService.registerWithEmailCode(input);
+    const resp = await this.authService.SERV_registerWithEmailCode(input);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     return { message: resp.body };
   }
@@ -47,7 +47,7 @@ export class AuthController {
   //Au.C-2 AcivateRegistration
   @Post('activate')
   async activateWithCode(@Body() input: VerifyCodeInput) {
-    const userResponse = await this.authService.activateAccountByCode(
+    const userResponse = await this.authService.SERV_activateAccountByCode(
       input.phoneOrEmail,
       input.code,
     );
@@ -61,7 +61,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Body() input: LoginUserInput,
   ): Promise<AuthTokenResponse> {
-    const res = await this.authService.login(input);
+    const res = await this.authService.SERV_login(input);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     //setting tokens
 
@@ -87,7 +87,7 @@ export class AuthController {
     } else {
       token = input.refreshToken;
     }
-    const resp = await this.authService.logOut(token);
+    const resp = await this.authService.SERV_logOut(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
     response.cookie(SystemConst.REFRESH_COOKIE, '');
@@ -112,11 +112,8 @@ export class AuthController {
     // logTrace("token is", token, ColorEnums.BgCyan)
     if (!token || token == 'undefined')
       throw new HttpException('NO Token Found', HttpStatus.UNAUTHORIZED);
-    const resp = await this.authService.resetTokens(token);
+    const resp = await this.authService.SERV_resetTokens(token);
     if (!resp.ok) {
-      //  response.status(resp.code).json({
-      //   message: resp.errMessage,
-      // });
       logTrace(resp.code, resp.errMessage, ColorEnums.FgRed);
       throw new HttpException(resp.errMessage, resp.code);
     }
@@ -132,7 +129,7 @@ export class AuthController {
   //Au.C-6 forgotPassword
   @Post('forgotPassword')
   async forgotPassword(@Body() input: EmailInput): Promise<Resp<boolean>> {
-    const res = await this.authService.sendResetCode(input.email);
+    const res = await this.authService.SERV_sendResetCode(input.email);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res;
   }
@@ -140,30 +137,29 @@ export class AuthController {
   //Au.C-7 resetPassword
   @Post('resetPassword')
   async resetPassword(@Body() input: ResetPasswordInput): Promise<boolean> {
-    const resp = await this.authService.resetPassword(input);
+    const resp = await this.authService.SERV_resetPassword(input);
     return resp.ok;
   }
 
   //AuC-9 change Email
-  @Patch('requestEmailChange')
+  @Post('requestEmailChange')
   @UseGuards(JwtGuard)
   // @Roles(RoleType.ADMIN)
   async requestEmailChange(@Req() req: Request, @Body() input: UpdateEmailInput) {
     const user: UserFromToken = req['user'];
-    const ans = await this.authService.requestEmailChange(user._id, input);
+    const ans = await this.authService.SERV_requestEmailChange(user._id, input);
     if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
     return ans.body;
     // return this.profileService.update(user._id, input);
   }
 
   //AuC-10 verify the code and update the email
-  @Patch('verifyUpdateEmail')
+  @Post('verifyUpdateEmail')
   @UseGuards(JwtGuard)
-  // @Roles(RoleType.ADMIN)
-  async verifyUpdateEmail(@Req() req: Request, @Body() input: VerifyCodeInput) {
+  async verifyUpdateEmail(@Req() req: Request, @Body() input: VerifyEmailChangeInput) {
     const user: UserFromToken = req['user'];
 
-    const ans = await this.authService.verifyUpdateEmail(user._id, input);
+    const ans = await this.authService.SERV_verifyUpdateEmail(user._id, input);
     if (!ans.ok) throw new HttpException(ans.errMessage, ans.code);
     return ans.body;
     // return this.profileService.update(user._id, input);

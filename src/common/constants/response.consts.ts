@@ -10,6 +10,8 @@ export enum ResponseConsts {
   NOT_FOUND = 'NOT_FOUND',
   INVALID_CODE = 'Code is not valid or expired',
   INVALID_CREDENTIALS = 'Invalid credentials',
+  AccountBlocked = 'Account Blocked',
+
   VERIFICATION_FAILED = 'verification failed please try again or use a different account',
   COULD_NOT_CREATE_USER = 'Could not create user',
   OPERATION_SUCCESS = 'operation is successful',
@@ -20,6 +22,7 @@ export enum ResponseConsts {
 export enum RespConst {
   OPERATION_SUCCESS = 'operation is successful',
   VERIFICATION_SENT = 'verification message Sent',
+  AccountBlocked = 'Account Blocked',
   VERIFICATION_PENDING = 'verification is pending please wait few minutes',
 }
 
@@ -43,6 +46,8 @@ export const errCode: ErrorConstantMap = {
   [ResponseConsts.INVALID_CODE]: HttpCodes.UNAUTHORIZED,
   [ResponseConsts.INVALID_CREDENTIALS]: HttpCodes.UNAUTHORIZED,
   [ResponseConsts.VERIFICATION_FAILED]: HttpCodes.UNAUTHORIZED,
+  //403
+  [ResponseConsts.AccountBlocked]: HttpCodes.FORBIDDEN,
   //201
   [ResponseConsts.OPERATION_SUCCESS]: HttpCodes.CREATED,
   [ResponseConsts.VERIFICATION_SENT]: HttpCodes.CREATED,

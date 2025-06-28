@@ -80,6 +80,7 @@ export class CustomJwtService {
         _id: decoded._id,
         role: decoded.role,
         sessionId: decoded.sessionId,
+        accountStatus: decoded?.accountStatus,
       };
       return Succeed(userToken);
     } catch (e) {

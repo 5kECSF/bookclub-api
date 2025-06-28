@@ -16,11 +16,12 @@ import { RegisterUserInput, User, UserService } from '../users';
 import { ResponseConsts } from '@/common/constants/response.consts';
 import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
 import { UpdateEmailInput } from '../users/entities/user.dto';
-import { LoginUserInput, ResetPasswordInput, VerifyCodeInput } from './dto/auth.input.dto';
+import { LoginUserInput, ResetPasswordInput, VerifyEmailChangeInput } from './dto/auth.input.dto';
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
 
 import { SystemConst } from '@/common/constants/system.consts';
 import { getExpiryDate } from '@/providers/crypto/token.functions';
+import { ACCOUNT_STATUS } from '../profile/dto/profile.dto';
 
 export class UserAndTokne {
   usrToken: UserFromToken;
@@ -40,7 +41,7 @@ export class AuthService {
      *   AS-1.1:registerWithEmailCode - check user exist, - generate code & create user with that code, - send verification via email
 
      */
-  public async registerWithEmailCode(input: RegisterUserInput): Promise<Resp<string>> {
+  public async SERV_registerWithEmailCode(input: RegisterUserInput): Promise<Resp<string>> {
     try {
       const user = await this.usersService.findOneWithPwd({
         email: input.email,
@@ -66,7 +67,7 @@ export class AuthService {
         // }
       }
       input.password = await this.cryptoService.createHash(input.password);
-      return this.sendCodeAndUpdateHash(input.email, input);
+      return this.UTIL_sendCodeAndUpdateHash(input.email, input);
     } catch (e) {
       return FAIL(e.message);
     }
@@ -75,7 +76,7 @@ export class AuthService {
   /**
      AuS-1.1: sendCodeAndUpdateHash
      */
-  async sendCodeAndUpdateHash(addressedEmail, input): Promise<Resp<string>> {
+  async UTIL_sendCodeAndUpdateHash(addressedEmail, input): Promise<Resp<string>> {
     /** ---  generate random code & update the verification hash */
     const code = '0000';
     // const code = this.cryptoService.randomCode();
@@ -110,11 +111,11 @@ export class AuthService {
   /**
      AuSr-2: - checks user exists, - check if the hash of codes matches & is not expired, - activates user
      */
-  public async activateAccountByCode(phoneOrEmail: string, code: string): Promise<Resp<User>> {
+  public async SERV_activateAccountByCode(phoneOrEmail: string, code: string): Promise<Resp<User>> {
     /**
      * verify the code, user is not active
      */
-    const verifyToActivate = await this.verifyCode(phoneOrEmail, code);
+    const verifyToActivate = await this.UTIL_verifyCode(phoneOrEmail, code);
     if (!verifyToActivate) return FAIL(ErrConst.INVALID_CODE);
     if (verifyToActivate.active == true) return FAIL(ErrConst.USER_EXISTS);
 
@@ -123,6 +124,7 @@ export class AuthService {
       { email: phoneOrEmail },
       {
         active: true,
+        accountStatus: ACCOUNT_STATUS.UN_APPROVED,
       },
     );
     if (!updatedUser.ok) return FAIL(updatedUser.errMessage, updatedUser.code);
@@ -133,13 +135,14 @@ export class AuthService {
   /**
      Au.S-2.1
      */
-  async verifyCode(phoneOrEmail: string, code: string): Promise<User> {
+  async UTIL_verifyCode(phoneOrEmail: string, code: string): Promise<User> {
     //1. check that a user exists with this email or phone number
     const userToVerify = await this.usersService.anyUserExists(phoneOrEmail);
     if (!userToVerify) {
       logTrace('not found', code);
       return null;
     }
+    //verify the hash is correct
     const verificationCodeHashMatch = await this.cryptoService.verifyHash(
       userToVerify.verificationCodeHash,
       code,
@@ -156,12 +159,17 @@ export class AuthService {
   /**
      AuSr-3
      */
-  async login(input: LoginUserInput): Promise<Resp<AuthTokenResponse>> {
-    // 3.1 validate user
-    const user: User = await this.loginValidateUser(input);
-    if (!user) return FAIL(ErrConst.INVALID_CREDENTIALS);
+  async SERV_login(input: LoginUserInput): Promise<Resp<AuthTokenResponse>> {
+    // get the user from list of active users
+    const userToLogin = await this.usersService.activeUserExists(input.info);
+    if (!userToLogin) return FAIL(ErrConst.INVALID_CREDENTIALS);
+    //verify the users passwrod
+    const pwdHashMatch = await this.cryptoService.verifyHash(userToLogin.password, input.password);
+    if (!pwdHashMatch) return FAIL(ErrConst.INVALID_CREDENTIALS);
+    //IF the user is blocked dont let him loging
+    if (userToLogin.accountStatus == ACCOUNT_STATUS.BLOCKED) return FAIL(ErrConst.AccountBlocked);
 
-    const pickedUser = removeKeys(user, [
+    const pickedUser = removeKeys(userToLogin, [
       'password',
       'hashedRefreshToken',
       'verificationCodeHash',
@@ -169,37 +177,23 @@ export class AuthService {
     ]) as User;
 
     // 3.2: generate authentication Tokens
-    const loginAuthToken: AuthToken = await this.generateAuthToken({
-      _id: user._id,
-      role: user.role,
+    const loginAuthToken: AuthToken = await this.UTIL_generateAuthToken({
+      _id: userToLogin._id,
+      role: userToLogin.role,
+      accountStatus: userToLogin.accountStatus,
     });
     if (!loginAuthToken) return FAIL(ErrConst.INTERNAL_ERROR);
     // 3.3: update users hashed token
-    const loginUpdate = await this.updateHashedToken(user._id, loginAuthToken.refreshToken);
+    const loginUpdate = await this.updateHashedToken(userToLogin._id, loginAuthToken.refreshToken);
     if (!loginUpdate) return FAIL(ErrConst.INTERNAL_ERROR);
 
     return Succeed({ authToken: loginAuthToken, userData: pickedUser });
   }
 
-  //Au.S-3.1
-  async loginValidateUser(input: LoginUserInput): Promise<User> {
-    const { info, password } = input;
-    const userToLogin = await this.usersService.activeUserExists(info);
-    // logTrace('usr', userToLogin);
-    if (!userToLogin) return null;
-    // logTrace('usere exis', userToLogin);
-    // Check password hash
-    const pwdHashMatch = await this.cryptoService.verifyHash(userToLogin.password, password);
-    if (!pwdHashMatch) return null;
-    userToLogin.password = '';
-    userToLogin.verificationCodeHash = '';
-    return userToLogin;
-  }
-
   /**
    *   AuS-3.2:  generate access & refresh tokens: for [login & resetToken]
    */
-  public async generateAuthToken(payload: UserFromToken, update = false): Promise<AuthToken> {
+  public async UTIL_generateAuthToken(payload: UserFromToken, update = false): Promise<AuthToken> {
     /*
      * 1. create random session id When user first logins
      */
@@ -212,6 +206,7 @@ export class AuthService {
       _id: payload._id,
       sessionId: update ? payload.sessionId : sessionId,
       role: payload.role,
+      accountStatus: payload.accountStatus,
     };
     /*
      * 3. generate refresh and access tokens
@@ -244,10 +239,10 @@ export class AuthService {
   }
 
   // Au.S-4
-  async logOut(token: string): Promise<Resp<boolean>> {
+  async SERV_logOut(token: string): Promise<Resp<boolean>> {
     try {
       if (token === undefined) return FAIL('token is undefined');
-      const user = await this.getUserFromRefreshToken(token);
+      const user = await this.UTIL_getUserFromRefreshToken(token);
       if (!user.ok) return FAIL(user.errMessage);
       const userRes = await this.usersService.upsertOne(
         { _id: user.body.user._id },
@@ -263,13 +258,13 @@ export class AuthService {
   /*
    * AuSr-5.1:
    */
-  async resetTokens(resetToken: string): Promise<Resp<AuthTokenResponse>> {
+  async SERV_resetTokens(resetToken: string): Promise<Resp<AuthTokenResponse>> {
     //  1. verify the refresh token
-    const user = await this.getUserFromRefreshToken(resetToken);
+    const user = await this.UTIL_getUserFromRefreshToken(resetToken);
     if (!user.ok) return FAIL(user.errMessage, user.code);
 
     //  2. generate new refresh token
-    const refreshAuthToken = await this.generateAuthToken(user.body.usrToken, true);
+    const refreshAuthToken = await this.UTIL_generateAuthToken(user.body.usrToken, true);
     // logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
     /*
      * 3. update the users hashed refresh token
@@ -285,7 +280,7 @@ export class AuthService {
 
   // when users access token experis, verifies users refresh token & returns the refresh token
   //Au.S-4.1  [logout & resetTokens]
-  public async getUserFromRefreshToken(refreshToken: string): Promise<Resp<UserAndTokne>> {
+  public async UTIL_getUserFromRefreshToken(refreshToken: string): Promise<Resp<UserAndTokne>> {
     if (!refreshToken) return null;
     //1.verify the refresh token
     const decoded = await this.jwtService.verifyRefreshToken(refreshToken);
@@ -314,7 +309,7 @@ export class AuthService {
   //  ==========================   PASSWORD RESET OPERATIONS
 
   //AuSr-6 : request password/other reset code
-  async sendResetCode(email: string) {
+  async SERV_sendResetCode(email: string) {
     try {
       // check the user exists, if it doesn't return null
       const user = await this.usersService.findOne({
@@ -323,16 +318,16 @@ export class AuthService {
       });
       if (!user.ok) return FAIL(ErrConst.USER_NOT_FOUND, user.code);
 
-      return this.sendCodeAndUpdateHash(email, { email });
+      return this.UTIL_sendCodeAndUpdateHash(email, { email });
     } catch (e) {
       return FAIL(e.message);
     }
   }
 
   //AuSr-7: reset password
-  async resetPassword(input: ResetPasswordInput) {
+  async SERV_resetPassword(input: ResetPasswordInput) {
     try {
-      const verifyToResetPwd = await this.verifyCode(input.email, input.code);
+      const verifyToResetPwd = await this.UTIL_verifyCode(input.email, input.code);
       if (!verifyToResetPwd) return FAIL('Code is wrong Or Have Expired');
 
       const hashedPwd = await this.cryptoService.createHash(input.newPassword);
@@ -353,7 +348,7 @@ export class AuthService {
   // =====================================   Email Changing operations
 
   //  AuSr-8
-  public async requestEmailChange(id: string, input: UpdateEmailInput) {
+  public async SERV_requestEmailChange(id: string, input: UpdateEmailInput) {
     //1. verify a user with the new email address doesnt exists
     const user = await this.usersService.findOneWithPwd({
       email: input.newEmail,
@@ -368,21 +363,24 @@ export class AuthService {
     if (usr.body.email == input.newEmail) return FAIL(ErrConst.INVALID_INPUT);
 
     //3. send reset email code with the new email
-    return this.sendCodeAndUpdateHash(input.newEmail, {
+    return this.UTIL_sendCodeAndUpdateHash(input.newEmail, {
       newEmail: input.newEmail,
       email: usr.body.email,
     });
   }
 
   //  AuSr-9
-  public async verifyUpdateEmail(id: string, input: VerifyCodeInput) {
+  public async SERV_verifyUpdateEmail(id: string, input: VerifyEmailChangeInput) {
     //1. get the current user
     const user = await this.usersService.findOneWithPwd({ _id: id });
     if (!user) return FAIL(ErrConst.USER_NOT_FOUND);
 
     // verify the code
-    const verifyToUpdateEmail = await this.verifyCode(user.email, input.code);
+    const verifyToUpdateEmail = await this.UTIL_verifyCode(user.email, input.code);
     if (!verifyToUpdateEmail) return FAIL('Code is wrong Or Have Expired');
+    //Verify the Password here
+    const pwdHashMatch = await this.cryptoService.verifyHash(user.password, input.password);
+    if (!pwdHashMatch) return FAIL(ErrConst.INVALID_CREDENTIALS, HttpStatus.FORBIDDEN);
     // console.log('newEmail===', user.newEmail);
     const usr = await this.usersService.updateById(user._id, {
       email: user.newEmail,

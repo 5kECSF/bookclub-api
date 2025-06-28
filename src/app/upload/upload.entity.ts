@@ -107,8 +107,6 @@ export class UploadDto extends PickType(Upload, [
 ]) {
   @Prop({ type: String })
   _id?: string;
-
-
 }
 //this is the model embeded in the other models
 @Schema({ _id: false })

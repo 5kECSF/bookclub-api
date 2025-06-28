@@ -36,6 +36,16 @@ export class VerifyCodeInput {
   code: string;
 }
 
+export class VerifyEmailChangeInput {
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}
+
 export class LoginUserInput {
   @IsString()
   @IsNotEmpty()
@@ -61,7 +71,8 @@ export class ResetPasswordInput {
   newPassword: string;
 
   @IsBoolean()
-  resetAllSessions: boolean;
+  @IsOptional()
+  resetAllSessions?: string;
 }
 
 export class RequestForgotPasswordInput {

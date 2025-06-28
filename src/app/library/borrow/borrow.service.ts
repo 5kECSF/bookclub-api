@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 
 import {
@@ -10,6 +10,7 @@ import {
   BorrowStatus,
 } from './entities/borrow.entity';
 
+import { ACCOUNT_STATUS } from '@/app/account/profile/dto/profile.dto';
 import { UserService } from '@/app/account/users';
 import { NotificationEnum } from '@/app/extra/notification/entities/notification.entity';
 import { NotificationService } from '@/app/extra/notification/notification.service';
@@ -43,9 +44,11 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
       await session.withTransaction(
         async () => {
           const usr = await this.userService.findById(userId);
-          if (!usr.ok) Promise.reject(FAIL(usr.errMessage, errCode.USER_NOT_FOUND));
+          if (!usr.ok) return Promise.reject(FAIL(usr.errMessage, errCode.USER_NOT_FOUND));
+          if (usr.body.accountStatus != ACCOUNT_STATUS.ACTIVE)
+            return Promise.reject(FAIL('Your Account is not Active', HttpStatus.FORBIDDEN));
           const book = await this.bookService.findById(id);
-          if (!book.ok) Promise.reject(FAIL(usr.errMessage, errCode.NOT_FOUND));
+          if (!book.ok) return Promise.reject(FAIL(usr.errMessage, errCode.NOT_FOUND));
           const createDto: CreateBorrowInput = {
             status: BorrowStatus.WaitList,
             userId: userId,

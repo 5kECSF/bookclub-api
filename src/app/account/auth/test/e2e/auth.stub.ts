@@ -1,5 +1,5 @@
-import { VerifyCodeInput } from '../../dto/auth.input.dto';
 import { RegisterUserInput } from '../../../users';
+import { VerifyCodeInput } from '../../dto/auth.input.dto';
 
 export const regUsr: RegisterUserInput = {
   email: 'testUsr1@gmail.com',
@@ -10,5 +10,6 @@ export const regUsr: RegisterUserInput = {
 
 export const verifyInput: VerifyCodeInput = {
   phoneOrEmail: regUsr.email,
-  code: '0000',
+  code: '0000'
+
 };

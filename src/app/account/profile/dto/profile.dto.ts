@@ -7,8 +7,9 @@ export enum GENDER {
 
 export enum ACCOUNT_STATUS {
   REGISTERED = 'REGISTERED',
-  EMAIL_VERIFIED = 'EMAIL_VERIFIED',
-  ACCOUNT_APPROVED = 'ACCOUNT_APPROVED',
+  UN_APPROVED = 'UN_APPROVED', //when the user verifies his email
+  ACTIVE = 'ACTIVE',
+  BLOCKED = 'BLOCKED',
 }
 // User change password directly on website
 

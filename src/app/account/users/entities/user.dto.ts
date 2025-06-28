@@ -1,35 +1,31 @@
-import { ApiHideProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 
 import { EmbedUpload } from '@/app/upload/upload.entity';
 import { RoleType } from '@/common/types/enums';
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
+import { User } from './user.entity';
 
-export class RegisterUserInput {
-  @IsNotEmpty()
-  @IsEmail()
-  email?: string;
-
-  @IsString()
+export class RegisterUserInput extends PickType(User, [
+  'email',
+  'firstName',
+  'lastName',
+  'team',
+  'department',
+  'bio',
+]) {
   @MinLength(6)
   @IsNotEmpty()
-  password?: string;
-
-  @IsString()
-  @MinLength(2)
-  @IsNotEmpty()
-  firstName?: string;
-
-  @IsString()
-  @MinLength(2)
-  @IsNotEmpty()
-  lastName?: string;
+  password: string;
 
   @ApiHideProperty()
   @IsOptional()
   avatar?: EmbedUpload;
 }
 
-export class UpdateMeDto extends PartialType(OmitType(RegisterUserInput, ['email', 'password'])) {}
+export class UpdateMeDto extends PartialType(OmitType(RegisterUserInput, ['email', 'password'])) {
+  @IsOptional()
+  phoneInfo: string;
+}
 
 /**
  * for admins updating and creating a user
@@ -53,10 +49,14 @@ export class UpdateEmailInput {
   @IsEmail()
   newEmail: string;
 }
-export const UserFilter: (keyof CreateUserDto)[] = [
+export const UserFilter: (keyof User)[] = [
   'email',
   'firstName',
   'active',
   'lastName',
   'role',
+  'team',
+  'department',
+  'accountStatus',
+  'phoneInfo',
 ];

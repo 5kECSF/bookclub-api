@@ -1,8 +1,8 @@
 import { Document } from 'mongoose';
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 import { EmbedUpload } from '@/app/upload/upload.entity';
 
@@ -31,23 +31,41 @@ export class User {
   @Transform(({ value }) => value.toString(), { toPlainOnly: true })
   readonly _id: string;
 
+  @IsNotEmpty()
+  @IsEmail()
   @Prop({ type: String, unique: true, sparse: true })
   email: string;
 
   @Prop({ type: String, unique: true, sparse: true })
   phone: string;
 
+  @Prop({ type: String })
+  phoneInfo: string;
+
   @Prop({ type: String, unique: true, sparse: true })
   userName: string;
 
+  @MinLength(2)
+  @IsNotEmpty()
   @Prop({ type: String })
   firstName: string;
 
+  @IsNotEmpty()
+  @MinLength(2)
   @Prop({ type: String })
   lastName: string;
 
   @Prop({ type: String })
   fullName?: string;
+
+  @Prop({ type: String })
+  team?: string;
+
+  @Prop({ type: String })
+  department?: string;
+
+  @Prop({ type: String })
+  bio?: string;
 
   @Prop({ type: String, select: false })
   @ApiHideProperty()
@@ -63,7 +81,13 @@ export class User {
   })
   role: RoleType = RoleType.USER;
 
-  //===============  Account Related
+  @Prop({
+    type: String,
+    enum: Object.values(ACCOUNT_STATUS),
+  }) //to see if the user can request to borrow books & etc
+  accountStatus: ACCOUNT_STATUS;
+
+  //===============  Verification related
 
   @ApiHideProperty()
   @Prop({ type: String, select: false })
@@ -79,7 +103,7 @@ export class User {
 
   //===============profile related
 
-  @Prop({ type: [{ type: String, ref: 'Book._id' }] })
+  @Prop({ type: [{ type: String }] })
   likedBooks: string[];
 
   @Prop({ type: [{ type: String }] })
@@ -109,7 +133,7 @@ export class User {
   newEmail: string;
 
   @Prop({ type: Boolean, required: false })
-  active: boolean;
+  active: boolean; //tells whether the user's email is verified or not
 
   /**
    * These are properties for account setup
@@ -117,12 +141,6 @@ export class User {
 
   @Prop({ required: false })
   idImage?: string;
-
-  @Prop({
-    type: String,
-    enum: Object.values(ACCOUNT_STATUS),
-  }) //to see if the user can request to borrow books & etc
-  accountStatus: ACCOUNT_STATUS;
 
   @Prop({
     type: String,
