@@ -80,6 +80,10 @@ export class Book {
   pageNo?: number;
 
   @IsOptional()
+  @Prop({ type: Number, required: false })
+  publishDate?: number;
+
+  @IsOptional()
   @IsString()
   @Prop({ type: String })
   authorName: string;
