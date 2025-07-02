@@ -136,10 +136,19 @@ export class BorrowController {
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
+    let additinalQuery = {};
+    if (inputQuery.overDue) {
+      const currentDate = new Date();
+      additinalQuery = {
+        dueDate: { $lt: currentDate },
+      };
+    }
+
     const res = await this.borrowService.searchManyAndPaginate(
       ['userName', 'instanceId'],
       inputQuery,
       BorrowFilter,
+      additinalQuery,
     );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;

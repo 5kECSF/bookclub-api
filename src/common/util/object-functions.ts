@@ -28,7 +28,9 @@ export function pickKeys(obj: Record<string, any>, keysToKeep: string[]): Record
 
   keysToKeep.forEach((key) => {
     if (obj.hasOwnProperty(key)) {
-      newObj[key] = obj[key];
+      if (obj[key] != 'null' || obj[key] != 'undefined') {
+        newObj[key] = obj[key];
+      }
     }
   });
 

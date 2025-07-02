@@ -11,7 +11,6 @@ import {
   Post,
   Query,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { BookService } from './book.service';
@@ -26,7 +25,7 @@ import { generateSlug } from '@/common/util/random-functions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
 import { Book, BookFilter } from './entities/book.entity';
@@ -116,15 +115,14 @@ export class BookController {
   @UseGuards(JwtGuard)
   async update(
     @Req() req: Request,
-    @Res() res: Response,
     @Param('id') id: string,
     @Body() updateBookDto: UpdateBookDto,
-  ) {
+  ): Promise<Book> {
     const user: UserFromToken = req['user'];
     const bookResp = await this.bookService.findById(id);
     if (!bookResp.ok) {
-      return res.status(bookResp.code).json(bookResp);
-      // throw new HttpException(res.errMessage, res.
+      // return res.status(bookResp.code).json(bookResp);
+      ThrowRes(bookResp);
     }
     /**
      * if there is change on the image
@@ -138,7 +136,7 @@ export class BookController {
     const resp = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
     if (!resp.ok) {
       logTrace('', resp.errMessage);
-      return res.status(resp.code).json(resp);
+      ThrowRes(bookResp);
     }
     return resp.body;
   }
@@ -185,14 +183,21 @@ export class BookController {
   @Get()
   async filterManyAndPaginate(@Query() inputQuery: BookQuery): Promise<PaginatedRes<Book>> {
     let genres = inputQuery.genres;
+    let metas = inputQuery.meta;
     if (genres && !Array.isArray(genres)) {
       // If `tags` is not an array, convert it to a single-element array.
       genres = [genres];
+    }
+    if (metas && !Array.isArray(metas)) {
+      metas = [metas];
     }
     // logTrace('query', inputQuery);
     const additionalQuery = {};
     if (inputQuery?.genres && inputQuery.genres.length > 0) {
       additionalQuery['genres'] = { $in: genres };
+    }
+    if (inputQuery?.meta && inputQuery.meta.length > 0) {
+      additionalQuery['meta'] = { $in: metas };
     }
 
     const res = await this.bookService.searchManyAndPaginate(

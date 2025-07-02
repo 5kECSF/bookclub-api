@@ -11,6 +11,7 @@ export class CreateBookInput extends PickType(Book, [
   'status',
   'categoryName',
   'genres',
+  'meta',
   'authorName',
   'language',
   'pageNo',
@@ -49,6 +50,9 @@ export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'
 export class BookQuery extends PaginationInputs {
   @IsOptional()
   genres?: string[];
+
+  @IsOptional()
+  meta?: string[];
 
   @IsOptional()
   categoryId?: string;

@@ -58,10 +58,17 @@ export class NotificationController {
   async filterAndPaginate(
     @Query() inputQuery: NotificationQuery,
   ): Promise<PaginatedRes<Notification>> {
+    let additinalQuery = {};
+    if (inputQuery.after) {
+      additinalQuery = {
+        createdAt: { $gt: new Date(inputQuery.after) },
+      };
+    }
     const res = await this.notificationService.searchManyAndPaginate(
       ['title'],
       inputQuery,
       NotificationFilter,
+      additinalQuery,
     );
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;

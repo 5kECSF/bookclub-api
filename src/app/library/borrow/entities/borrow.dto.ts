@@ -17,6 +17,9 @@ export class BorrowQuery extends PaginationInputs {
   @IsOptional()
   searchText?: string;
 
+  @IsOptional()
+  overDue?: boolean;
+
   // ======== Pagination fields
   @IsOptional()
   sort?: string = 'count';

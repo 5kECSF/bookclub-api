@@ -9,6 +9,11 @@ export enum NotificationEnum {
   Individual = 'Individual',
 }
 
+export enum ToEnum {
+  General = 'General',
+  Individual = 'Individual',
+}
+
 @Schema({ timestamps: true })
 export class Notification {
   @ApiProperty({ name: 'id' })
@@ -34,6 +39,8 @@ export class Notification {
   @IsOptional()
   @Prop({ type: String, required: false, ref: 'User' })
   userId: string;
+
+  to: string;
 }
 
 export type NotificationDocument = Notification & Document;

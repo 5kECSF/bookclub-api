@@ -48,6 +48,10 @@ export class Book {
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
   genres: string[];
 
+  @IsNotEmpty()
+  @Prop({ type: [{ type: String }] })
+  meta: string[];
+
   //===========================   File Related ===============
   @Prop({ type: EmbedUpload })
   upload: EmbedUpload;

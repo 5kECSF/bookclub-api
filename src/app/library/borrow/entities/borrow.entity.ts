@@ -91,10 +91,10 @@ export class BookTaken {
   note: string;
 
   @IsNotEmpty()
-  takenDate: string;
+  takenDate: Date;
 
   @IsNotEmpty()
-  dueDate: string;
+  dueDate: Date;
 }
 
 export class BookReturned {
