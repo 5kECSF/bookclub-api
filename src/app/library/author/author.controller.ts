@@ -133,6 +133,13 @@ export class AuthorController {
     return res.body;
   }
 
+  @Get(':name/name')
+  async findOneByName(@Param('name') name: string) {
+    const res = await this.service.findOne({ name });
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.body;
+  }
+
   // ================  Depricated Functions
   /* @depricated: this waits for the file id from the client*/
   @Post()
