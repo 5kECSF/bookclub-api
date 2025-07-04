@@ -10,8 +10,8 @@ export enum NotificationEnum {
 }
 
 export enum ToEnum {
-  General = 'General',
-  Individual = 'Individual',
+  Admin = 'ADMIN',
+  USERS = 'USERS',
 }
 
 @Schema({ timestamps: true })
@@ -37,10 +37,16 @@ export class Notification {
   type?: NotificationEnum; //general, single user
 
   @IsOptional()
+  @Prop({
+    type: String,
+    enum: Object.values(ToEnum),
+    default: ToEnum.USERS,
+  })
+  to?: ToEnum; //admin, users
+
+  @IsOptional()
   @Prop({ type: String, required: false, ref: 'User' })
   userId: string;
-
-  to: string;
 }
 
 export type NotificationDocument = Notification & Document;

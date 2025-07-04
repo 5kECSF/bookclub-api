@@ -1,4 +1,4 @@
-import { PaginatedRes } from '@/common/types/common.types.dto';
+import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
 import { RoleType } from '@/common/types/enums';
 import {
   Body,
@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { CreateNotificationInput, NotificationQuery, UpdateDto } from './entities/notification.dto';
@@ -19,7 +20,7 @@ import { Endpoint } from '@/common/constants/model.names';
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
-import { Notification, NotificationFilter } from './entities/notification.entity';
+import { Notification, NotificationEnum, NotificationFilter } from './entities/notification.entity';
 
 @Controller(Endpoint.Notification)
 @ApiTags(Endpoint.Notification)
@@ -53,16 +54,18 @@ export class NotificationController {
     return res.body;
   }
 
-  // == below queries dont need authentication
   @Get()
+  @UseGuards(JwtGuard)
   async filterAndPaginate(
+    @Req() req: Request,
     @Query() inputQuery: NotificationQuery,
   ): Promise<PaginatedRes<Notification>> {
-    let additinalQuery = {};
+    const user: UserFromToken = req['user'];
+    const additinalQuery = {
+      $or: [{ type: NotificationEnum.General }, { userId: user._id }],
+    };
     if (inputQuery.after) {
-      additinalQuery = {
-        createdAt: { $gt: new Date(inputQuery.after) },
-      };
+      additinalQuery['createdAt'] = { $gt: new Date(inputQuery.after) };
     }
     const res = await this.notificationService.searchManyAndPaginate(
       ['title'],
@@ -75,6 +78,7 @@ export class NotificationController {
   }
 
   @Get(':id')
+  @UseGuards(JwtGuard)
   async findOne(@Param('id') id: string) {
     const res = await this.notificationService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);

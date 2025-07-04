@@ -11,14 +11,14 @@ import { DatabaseService } from './database.service';
       useFactory: async () => {
         const mongoUri = getMongoUri();
         logTrace('monogUri', mongoUri.substring(0, 20), ColorEnums.BgGreen);
-        logTrace('monogUri', mongoUri, ColorEnums.BgGreen);
+        // logTrace('monogUri', mongoUri, ColorEnums.BgGreen);
         try {
           const mongooseOptions = {
             uri: mongoUri,
           };
           // await mongoose.connect(mongoUri, mongooseOptions);
 
-          console.info('MongoDB connected successfully!', 'mongoUri');
+          console.info('MongoDB  trying to connect');
 
           return mongooseOptions;
         } catch (e) {

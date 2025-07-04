@@ -157,6 +157,7 @@ export class BorrowService extends MongoGenericRepository<Borrow> {
               instanceUid: instance.body.uid,
               instanceId: message.instanceId,
               acceptedDate: new Date(),
+              note: message.note,
             },
             session,
           );

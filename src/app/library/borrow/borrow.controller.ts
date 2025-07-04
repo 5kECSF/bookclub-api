@@ -133,11 +133,18 @@ export class BorrowController {
     return res.body;
   }
 
-  // == below queries dont need authentication
   @Get()
-  async filterAndPaginate(@Query() inputQuery: BorrowQuery): Promise<PaginatedRes<Borrow>> {
+  @UseGuards(JwtGuard)
+  async filterAndPaginate(
+    @Req() req: Request,
+    @Query() inputQuery: BorrowQuery,
+  ): Promise<PaginatedRes<Borrow>> {
+    const user: UserFromToken = req['user'];
     let additinalQuery = {};
-    if (inputQuery.overDue) {
+    if (user.role != RoleType.ADMIN) {
+      additinalQuery['userId'] = user._id;
+    }
+    if (inputQuery.overDue == true || String(inputQuery.overDue) == 'true') {
       const currentDate = new Date();
       additinalQuery = {
         dueDate: { $lt: currentDate },
@@ -155,6 +162,8 @@ export class BorrowController {
   }
 
   @Get(':id')
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async findOne(@Param('id') id: string): Promise<Borrow> {
     const res = await this.borrowService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);

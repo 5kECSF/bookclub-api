@@ -36,7 +36,7 @@ export class Borrow {
 
   @IsOptional()
   @Prop({ type: String, ref: 'Donation' })
-  instanceId?: string;
+  instanceId?: string; //id of the donation
 
   @IsOptional()
   @IsString()
