@@ -106,7 +106,7 @@ export class AuthService {
     return Succeed(ResponseConsts.VERIFICATION_SENT);
   }
 
-  //===============  Verifying & activating user by code
+  //==============  Verifying & activating user by code
 
   /**
      AuSr-2: - checks user exists, - check if the hash of codes matches & is not expired, - activates user

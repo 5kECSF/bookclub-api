@@ -17,6 +17,7 @@ import { NotificationModule } from './app/extra/notification/notification.module
 // import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthorModule } from '@/app/library/author/author.module';
 import { BorrowModule } from './app/library/borrow/borrow.module';
+import { StatsModule } from './app/library/stats/stats.module';
 import { FileModule } from './providers/upload/file.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { FileModule } from './providers/upload/file.module';
     AuthorModule,
     BorrowModule,
     FileModule,
+    StatsModule,
     // ThrottlerModule.forRoot([
     //   {
     //     ttl: 60000,

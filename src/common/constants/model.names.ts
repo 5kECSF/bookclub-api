@@ -8,8 +8,10 @@ export enum Endpoint {
   Borrow = 'borrow',
   Category = 'category',
   Donation = 'donation',
+  Author = 'author',
+  Stats = 'stats',
+  // =-======= extra
   Feedback = 'feedback',
   File = 'file',
   Notification = 'notification',
-  Author = 'author',
 }
