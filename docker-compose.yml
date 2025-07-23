@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    network_mode: host
+    ports:
+      - "3000:9001"
+    environment:
+      NODE_ENV: local
+    env_file: .env
