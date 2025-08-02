@@ -18,8 +18,8 @@ export class Genre {
   name: string;
 
   @IsNotEmpty()
-  @Prop({ type: [{ type: String }] })
-  category: string[];
+  @Prop({ type: String, unique: true })
+  category: string;
 
   @IsOptional()
   @IsString()
