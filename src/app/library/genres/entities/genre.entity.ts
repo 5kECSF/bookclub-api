@@ -17,6 +17,10 @@ export class Genre {
   @Prop({ type: String, unique: true })
   name: string;
 
+  @IsNotEmpty()
+  @Prop({ type: [{ type: String }] })
+  category: string[];
+
   @IsOptional()
   @IsString()
   @Prop({ type: String })
@@ -64,6 +68,7 @@ export class CreateGenreInput extends PickType(Genre, [
   'restricted',
   'fileId',
   'status',
+  'category',
 ]) {
   @IsOptional()
   @ApiHideProperty()
@@ -81,11 +86,15 @@ export const GenreFilter: (keyof Genre)[] = [
   'fileId',
   'restricted',
   '_id',
+  'category',
 ];
 
 export class UpdateDto extends PartialType(OmitType(CreateGenreInput, ['slug'])) {}
 
 export class GenreQuery extends PaginationInputs {
+  @IsOptional()
+  category: string;
+
   status: ItemStatus;
 
   @IsOptional()

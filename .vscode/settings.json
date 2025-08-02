@@ -1,28 +1,36 @@
 {
-    "workbench.colorCustomizations": {
-      "activityBar.activeBackground": "#70fbfc",
-      "activityBar.background": "#70fbfc",
-      "activityBar.foreground": "#15202b",
-      "activityBar.inactiveForeground": "#15202b99",
-      "activityBarBadge.background": "#fc63fb",
-      "activityBarBadge.foreground": "#15202b",
-      "commandCenter.border": "#15202b99",
-      "sash.hoverBorder": "#70fbfc",
-      "statusBarItem.hoverBackground": "#0cf7fa",
-      "statusBarItem.remoteBackground": "#3ef9fb",
-      "statusBarItem.remoteForeground": "#15202b",
-      "titleBar.activeBackground": "#3ef9fb",
-      "titleBar.activeForeground": "#15202b",
-      "titleBar.inactiveBackground": "#3ef9fb99",
-      "titleBar.inactiveForeground": "#15202b99"
-    },
-    "peacock.color": "#3ef9fb",
-    "tabsColor.activeTab": {
-  "backgroundColor": "yellow",
-  "fontColor": "black"
-},
-"todomd.autoArchiveTasks": true,
-"todomd.defaultFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.md",
-"todomd.defaultArchiveFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.done.md",
-"todomd.defaultSomedayFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.later.md"
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#70fbfc",
+    "activityBar.background": "#70fbfc",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#fc63fb",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#15202b99",
+    "sash.hoverBorder": "#70fbfc",
+    "statusBarItem.hoverBackground": "#0cf7fa",
+    "statusBarItem.remoteBackground": "#3ef9fb",
+    "statusBarItem.remoteForeground": "#15202b",
+    "titleBar.activeBackground": "#3ef9fb",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#3ef9fb99",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#3ef9fb",
+  "tabsColor.activeTab": {
+    "backgroundColor": "yellow",
+    "fontColor": "black"
+  },
+  "todomd.autoArchiveTasks": true,
+  "todomd.defaultFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.md",
+  "todomd.defaultArchiveFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.done.md",
+  "todomd.defaultSomedayFile": "/Users/bk/Documents/3prog/proj/bookclub/bookclubApi/documentation/todo.later.md",
+  "search.exclude": {
+    "**/.yarn": true,
+    "**/.pnp.*": true
+  },
+  "eslint.nodePath": ".yarn/sdks",
+  "prettier.prettierPath": ".yarn/sdks/prettier/index.js",
+  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }
