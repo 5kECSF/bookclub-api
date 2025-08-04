@@ -86,13 +86,13 @@ export abstract class MongoGenericRepository<T> {
       const sortDir = paginateQuery?._sortDir === 'desc' ? -1 : 1;
 
       // logTrace('main!', mainQuery);
-
+      const skip = (page - 1) * limit;
       items = await this._repository
         .find(mainQuery)
-        .skip((page - 1) * limit)
+        .skip(skip)
         .limit(limit + 1)
         .collation({ locale: 'en', strength: 2 })
-        .sort({ [sort]: sortDir })
+        .sort({ [sort]: sortDir, _id: -1 })
         .lean();
       let hasNext = false;
       if (items.length > limit) {
