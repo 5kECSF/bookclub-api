@@ -393,14 +393,14 @@ export class AuthService {
 
   //  ------------------------   AUTHORIZATION OPERATIONS
   //  AuSr--
-  public async getUserFromToken(token: string): Promise<User | null> {
-    if (!token) return null;
-    // logTrace('token ', token);
-    const decoded = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
-    if (!decoded || !decoded?._id) return null;
-    logTrace('token Verified', decoded);
-    const realUser = await this.usersService.findById(decoded._id);
-    if (!realUser.body) return null;
-    return realUser.body;
-  }
+  // public async getUserFromToken(token: string): Promise<User | null> {
+  //   if (!token) return null;
+  //   // logTrace('token ', token);
+  //   const decoded = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
+  //   if (!decoded || !decoded?._id) return null;
+  //   logTrace('token Verified', decoded);
+  //   const realUser = await this.usersService.findById(decoded._id);
+  //   if (!realUser.body) return null;
+  //   return realUser.body;
+  // }
 }

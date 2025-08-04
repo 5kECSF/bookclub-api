@@ -17,9 +17,13 @@ export class Genre {
   @Prop({ type: String, unique: true })
   name: string;
 
-  @IsNotEmpty()
-  @Prop({ type: String, unique: true })
+  @IsOptional()
+  @Prop({ type: String })
   category: string;
+
+  @IsNotEmpty()
+  @Prop({ type: [{ type: String }] })
+  categories: string[];
 
   @IsOptional()
   @IsString()
@@ -69,6 +73,7 @@ export class CreateGenreInput extends PickType(Genre, [
   'fileId',
   'status',
   'category',
+  'categories',
 ]) {
   @IsOptional()
   @ApiHideProperty()
@@ -94,6 +99,8 @@ export class UpdateDto extends PartialType(OmitType(CreateGenreInput, ['slug']))
 export class GenreQuery extends PaginationInputs {
   @IsOptional()
   category: string;
+
+  categories: string;
 
   status: ItemStatus;
 

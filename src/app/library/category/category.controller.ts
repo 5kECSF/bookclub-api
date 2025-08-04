@@ -126,8 +126,8 @@ export class CategoryController {
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: CategoryQuery): Promise<PaginatedRes<Category>> {
-    const query = removeKeys(inputQuery, [...pagiKeys, 'searchText']);
-    const res = await this.service.searchManyAndPaginate(['name'], query, CategoryFilter);
+
+    const res = await this.service.searchManyAndPaginate(['name'], inputQuery, CategoryFilter);
     if (!res.ok) ThrowRes(res);
     return res.body;
   }

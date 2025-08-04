@@ -48,7 +48,7 @@ export class Book {
   @Prop({ type: [{ type: String, ref: 'Genre.name' }] })
   genres: string[];
 
-  @IsNotEmpty()
+  @IsOptional()
   @Prop({ type: [{ type: String }] })
   meta: string[];
 
