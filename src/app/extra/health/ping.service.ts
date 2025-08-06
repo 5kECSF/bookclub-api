@@ -10,7 +10,7 @@ export class PingService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async pingSelf() {
     try {
       const response = await firstValueFrom(this.httpService.get(this.pingUrl));
