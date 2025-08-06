@@ -31,6 +31,7 @@ export const LOAD_ENVS = (req = false): ENV_TYPES => {
       ENV_DEFAULT.JWT_REFRESH_EXPIRY_TIME,
     ),
     ENCRYPTION_KEY: tryReadEnv(ENV_NAMES.ENCRYPTION_KEY, req),
+    SELF_PING_URL: tryReadEnv(ENV_NAMES.SELF_PING_URL, req),
     //  Firebase envs
     FIREBASE_PRIVATE_KEY: getFireBasePrivateKey(),
     FIREBASE_PRIVATE_KEY_STRING: tryReadEnv(ENV_NAMES.FIREBASE_PRIVATE_KEY_STRING, req),

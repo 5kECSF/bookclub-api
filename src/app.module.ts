@@ -20,8 +20,13 @@ import { BorrowModule } from './app/library/borrow/borrow.module';
 import { StatsModule } from './app/library/stats/stats.module';
 import { FileModule } from './providers/upload/file.module';
 
+import { HttpModule } from '@nestjs/axios';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PingService } from './app/extra/health/ping.service';
+
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     DatabaseModule,
     UsersModule,
     AuthModule,
@@ -37,6 +42,9 @@ import { FileModule } from './providers/upload/file.module';
     BorrowModule,
     FileModule,
     StatsModule,
+    HttpModule,
+    // TerminusModule,
+    // HealthModule,
     // ThrottlerModule.forRoot([
     //   {
     //     ttl: 60000,
@@ -47,6 +55,7 @@ import { FileModule } from './providers/upload/file.module';
   controllers: [AppController],
   providers: [
     AppService,
+    PingService,
     // {
     //   provide: APP_GUARD,
     //   useClass: ThrottlerGuard,

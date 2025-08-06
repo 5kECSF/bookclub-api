@@ -85,6 +85,7 @@ export const ENV_DEFAULT = {
   //app urls
   SERVER_URL: 'http://localhost:4000',
   CLIENT_URL: 'http://localhost:3000',
+  SELF_PING_URL: 'http://localhost:9001',
 
   //Token secrets
   JWT_ACCESS_SECRET: 'some long secret',
