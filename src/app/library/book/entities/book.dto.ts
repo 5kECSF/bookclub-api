@@ -62,4 +62,7 @@ export class BookQuery extends PaginationInputs {
 
   @IsOptional()
   authorId?: string;
+
+  @IsOptional()
+  inStore?: boolean= true;
 }

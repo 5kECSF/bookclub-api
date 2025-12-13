@@ -54,12 +54,12 @@ export abstract class MongoGenericRepository<T> {
   ): Promise<Resp<PaginatedRes<T>>> {
     try {
       const paginateQuery = pickKeys(filter, [...pagiKeys]);
-      // logTrace('keys to remove', keysToRemove);
+      // 1. pick the keys that are alowed to be directly filtered in
       const query = pickKeys(filter, [...(keysToFilter as string[])]);
-      // logTrace('filter', filter);
 
+      //2. use the additional query as a starting point
       let mainQuery: Record<string, any> = additionalQuery;
-      // this adds text search capability
+      //3. if there is a search query adds text search capability
       if (filter.q) {
         // const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
         // logTrace('searchTxt', searchText);
@@ -70,7 +70,7 @@ export abstract class MongoGenericRepository<T> {
           })),
         };
       }
-      // logTrace('query', mainQuery, filter.searchText);
+      // 4. for each direct filter query add it to the main query 
       Object.keys(query).forEach((key) => {
         if (query[key]) {
           mainQuery[key] = query[key];
@@ -79,14 +79,15 @@ export abstract class MongoGenericRepository<T> {
       //--- the above function with out text search
 
       let items: T[] = [];
-      // Always make default pagination = 25 with first page
+      //6. setup limit, page, sort & sortdir
+      //6.1 Always make default pagination = 25 with first page
       const limit = parseInt(paginateQuery?.limit) || 25;
       const page = parseInt(paginateQuery?.page) || 1;
       const sort = paginateQuery?.sort || '_id';
       const sortDir = paginateQuery?._sortDir === 'desc' ? -1 : 1;
-
-      // logTrace('main!', mainQuery);
       const skip = (page - 1) * limit;
+
+      //7. perform the query, with limit +1
       items = await this._repository
         .find(mainQuery)
         .skip(skip)
@@ -94,6 +95,8 @@ export abstract class MongoGenericRepository<T> {
         .collation({ locale: 'en', strength: 2 })
         .sort({ [sort]: sortDir, _id: -1 })
         .lean();
+
+      //if len(result) is greater than the query pop the last element and make hasNext true
       let hasNext = false;
       if (items.length > limit) {
         hasNext = true;

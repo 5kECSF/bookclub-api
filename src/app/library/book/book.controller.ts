@@ -199,6 +199,9 @@ export class BookController {
     if (inputQuery?.meta && inputQuery.meta.length > 0) {
       additionalQuery['meta'] = { $in: metas };
     }
+    if (inputQuery.inStore){
+      additionalQuery['availableCnt']={$gt: 0}
+    }
 
     const res = await this.bookService.searchManyAndPaginate(
       ['title', 'desc'],
