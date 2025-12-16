@@ -24,8 +24,6 @@ lerna-debug.log*
 #env files
 .env.dev
 .env.prod
-.env.test
-.env*
 !.env.example
 
 #keys
@@ -48,8 +46,8 @@ serviceKey.json
 *.sublime-workspace
 
 # IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+config.bat

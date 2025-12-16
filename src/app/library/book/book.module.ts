@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BookService } from './book.service';
 import { BookController } from './book.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -10,6 +10,7 @@ import { CategoryModule } from '../category/category.module';
 import { GenreModule } from '../genres/genre.module';
 import { UploadModule } from '@/app/upload/upload.module';
 import { Sequence, SequenceModel, SequenceService } from './sequence/sequence.entity';
+import { DonationModule } from '../donation/donation.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Sequence, SequenceModel, SequenceService } from './sequence/sequence.en
     CategoryModule,
     GenreModule,
     UploadModule,
+    forwardRef(() => DonationModule),
   ],
   controllers: [BookController],
   providers: [BookService, SequenceService],
