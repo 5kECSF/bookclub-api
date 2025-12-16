@@ -72,13 +72,16 @@ export class DonationController {
   @Delete(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async removeOne(@Req() req: Request, @Param('id') id: string) {
+  async removeOne(@Req() req: Request, @Param('id') id: string):Promise<Donation> {
     const res = await this.donationService.findOneAndRemove({ _id: id });
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
 
+    const donationCnt= await this.donationService.countDoc({bookId: res.body.bookId})
+    if (res.ok) throw new HttpException(donationCnt.errMessage, donationCnt.code);
+
     const ctg = await this.bookService.updateOneAndReturnCount(
       { _id: res.body.bookId },
-      { $inc: { instanceCnt: -1 } },
+      { instanceCnt: res.body},
     );
     const donor = await this.userService.updateOneAndReturnCount(
       { _id: res.body.donorId },

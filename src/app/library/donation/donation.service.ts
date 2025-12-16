@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 
 import { bookStatus, Donation, DonationDocument } from './entities/donation.entity';
@@ -15,6 +15,7 @@ import { CreateDonationInput } from './entities/donation.dto';
 export class DonationService extends MongoGenericRepository<Donation> {
   constructor(
     @InjectModel(Donation.name) private questionModel: Model<DonationDocument>,
+    @Inject(forwardRef(() => BookService))
     private readonly bookService: BookService,
     @InjectConnection() private readonly connection: Connection,
     private readonly userService: UserService,
