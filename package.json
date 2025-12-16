@@ -6,9 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "node api.js && nest build",
     "format": "prettier --write \\\\\\\"src/**/*.ts\\\\\\\" \\\\\\\"test/**/*.ts\\\\\\\"",
-    "start": "npm run start:prod",
+    "start": "node api.js && npm run start:prod",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main --max-old-space-size=256",
@@ -33,7 +33,6 @@
     "@nestjs/platform-express": "^9.4.3",
     "@nestjs/schedule": "^4.0.0",
     "@nestjs/swagger": "^6.3.0",
-
     "@nestjs/throttler": "^5.2.0",
     "argon2": "^0.30.3",
     "axios": "^1.11.0",
