@@ -32,6 +32,7 @@ import { Book, BookFilter } from './entities/book.entity';
 
 import { ThrowRes } from '@/common/util/responseFunctions';
 import { SequenceService } from './sequence/sequence.entity';
+import { DonationService } from '../donation/donation.service';
 
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
@@ -145,21 +146,8 @@ export class BookController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async removeOne(@Req() req: Request, @Param('id') id: string): Promise<Book> {
-    //TODO: iterate and remove all the files
-    const res = await this.bookService.findOneAndRemove({ _id: id });
+    const res = await this.bookService.removeOne(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-    const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
-    if (!result.ok) {
-      console.log('deleting the file error');
-    }
-
-    await Promise.all([
-      this.categoryService.updateOneAndReturnCount(
-        { name: res.body.categoryName },
-        { $inc: { count: -1 } },
-      ),
-      this.genreService.updateMany({ name: { $in: res.body.genres } }, { $inc: { count: -1 } }),
-    ]);
     return res.body;
   }
 
@@ -199,8 +187,8 @@ export class BookController {
     if (inputQuery?.meta && inputQuery.meta.length > 0) {
       additionalQuery['meta'] = { $in: metas };
     }
-    if (inputQuery.inStore){
-      additionalQuery['availableCnt']={$gt: 0}
+    if (inputQuery.inStore) {
+      additionalQuery['availableCnt'] = { $gt: 0 };
     }
 
     const res = await this.bookService.searchManyAndPaginate(
