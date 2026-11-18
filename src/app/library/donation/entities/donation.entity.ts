@@ -5,7 +5,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { Prop as MProp } from '@nestjs/mongoose/dist/decorators/prop.decorator';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export enum bookStatus {
   Available = 'AVAILABLE',
@@ -24,7 +24,7 @@ export class Donation {
    * @example '2-1'
    */
   @IsOptional()
-  @Prop({ type: String, unique: true, spares: true })
+  @Prop({ type: String, unique: true, sparse: true })
   uid?: string;
 
   /**
@@ -63,11 +63,14 @@ export class Donation {
   @Prop({ type: Date, required: false })
   donatedDate?: Date; //Created Date
 
+  // new copies are available by default (no default meant they were never counted as available)
   @MProp({
     type: String,
     enum: Object.values(bookStatus),
+    default: bookStatus.Available,
   })
   @IsOptional()
+  @IsEnum(bookStatus)
   status: bookStatus;
 
   /**
@@ -86,3 +89,9 @@ export type DonationDocument = Donation & Document;
 export const DonationSchema = SchemaFactory.createForClass(Donation);
 // Create indexes
 DonationSchema.index({ body: 'text' });
+
+/**
+ * filter for copies that can be lent: legacy documents created before `status` had a default
+ * have no status at all and are treated as available
+ */
+export const availableStatusFilter = { $in: [bookStatus.Available, null] };

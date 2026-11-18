@@ -6,14 +6,31 @@ import {
   ENV_TYPES,
   getFireBasePrivateKey,
   getMongoUri,
+  readOptionalEnv,
   tryReadEnv,
 } from './config.utills';
 
+const isProdMode = (mode: string) => mode === 'prod' || mode === 'production';
+
 export const LOAD_ENVS = (req = false): ENV_TYPES => {
+  const nodeEnv = tryReadEnv('NODE_ENV');
+  const port = tryReadEnv(ENV_NAMES.PORT, req);
+  let verificationCode = readOptionalEnv(ENV_NAMES.VERIFICATION_CODE);
+  if (verificationCode && isProdMode(nodeEnv)) {
+    logTrace('VERIFICATION_CODE is ignored in production', '', ColorEnums.BgRed);
+    verificationCode = '';
+  }
   return {
     ...ENV_DEFAULT,
-    NODE_ENV: tryReadEnv('NODE_ENV'),
-    PORT: tryReadEnv(ENV_NAMES.PORT, req),
+    NODE_ENV: nodeEnv,
+    PORT: port,
+    SERVER_URL: readOptionalEnv(
+      ENV_NAMES.SERVER_URL,
+      `http://localhost:${port || ENV_DEFAULT.PORT}`,
+    ),
+    VERIFICATION_CODE: verificationCode,
+    EMAIL_PROVIDER: readOptionalEnv(ENV_NAMES.EMAIL_PROVIDER),
+    UPLOAD_DIR: readOptionalEnv(ENV_NAMES.UPLOAD_DIR),
     //Database
     MONGODB_URI: getMongoUri(),
     //Jwt Related
@@ -47,6 +64,12 @@ export const LOAD_ENVS = (req = false): ENV_TYPES => {
     // GOOGLE_GMAIL_REFRESH_TOKEN: tryReadEnv(ENV_NAMES.GOOGLE_GMAIL_REFRESH_TOKEN, req),
     //======Cloudinary
     STORAGE_PROVIDER: tryReadEnv(ENV_NAMES.STORAGE_PROVIDER, req),
+    // S3 settings were never read from the environment before
+    S3_BUCKET: readOptionalEnv(ENV_NAMES.S3_BUCKET),
+    S3_ENDPOINT: readOptionalEnv(ENV_NAMES.S3_ENDPOINT),
+    S3_ACCESS_KEY: readOptionalEnv(ENV_NAMES.S3_ACCESS_KEY),
+    S3_SECRET_KEY: readOptionalEnv(ENV_NAMES.S3_SECRET_KEY),
+    S3_REGION: readOptionalEnv(ENV_NAMES.S3_REGION, ENV_DEFAULT.S3_REGION),
     CLOUDINARY_CLOUD_NAME: tryReadEnv(ENV_NAMES.CLOUDINARY_CLOUD_NAME, req),
     CLOUDINARY_API_KEY: tryReadEnv(ENV_NAMES.CLOUDINARY_API_KEY, req),
     CLOUDINARY_API_SECRET: tryReadEnv(ENV_NAMES.CLOUDINARY_API_SECRET, req),

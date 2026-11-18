@@ -25,6 +25,8 @@ export const enum ColorEnums {
 }
 //num 2 shows the line this is called,
 export const logTrace = (name: any, value: any, color = ColorEnums.FgBlue, num = 2) => {
+  // LOG_TRACE=off silences the debug traces (used by the integration tests)
+  if (process.env.LOG_TRACE === 'off') return;
   console.log(
     color,
     'DEBUG:-',

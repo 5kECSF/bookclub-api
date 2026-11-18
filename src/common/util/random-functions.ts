@@ -30,9 +30,12 @@ export function generateUniqName(fileName: string, uid = '', ctr = 0): Img {
 
   const names = fileName.split('.');
   //chooses if slug should have random and timestamp
-  const slug = generateSlug(names[0], true, false);
+  const slug = generateSlug(names[0] || 'file', true, false);
 
-  const ext = names[names.length - 1];
+  // the extension comes from the client supplied file name: keep it filesystem/url safe
+  const ext =
+    (names.length > 1 ? names[names.length - 1] : '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) ||
+    'bin';
   return { name: `${uid}-${slug}-${ctr}.${ext}`, uid: uid };
 }
 
@@ -57,8 +60,8 @@ export function generateRandoms(len: number) {
   let pass = '';
 
   for (let i = 1; i <= len; i++) {
-    const char = Math.floor(Math.random() * AlphaNumeric.length + 1);
-    pass += AlphaNumeric.charAt(char);
+    // charAt(length) used to return '' and produce shorter strings
+    pass += AlphaNumeric.charAt(crypto.randomInt(AlphaNumeric.length));
   }
   return pass;
 }
@@ -66,8 +69,7 @@ export function generateRandomNum(len: number) {
   let pass = '';
 
   for (let i = 1; i <= len; i++) {
-    const char = Math.floor(Math.random() * NumberChars.length + 1);
-    pass += NumberChars.charAt(char);
+    pass += NumberChars.charAt(crypto.randomInt(NumberChars.length));
   }
   return pass;
 }

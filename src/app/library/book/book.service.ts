@@ -1,4 +1,5 @@
-import { Injectable, Inject,forwardRef  } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ItemStatus } from '@/common/types/enums';
 import { InjectModel } from '@nestjs/mongoose';
 
 import { Model } from 'mongoose';
@@ -23,33 +24,47 @@ export class BookService extends MongoGenericRepository<Book> {
     @Inject(forwardRef(() => DonationService))
     private readonly donationService: DonationService,
     private readonly uploadService: UploadService,
-     private readonly categoryService: CategoryService,
-     private readonly genreService: GenreService,
+    private readonly categoryService: CategoryService,
+    private readonly genreService: GenreService,
   ) {
     super(bookModel);
   }
-  async removeOne( id: string): Promise<Resp<Book>> {
-    //Todo Check if the book has donataions
-    const DntnCnt = await this.donationService.countDoc({ bookId: id });
-    if (DntnCnt.ok && DntnCnt.body > 0) {
-      return Promise.reject(FAIL('there is donation records for this book', 400))
-    }
-    //TODO: iterate and remove all the files
-    const res = await this.findOneAndRemove({ _id: id });
-    if (!res.ok) return Promise.reject(FAIL(res.errMessage, res.code))
-    const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
-    if (!result.ok) {
-      console.log('deleting the file error');
-    }
 
+  async removeOne(id: string): Promise<Resp<Book>> {
+    // books with donation (physical copy) records can't be removed
+    const DntnCnt = await this.donationService.countDoc({ bookId: id });
+    if (!DntnCnt.ok) return FAIL(DntnCnt.errMessage, DntnCnt.code);
+    if (DntnCnt.body > 0) {
+      return FAIL('there is donation records for this book', 400);
+    }
+    const res = await this.findOneAndRemove({ _id: id });
+    if (!res.ok) return FAIL(res.errMessage, res.code);
+    if (res.body.fileId) {
+      const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
+      if (!result.ok) logTrace('deleting the book file failed', result.errMessage);
+    }
+    await this.recomputeTaxonomyCounts([res.body.categoryName], res.body.genres);
+    return Succeed(res.body);
+  }
+
+  /**
+   * recompute the (active) book counts of the given categories & genres
+   * (used to be blind $inc/-1 which drifted e.g. when a book was activated twice)
+   */
+  async recomputeTaxonomyCounts(categoryNames: string[] = [], genres: string[] = []) {
+    const ctgs = [...new Set((categoryNames || []).filter(Boolean))];
+    const gnrs = [...new Set((genres || []).filter(Boolean))];
     await Promise.all([
-      this.categoryService.updateOneAndReturnCount(
-        { name: res.body.categoryName },
-        { $inc: { count: -1 } },
-      ),
-      this.genreService.updateMany({ name: { $in: res.body.genres } }, { $inc: { count: -1 } }),
+      ...ctgs.map(async (name) => {
+        const cnt = await this.countDoc({ categoryName: name, status: ItemStatus.Active });
+        if (cnt.ok)
+          await this.categoryService.updateOneAndReturnCount({ name }, { count: cnt.body });
+      }),
+      ...gnrs.map(async (name) => {
+        const cnt = await this.countDoc({ genres: name, status: ItemStatus.Active });
+        if (cnt.ok) await this.genreService.updateOneAndReturnCount({ name }, { count: cnt.body });
+      }),
     ]);
-    return res;
   }
 
   public async CountCtg(categoryId: string) {
@@ -71,6 +86,7 @@ export class BookService extends MongoGenericRepository<Book> {
         { _id: userId, dislikedBooks: bookId },
         { $pull: { dislikedBooks: bookId } },
       );
+      if (!dislike.ok) return false;
       if (dislike.body.matchedCount >= 1 && dislike.body.modifiedCount >= 1) dislikeCont++;
 
       // 2. if the user have not previously liked this book like it
@@ -111,6 +127,7 @@ export class BookService extends MongoGenericRepository<Book> {
         { _id: userId, likedBooks: bookId },
         { $pull: { likedBooks: bookId } },
       );
+      if (!removeLike.ok) return false;
       if (removeLike.body.matchedCount >= 1 && removeLike.body.modifiedCount >= 1) remvdLikeCnt++;
 
       // 2. if the user have not previously disliked this book dislike it

@@ -1,3 +1,4 @@
+import { logTrace } from '@/common/logger';
 import { ItemStatus, RoleType } from '@/common/types/enums';
 import {
   Body,
@@ -42,7 +43,7 @@ export class CategoryController {
   //================  createDraft is P1:  for  New Ones where the draft is created first ============
   //====================================================================================================
   @Post('draft')
-  @Roles(RoleType.USER)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CategoryInput): Promise<Category> {
     const user: UserFromToken = req['user'];
@@ -61,7 +62,7 @@ export class CategoryController {
   //====================================================================================================
 
   @Post(':id')
-  // @Roles(RoleType.ADMIN)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async activateDraft(@Param('id') id: string): Promise<Category> {
     const data = await this.service.findById(id);
@@ -82,13 +83,13 @@ export class CategoryController {
       fileName: updateImg.body.fileName,
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
-      url: updateImg.body.url
+      url: updateImg.body.url,
     };
     const resp = await this.service.updateById(id, {
       status: ItemStatus.Active,
       upload: upload,
     });
-    if (!resp.ok) ThrowRes(updateImg);
+    if (!resp.ok) ThrowRes(resp);
     return resp.body;
   }
 
@@ -96,7 +97,7 @@ export class CategoryController {
 
   @Patch(':id')
   @UseGuards(JwtGuard)
-  @Roles(RoleType.ADMIN, RoleType.USER)
+  @Roles(RoleType.ADMIN)
   async update(@Param('id') id: string, @Body() updateDto: UpdateCategoryDto) {
     if (updateDto?.fileId) {
       const genre = await this.service.findById(id);
@@ -116,8 +117,11 @@ export class CategoryController {
   async remove(@Param('id') id: string) {
     const res = await this.service.findById(id);
     if (!res.ok) ThrowRes(res);
-    const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
-    if (!result.ok) ThrowRes(result);
+    if (res.body.fileId) {
+      // a missing/never uploaded file must not block deleting the record
+      const result = await this.uploadService.deleteFileByIdPrefix(res.body.fileId);
+      if (!result.ok) logTrace('failed deleting category file', result.errMessage);
+    }
     const deleteResp = await this.service.findByIdAndDelete(id);
     if (!deleteResp.ok) ThrowRes(deleteResp);
     return deleteResp.body;
@@ -126,7 +130,6 @@ export class CategoryController {
   // == below queries dont need authentication
   @Get()
   async filterAndPaginate(@Query() inputQuery: CategoryQuery): Promise<PaginatedRes<Category>> {
-
     const res = await this.service.searchManyAndPaginate(['name'], inputQuery, CategoryFilter);
     if (!res.ok) ThrowRes(res);
     return res.body;

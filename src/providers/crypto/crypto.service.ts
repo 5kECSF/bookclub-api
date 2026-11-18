@@ -30,12 +30,14 @@ export class CryptoService {
   }
 
   public async verifyHash(hash: string, plain: string) {
+    // a missing/cleared hash (e.g. after logout or after a code was consumed) never matches
+    if (!hash || !plain) return false;
     try {
       return await argon2.verify(hash, plain);
     } catch (e) {
+      // malformed hashes are treated as a mismatch instead of a 503
       logTrace('verifyHashErr-', e.message, ColorEnums.BgMagenta);
-      logTrace(hash, plain);
-      throw new ServiceUnavailableException('Internal server Error');
+      return false;
     }
   }
 

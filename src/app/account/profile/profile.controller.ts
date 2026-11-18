@@ -18,7 +18,8 @@ import { JwtGuard } from '@/providers/guards/guard.rest';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { User, UserService } from '../users';
-import { UpdateMeDto } from '../users/entities/user.dto';
+import { pickKeys } from '@/common/util/object-functions';
+import { UpdateMeAllowedKeys, UpdateMeDto } from '../users/entities/user.dto';
 import { ChangePasswordInput } from './dto/profile.dto';
 import { ProfileService } from './profile.service';
 
@@ -50,11 +51,16 @@ export class ProfileController {
     @Body() input: UpdateMeDto,
   ): Promise<User> {
     const user: UserFromToken = req['user'];
+    // whitelist: role/accountStatus/active/email/password... used to be writable here
+    const safeInput: Partial<UpdateMeDto> = pickKeys(input || {}, UpdateMeAllowedKeys);
+    delete safeInput.avatar;
     if (file && file.buffer) {
       const update = await this.uploadService.UploadSingle(file, user._id);
-      input.avatar = update.body;
+      if (!update.ok) throw new HttpException(update.errMessage, update.code);
+      safeInput.avatar = update.body;
     }
-    const res = await this.usersService.updateById(user._id, input);
+    if (Object.keys(safeInput).length === 0) throw new HttpException('Nothing to update', 400);
+    const res = await this.usersService.updateById(user._id, safeInput);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }

@@ -62,7 +62,7 @@ export class NotificationController {
   ): Promise<PaginatedRes<Notification>> {
     const user: UserFromToken = req['user'];
     const additinalQuery = {
-      $or: [{ type: NotificationEnum.General }, { userId: user._id }],
+      $or: [{ type: { $ne: NotificationEnum.Individual } }, { userId: user._id }],
     };
     if (inputQuery.after) {
       additinalQuery['createdAt'] = { $gt: new Date(inputQuery.after) };
@@ -79,9 +79,16 @@ export class NotificationController {
 
   @Get(':id')
   @UseGuards(JwtGuard)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Req() req: Request, @Param('id') id: string) {
+    const user: UserFromToken = req['user'];
     const res = await this.notificationService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    // individual notifications are only visible to their owner (and admins)
+    const visible =
+      user.role === RoleType.ADMIN ||
+      res.body.type !== NotificationEnum.Individual ||
+      String(res.body.userId) === String(user._id);
+    if (!visible) throw new HttpException('NOT_FOUND', 404);
     return res.body;
   }
 }

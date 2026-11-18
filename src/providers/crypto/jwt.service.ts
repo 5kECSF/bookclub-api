@@ -38,7 +38,9 @@ export class CustomJwtService {
 
   public async verifyAccessToken(authorization: string) {
     try {
-      const [_, token] = authorization.split(' ');
+      const parts = authorization.split(' ');
+      // accept both `Bearer <token>` and a bare token
+      const token = parts.length > 1 ? parts[1] : parts[0];
       // logTrace('Access Token==', token);
       const decoded = await verify(token, EnvVar.getInstance.JWT_ACCESS_SECRET, {
         algorithms: ['HS256'],
@@ -74,7 +76,7 @@ export class CustomJwtService {
         algorithms: ['HS256'],
       }) as JwtPayload;
 
-      if (!decoded._id) return FAIL('NO User id found on the JWT');
+      if (!decoded._id) return FAIL('NO User id found on the JWT', 401);
       const userToken: UserFromToken = {
         expiryDate: decoded.exp,
         _id: decoded._id,
@@ -85,7 +87,7 @@ export class CustomJwtService {
       return Succeed(userToken);
     } catch (e) {
       logTrace('verifying Token Error', e.message);
-      return FAIL(e.message);
+      return FAIL(e.message, 401);
     }
   }
 }

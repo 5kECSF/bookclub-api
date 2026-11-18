@@ -30,9 +30,9 @@ import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genres/genre.service';
 import { Book, BookFilter } from './entities/book.entity';
 
+import { parseBool } from '@/common/util/object-functions';
 import { ThrowRes } from '@/common/util/responseFunctions';
 import { SequenceService } from './sequence/sequence.entity';
-import { DonationService } from '../donation/donation.service';
 
 @Controller(Endpoint.Book)
 @ApiTags(Endpoint.Book)
@@ -46,7 +46,7 @@ export class BookController {
   ) {}
 
   @Post()
-  @Roles(RoleType.ADMIN, RoleType.USER)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateBookInput): Promise<Book> {
     const user: UserFromToken = req['user'];
@@ -64,10 +64,9 @@ export class BookController {
   }
 
   @Post(':id')
-  // @Roles(RoleType.ADMIN, RoleType.USER)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  async activateBook(@Req() req: Request, @Param('id') id: string): Promise<Book> {
-    const user: UserFromToken = req['user'];
+  async activateBook(@Param('id') id: string): Promise<Book> {
     //find the book
     const book = await this.bookService.findById(id);
     if (!book.ok) ThrowRes(book);
@@ -99,27 +98,16 @@ export class BookController {
     );
     if (!resp.ok || resp.body == null) ThrowRes(resp);
 
-    //===============>>     TODO: update this using count, to make it always accurate
-    await Promise.all([
-      this.categoryService.updateOneAndReturnCount(
-        { name: resp.body.categoryName },
-        { $inc: { count: 1 } },
-      ),
-      this.genreService.updateMany({ name: { $in: resp.body.genres } }, { $inc: { count: 1 } }),
-    ]);
+    // category/genre counts are recomputed (re-activating used to double count)
+    await this.bookService.recomputeTaxonomyCounts([resp.body.categoryName], resp.body.genres);
 
     return resp.body;
   }
 
   @Patch(':id')
-  // @Roles(RoleType.ADMIN)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
-  async update(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body() updateBookDto: UpdateBookDto,
-  ): Promise<Book> {
-    const user: UserFromToken = req['user'];
+  async update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto): Promise<Book> {
     const bookResp = await this.bookService.findById(id);
     if (!bookResp.ok) {
       // return res.status(bookResp.code).json(bookResp);
@@ -128,17 +116,23 @@ export class BookController {
     /**
      * if there is change on the image
      */
-    if (updateBookDto?.fileUpdated || updateBookDto.fileId) {
+    const { fileUpdated, ...update } = updateBookDto;
+    if (fileUpdated || update.fileId) {
       const file = await this.uploadService.findById(bookResp.body.fileId);
       if (!file.ok) throw new HttpException(file.errMessage, file.code);
-      updateBookDto.upload = file.body;
+      update.upload = file.body;
     }
-    //Todo: calculate the Genres & categories Count
-    const resp = await this.bookService.findOneAndUpdate({ _id: id }, updateBookDto);
+    // the file id is managed by the draft/upload flow
+    delete update.fileId;
+    const resp = await this.bookService.findOneAndUpdate({ _id: id }, update);
     if (!resp.ok) {
       logTrace('', resp.errMessage);
-      ThrowRes(bookResp);
+      ThrowRes(resp);
     }
+    await this.bookService.recomputeTaxonomyCounts(
+      [bookResp.body.categoryName, resp.body.categoryName],
+      [...(bookResp.body.genres || []), ...(resp.body.genres || [])],
+    );
     return resp.body;
   }
 
@@ -181,13 +175,13 @@ export class BookController {
     }
     // logTrace('query', inputQuery);
     const additionalQuery = {};
-    if (inputQuery?.genres && inputQuery.genres.length > 0) {
+    if (genres && genres.length > 0) {
       additionalQuery['genres'] = { $in: genres };
     }
-    if (inputQuery?.meta && inputQuery.meta.length > 0) {
+    if (metas && metas.length > 0) {
       additionalQuery['meta'] = { $in: metas };
     }
-    if (inputQuery.inStore) {
+    if (parseBool(inputQuery.inStore) === true) {
       additionalQuery['availableCnt'] = { $gt: 0 };
     }
 

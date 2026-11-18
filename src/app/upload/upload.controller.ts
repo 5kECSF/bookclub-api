@@ -31,7 +31,7 @@ import { PaginatedRes, UserFromToken } from '@/common/types/common.types.dto';
 import { RoleType } from '@/common/types/enums';
 import { JsonRes, ThrowRes } from '@/common/util/responseFunctions';
 import { JwtGuard } from '@/providers/guards/guard.rest';
-import { ToBeAdded } from '@/providers/upload/firebase';
+import { EnvVar } from '@/common/config/config.instances';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 
@@ -39,6 +39,40 @@ import { ApiManyFiltered, ApiSingleFiltered, ParseFile } from './fileParser';
 @ApiTags(Endpoint.File)
 export class UploadController {
   constructor(private uploadService: UploadService) {}
+
+  // ===========  UNUSED (declared first: `POST :id` used to shadow these routes)
+
+  //Upload file with out the fileName from the user
+  @UseGuards(JwtGuard)
+  @Post('single')
+  @ApiSingleFiltered('file', true, MaxImageSize)
+  async createSingle(
+    @Req() req: Request,
+    @UploadedFile(ParseFile) file: Express.Multer.File,
+  ): Promise<Upload> {
+    const user: UserFromToken = req['user'];
+    logTrace('user is', user);
+    const img = await this.uploadService.UploadSingle(file, user?._id);
+    if (!img.ok) ThrowRes(img);
+    return img.body;
+  }
+
+  // @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
+  @Post('multi')
+  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
+  async createWithCover(
+    @Req() req: Request,
+    @UploadedFiles()
+    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
+  ) {
+    const user: UserFromToken = req['user'];
+    const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
+    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
+    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
+
+    return imageObj.body;
+  }
 
   //Upload file by getting the filesId from the user
   @Post(':id')
@@ -167,43 +201,11 @@ export class UploadController {
   @Post()
   async getUrls(@Body() updateDto: UpdateBody) {
     const urls = [];
-    for (const img of updateDto.removedImages) {
-      urls.push(`${ToBeAdded}${img}?alt=media`);
+    // (computed here: importing providers/upload/firebase initialized firebase-admin on startup)
+    const toBeAdded = `https://firebasestorage.googleapis.com/v0/b/${EnvVar.getInstance.FIREBASE_PROJECT_NAME}.appspot.com/o/`;
+    for (const img of updateDto?.removedImages || []) {
+      urls.push(`${toBeAdded}${img}?alt=media`);
     }
     return urls;
-  }
-
-  // ===========================    UNUSED =====================
-
-  //Upload file with out the fileName from the user
-  @UseGuards(JwtGuard)
-  @Post('single')
-  @ApiSingleFiltered('file', true, MaxImageSize)
-  async createSingle(
-    @Req() req: Request,
-    @UploadedFile(ParseFile) file: Express.Multer.File,
-  ): Promise<Upload> {
-    const user: UserFromToken = req['user'];
-    logTrace('user is', user);
-    const img = await this.uploadService.UploadSingle(file, user?._id);
-    if (!img.ok) ThrowRes(img);
-    return img.body;
-  }
-
-  // @Roles(RoleType.ADMIN)
-  @UseGuards(JwtGuard)
-  @Post('multi')
-  @ApiManyFiltered('cover', 'images', 3, MaxImageSize)
-  async createWithCover(
-    @Req() req: Request,
-    @UploadedFiles()
-    files: { cover?: Express.Multer.File[]; images?: Express.Multer.File[] },
-  ) {
-    const user: UserFromToken = req['user'];
-    const imageObj = await this.uploadService.UploadWithCover(files, user?._id);
-    if (!imageObj.ok) throw new HttpException(imageObj.errMessage, imageObj.code);
-    logTrace('upload mulit suceed', imageObj.body, ColorEnums.BgCyan);
-
-    return imageObj.body;
   }
 }

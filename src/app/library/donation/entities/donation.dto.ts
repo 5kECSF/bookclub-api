@@ -12,7 +12,6 @@ export class CreateDonationInput extends PickType(Donation, [
   'note',
 
   'donatedDate',
-  ,
   'imgUrl',
 ]) {
   @ApiHideProperty()

@@ -4,7 +4,7 @@ import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { EnvVar } from '../../common/config/config.instances';
 import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
-import { FileServiceInterface } from './firebase';
+import { FileServiceInterface } from './file-service.interface';
 
 // Configure Cloudinary with environment variables
 // cloudinary.config({

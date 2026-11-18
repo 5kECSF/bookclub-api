@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvVar } from '../../common/config/config.instances';
 import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
-import { FileServiceInterface } from './firebase';
+import { FileServiceInterface } from './file-service.interface';
 
 @Injectable()
 export class S3Service implements FileServiceInterface {

@@ -19,6 +19,7 @@ import { UpdateEmailInput } from '../users/entities/user.dto';
 import { LoginUserInput, ResetPasswordInput, VerifyEmailChangeInput } from './dto/auth.input.dto';
 import { AuthToken, AuthTokenResponse } from './dto/auth.response.dto';
 
+import { EnvVar } from '@/common/config/config.instances';
 import { SystemConst } from '@/common/constants/system.consts';
 import { getExpiryDate } from '@/providers/crypto/token.functions';
 import { ACCOUNT_STATUS } from '../profile/dto/profile.dto';
@@ -66,8 +67,26 @@ export class AuthService {
         //   return FAIL(ErrConst.VERIFICATION_FAILED);
         // }
       }
-      input.password = await this.cryptoService.createHash(input.password);
-      return this.UTIL_sendCodeAndUpdateHash(input.email, input);
+      /**
+       * only these fields may come from the client: spreading the whole body allowed
+       * `role`, `accountStatus`, `active`... to be set by anyone (privilege escalation)
+       */
+      const safeInput: Partial<User> = {
+        email: input.email,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        team: input.team,
+        department: input.department,
+        bio: input.bio,
+        password: await this.cryptoService.createHash(input.password),
+      };
+      Object.keys(safeInput).forEach((k) => safeInput[k] === undefined && delete safeInput[k]);
+      if (!user) {
+        // brand new account
+        safeInput.accountStatus = ACCOUNT_STATUS.REGISTERED;
+        safeInput.active = false;
+      }
+      return this.UTIL_sendCodeAndUpdateHash(input.email, safeInput);
     } catch (e) {
       return FAIL(e.message);
     }
@@ -77,9 +96,8 @@ export class AuthService {
      AuS-1.1: sendCodeAndUpdateHash
      */
   async UTIL_sendCodeAndUpdateHash(addressedEmail, input): Promise<Resp<string>> {
-    /** ---  generate random code & update the verification hash */
-    const code = '0000';
-    // const code = this.cryptoService.randomCode();
+    /** ---  generate random code (VERIFICATION_CODE env overrides it in dev/test/e2e only) */
+    const code = EnvVar.getInstance.VERIFICATION_CODE || this.cryptoService.randomCode();
     const codeHash = await this.cryptoService.createHash(code);
 
     /**
@@ -99,9 +117,13 @@ export class AuthService {
       return FAIL(ErrConst.COULD_NOT_CREATE_USER);
     }
     /**
-     * send verification email
+     * send verification email: a failing/slow email provider never fails the request
      */
-    const emRes = await this.verificationService.sendVerificationCode(addressedEmail, code);
+    try {
+      await this.verificationService.sendVerificationCode(addressedEmail, code);
+    } catch (e) {
+      logTrace('sending verification code failed', e?.message);
+    }
 
     return Succeed(ResponseConsts.VERIFICATION_SENT);
   }
@@ -125,6 +147,8 @@ export class AuthService {
       {
         active: true,
         accountStatus: ACCOUNT_STATUS.UN_APPROVED,
+        // the code is single use
+        verificationCodeHash: '',
       },
     );
     if (!updatedUser.ok) return FAIL(updatedUser.errMessage, updatedUser.code);
@@ -137,8 +161,9 @@ export class AuthService {
      */
   async UTIL_verifyCode(phoneOrEmail: string, code: string): Promise<User> {
     //1. check that a user exists with this email or phone number
+    if (!phoneOrEmail || !code) return null;
     const userToVerify = await this.usersService.anyUserExists(phoneOrEmail);
-    if (!userToVerify) {
+    if (!userToVerify || !userToVerify.verificationCodeHash) {
       logTrace('not found', code);
       return null;
     }
@@ -264,7 +289,16 @@ export class AuthService {
     if (!user.ok) return FAIL(user.errMessage, user.code);
 
     //  2. generate new refresh token
-    const refreshAuthToken = await this.UTIL_generateAuthToken(user.body.usrToken, true);
+    const refreshAuthToken = await this.UTIL_generateAuthToken(
+      {
+        _id: user.body.user._id,
+        sessionId: user.body.usrToken.sessionId,
+        // role/status are read from the database so admin changes apply on refresh
+        role: user.body.user.role,
+        accountStatus: user.body.user.accountStatus,
+      },
+      true,
+    );
     // logTrace('generating tokns sucess', refreshAuthToken.expiresIn);
     /*
      * 3. update the users hashed refresh token
@@ -281,7 +315,7 @@ export class AuthService {
   // when users access token experis, verifies users refresh token & returns the refresh token
   //Au.S-4.1  [logout & resetTokens]
   public async UTIL_getUserFromRefreshToken(refreshToken: string): Promise<Resp<UserAndTokne>> {
-    if (!refreshToken) return null;
+    if (!refreshToken) return FAIL('No refresh token', HttpStatus.UNAUTHORIZED);
     //1.verify the refresh token
     const decoded = await this.jwtService.verifyRefreshToken(refreshToken);
     if (!decoded.ok) return FAIL(decoded.errMessage, decoded.code);
@@ -289,7 +323,9 @@ export class AuthService {
     const user: User = await this.usersService.findOneWithPwd({
       _id: decoded.body._id,
     });
-    if (!user) return FAIL(ErrConst.USER_NOT_FOUND);
+    if (!user) return FAIL(ErrConst.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+    if (user.accountStatus == ACCOUNT_STATUS.BLOCKED)
+      return FAIL(ErrConst.AccountBlocked, HttpStatus.FORBIDDEN);
     const pickedUser = removeKeys(user, [
       'password',
       'hashedRefreshToken',
@@ -328,7 +364,8 @@ export class AuthService {
   async SERV_resetPassword(input: ResetPasswordInput) {
     try {
       const verifyToResetPwd = await this.UTIL_verifyCode(input.email, input.code);
-      if (!verifyToResetPwd) return FAIL('Code is wrong Or Have Expired');
+      if (!verifyToResetPwd) return FAIL('Code is wrong Or Have Expired', 400);
+      if (!verifyToResetPwd.active) return FAIL(ErrConst.USER_NOT_FOUND, 404);
 
       const hashedPwd = await this.cryptoService.createHash(input.newPassword);
       const usr = await this.usersService.findOneAndUpdate(
@@ -336,6 +373,8 @@ export class AuthService {
         {
           password: hashedPwd,
           hashedRefreshToken: '',
+          // the code is single use
+          verificationCodeHash: '',
         },
       );
       if (!usr.ok) return FAIL(usr.errMessage, usr.code);
@@ -382,9 +421,11 @@ export class AuthService {
     const pwdHashMatch = await this.cryptoService.verifyHash(user.password, input.password);
     if (!pwdHashMatch) return FAIL(ErrConst.INVALID_CREDENTIALS, HttpStatus.FORBIDDEN);
     // console.log('newEmail===', user.newEmail);
+    if (!user.newEmail) return FAIL('No email change was requested', 400);
     const usr = await this.usersService.updateById(user._id, {
       email: user.newEmail,
       newEmail: '',
+      verificationCodeHash: '',
     });
     // console.log('updated email,', usr);
     if (!usr.ok) return FAIL(ErrConst.INTERNAL_ERROR);

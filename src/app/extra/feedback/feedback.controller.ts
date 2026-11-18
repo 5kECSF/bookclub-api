@@ -28,6 +28,7 @@ import { Roles } from '@/providers/guards/roles.decorators';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { UserService } from '../../account/users';
+import { pickKeys } from '@/common/util/object-functions';
 import { FeedBack } from './entities/feedback.entity';
 
 @Controller(Endpoint.Feedback)
@@ -49,10 +50,15 @@ export class FeedbackController {
     const usr = await this.userService.findById(user._id);
     if (!usr.ok) throw new HttpException(usr.errMessage, errCode.UNAUTHORIZED);
 
-    createDto.userId = user._id;
-    createDto.fullName = `${usr.body.firstName} ${usr.body.lastName}`;
-
-    const resp = await this.feedbackService.createOne(createDto);
+    const fullName = `${usr.body.firstName} ${usr.body.lastName}`;
+    const resp = await this.feedbackService.createOne({
+      title: createDto.title,
+      body: createDto.body,
+      email: createDto.email || usr.body.email,
+      userId: user._id,
+      userName: fullName,
+      seen: false,
+    });
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
     return resp.body;
   }
@@ -60,8 +66,15 @@ export class FeedbackController {
   @Patch(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.USER)
-  async update(@Param('id') id: string, @Body() updateDto: UpdateFeedbackDto) {
-    const res = await this.feedbackService.updateById(id, updateDto);
+  async update(@Req() req: Request, @Param('id') id: string, @Body() updateDto: UpdateFeedbackDto) {
+    const user: UserFromToken = req['user'];
+    const isAdmin = user.role === RoleType.ADMIN;
+    // admins can mark feedback as seen; users can only edit the text of their own feedback
+    const allowed = isAdmin ? ['title', 'body', 'email', 'seen'] : ['title', 'body', 'email'];
+    const update = pickKeys(updateDto || {}, allowed);
+    if (Object.keys(update).length === 0) throw new HttpException('Nothing to update', 400);
+    const filter = isAdmin ? { _id: id } : { _id: id, userId: user._id };
+    const res = await this.feedbackService.findOneAndUpdate(filter, update);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
@@ -78,6 +91,7 @@ export class FeedbackController {
   // == below queries dont need authentication
   @Get()
   @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async filterAndPaginate(@Query() inputQuery: FeedbackQuery): Promise<PaginatedRes<FeedBack>> {
     const res = await this.feedbackService.searchManyAndPaginate(
       ['title'],
@@ -90,6 +104,7 @@ export class FeedbackController {
 
   @Get(':id')
   @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async findOne(@Param('id') id: string) {
     const res = await this.feedbackService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);

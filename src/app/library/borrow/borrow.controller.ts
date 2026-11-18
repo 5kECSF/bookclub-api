@@ -27,7 +27,15 @@ import { UserService } from '../../account/users';
 import { NotificationService } from '../../extra/notification/notification.service';
 import { BookService } from '../book/book.service';
 import { DonationService } from '../donation/donation.service';
-import { BookReturned, BookTaken, Borrow, BorrowAccept } from './entities/borrow.entity';
+import { parseBool } from '@/common/util/object-functions';
+import {
+  BookReturned,
+  BookTaken,
+  Borrow,
+  BorrowAccept,
+  BorrowStatus,
+  RemoveBorrowInput,
+} from './entities/borrow.entity';
 
 @Controller(Endpoint.Borrow)
 @ApiTags(Endpoint.Borrow)
@@ -49,7 +57,8 @@ export class BorrowController {
     return resp;
   }
 
-  @Post('/cancle/:borrowId')
+  // `/cancle/` is the historical (misspelled) route used by the frontend, `/cancel/` is an alias
+  @Post(['/cancle/:borrowId', '/cancel/:borrowId'])
   @UseGuards(JwtGuard)
   async cancelRequest(@Req() req: Request, @Param('borrowId') id: string): Promise<Resp<Borrow>> {
     const user: UserFromToken = req['user'];
@@ -98,10 +107,12 @@ export class BorrowController {
     const usr = await this.userService.findById(createDto.userId);
     if (!usr.ok) throw new HttpException(usr.errMessage, errCode.USER_NOT_FOUND);
     const book = await this.bookService.findById(createDto.bookId);
-    if (!book.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
+    if (!book.ok) throw new HttpException(book.errMessage, errCode.NOT_FOUND);
 
     const instance = await this.donationService.findById(createDto.instanceId);
-    if (!instance.ok) throw new HttpException(usr.errMessage, errCode.NOT_FOUND);
+    if (!instance.ok) throw new HttpException(instance.errMessage, errCode.NOT_FOUND);
+    if (String(instance.body.bookId) !== String(book.body._id))
+      throw new HttpException('The selected copy belongs to another book', 400);
 
     const createData: CreateBorrowInput = {
       ...createDto,
@@ -124,11 +135,26 @@ export class BorrowController {
     return res.body;
   }
 
+  /**
+   * admin rejects/removes a borrow (see BorrowService.RemoveBorrow):
+   * WAITLIST -> rejected (pulled from user.requestedBooks, user notified),
+   * ACCEPTED -> reservation cancelled (copy released), RETURNED -> deleted, BORROWED -> 409
+   * `POST /borrow/reject/:id` is an alias that accepts an optional `{ note }`
+   */
   @Delete(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id') id: string) {
-    const res = await this.borrowService.findByIdAndDelete(id);
+    const res = await this.borrowService.RemoveBorrow(id);
+    if (!res.ok) throw new HttpException(res.errMessage, res.code);
+    return res.body;
+  }
+
+  @Post('/reject/:id')
+  @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  async reject(@Param('id') id: string, @Body() body: RemoveBorrowInput) {
+    const res = await this.borrowService.RemoveBorrow(id, body?.note);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
@@ -140,15 +166,15 @@ export class BorrowController {
     @Query() inputQuery: BorrowQuery,
   ): Promise<PaginatedRes<Borrow>> {
     const user: UserFromToken = req['user'];
-    let additinalQuery = {};
+    const additinalQuery: Record<string, any> = {};
+    // normal users only ever see their own borrows
     if (user.role != RoleType.ADMIN) {
       additinalQuery['userId'] = user._id;
     }
-    if (inputQuery.overDue == true || String(inputQuery.overDue) == 'true') {
-      const currentDate = new Date();
-      additinalQuery = {
-        dueDate: { $lt: currentDate },
-      };
+    // merged with (it used to replace) the user restriction; overdue = still borrowed & past due
+    if (parseBool(inputQuery.overDue) === true) {
+      additinalQuery['status'] = BorrowStatus.Borrowed;
+      additinalQuery['dueDate'] = { $lt: new Date() };
     }
 
     const res = await this.borrowService.searchManyAndPaginate(

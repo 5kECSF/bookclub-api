@@ -41,7 +41,23 @@ export class EmailService implements VerificationServiceInterface {
         user: EnvVar.getInstance.EMAIL_FROM,
         pass: EnvVar.getInstance.GMAIL_APP_PWD,
       },
+      // never hang forever on a bad network/credentials
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
     });
+    const hbsOptions = {
+      viewEngine: {
+        extname: '.handlebars',
+        partialsDir: path.join(__dirname, './templates/'),
+        layoutsDir: path.join(__dirname, './templates/'),
+        defaultLayout: '',
+      },
+      viewPath: path.join(__dirname, './templates/'),
+      extName: '.handlebars',
+    };
+    // registered once (it used to be re-registered on every send)
+    this.transporter.use('compile', hbs(hbsOptions));
   }
 
   async createOAuthTransport() {
@@ -84,20 +100,7 @@ export class EmailService implements VerificationServiceInterface {
       };
       //TODO the second one looks better since it dont need to be initialized every time
       // const transporter = await this.createOAuthTransport();
-      const transporter = this.transporter;
-
-      const hbsOptions = {
-        viewEngine: {
-          extName: '.hbs',
-          partialsDir: path.join(__dirname, './templates/'),
-          layoutsDir: path.join(__dirname, './templates/'),
-          defaultLayout: '',
-        },
-        viewPath: path.join(__dirname, './templates/'),
-      };
-      transporter.use('compile', hbs(hbsOptions));
-
-      return transporter.sendMail(mailOptions);
+      return this.transporter.sendMail(mailOptions);
     } catch (e) {
       logTrace('', e.message, ColorEnums.BgRed);
       throw e;
@@ -123,7 +126,7 @@ export class EmailService implements VerificationServiceInterface {
       const message = await this.send('confirmation', 'Confirm to activate your account', email, {
         code: token,
       });
-      logTrace('email response', message);
+      logTrace('email response', message?.messageId);
 
       return Succeed(message);
     } catch (e) {

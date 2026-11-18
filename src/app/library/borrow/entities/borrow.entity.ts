@@ -10,6 +10,13 @@ export enum BorrowStatus {
   Returned = 'RETURNED',
 }
 
+/** statuses where a borrow is still "open" (a user can have only one open borrow per book) */
+export const OpenBorrowStatuses = [
+  BorrowStatus.WaitList,
+  BorrowStatus.Accepted,
+  BorrowStatus.Borrowed,
+];
+
 @Schema({ timestamps: true })
 export class Borrow {
   @ApiProperty({ name: 'id' })
@@ -76,13 +83,14 @@ export class Borrow {
 export type BorrowDocument = Borrow & Document;
 export const BorrowSchema = SchemaFactory.createForClass(Borrow);
 // Create indexes
-BorrowSchema.index({ name: 'text' });
+BorrowSchema.index({ userId: 1, bookId: 1, status: 1 });
 
 export class BorrowAccept {
   @IsOptional()
   note: string;
 
   @IsNotEmpty()
+  @IsString()
   instanceId: string;
 }
 
@@ -90,14 +98,23 @@ export class BookTaken {
   @IsOptional()
   note: string;
 
-  @IsNotEmpty()
-  takenDate: Date;
+  /** defaults to now */
+  @IsOptional()
+  takenDate?: Date;
 
-  @IsNotEmpty()
+  /** required, must be after takenDate (validated in the service -> 400) */
+  @IsOptional()
   dueDate: Date;
 }
 
 export class BookReturned {
-  @IsNotEmpty()
-  returnedDate: string;
+  /** defaults to now */
+  @IsOptional()
+  returnedDate?: string;
+}
+
+export class RemoveBorrowInput {
+  @IsOptional()
+  @IsString()
+  note?: string;
 }

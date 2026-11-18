@@ -8,6 +8,8 @@ import { pickKeys } from '@/common/util/object-functions';
 import { isEmpty } from 'class-validator';
 import { RemovedModel, UpdateResponse } from './mongo.entity';
 
+const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export abstract class MongoGenericRepository<T> {
   private _repository: Model<T>;
   private _populateOnFind: string[];
@@ -57,22 +59,25 @@ export abstract class MongoGenericRepository<T> {
       // 1. pick the keys that are alowed to be directly filtered in
       const query = pickKeys(filter, [...(keysToFilter as string[])]);
 
-      //2. use the additional query as a starting point
-      let mainQuery: Record<string, any> = additionalQuery;
+      //2. use a copy of the additional query as a starting point
+      const mainQuery: Record<string, any> = { ...additionalQuery };
       //3. if there is a search query adds text search capability
       if (filter.q) {
-        // const searchText = new RegExp(filter.searchText, 'i'); // Case-insensitive search
-        // logTrace('searchTxt', searchText);
-        mainQuery = {
-          ...mainQuery,
-          $or: fieldsToSearch.map((field) => ({
-            [field]: { $regex: `${filter.q}`, $options: 'i' },
-          })),
-        };
+        const searchOr = fieldsToSearch.map((field) => ({
+          [field]: { $regex: escapeRegex(`${filter.q}`), $options: 'i' },
+        }));
+        // never overwrite an `$or` coming from the additional (scoping) query
+        if (mainQuery.$or) {
+          mainQuery.$and = [...(mainQuery.$and || []), { $or: searchOr }];
+        } else {
+          mainQuery.$or = searchOr;
+        }
       }
-      // 4. for each direct filter query add it to the main query 
+      // 4. for each direct filter query add it to the main query
       Object.keys(query).forEach((key) => {
-        if (query[key]) {
+        // keys already constrained by the additional (scoping) query can't be overridden by users
+        // explicit `false` (parsed boolean query params) is a valid filter value
+        if ((query[key] || query[key] === false) && !(key in additionalQuery)) {
           mainQuery[key] = query[key];
         }
       });
@@ -120,8 +125,13 @@ export abstract class MongoGenericRepository<T> {
   }
 
   async countDoc(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<number>> {
-    const count = await this._repository.countDocuments(filter, { session });
-    return Succeed(count);
+    try {
+      const count = await this._repository.countDocuments(filter, { session });
+      return Succeed(count);
+    } catch (e) {
+      logTrace(`${this._repository.modelName}--countError=`, e.message, ColorEnums.FgRed, 3);
+      return FAIL(e.message, 500);
+    }
   }
 
   //-----  find One Query
@@ -129,7 +139,7 @@ export abstract class MongoGenericRepository<T> {
     try {
       const item: T = await this._repository
         .findById(id)
-        .session(session)
+        .session(session || null)
         .populate(this._populateOnFind)
         .lean();
       // logTrace(`FINDOne=====>>`, item, ColorEnums.BgBlue);
@@ -143,7 +153,11 @@ export abstract class MongoGenericRepository<T> {
 
   public async findOne(where: FilterQuery<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
-      const user: T = await this._repository.findOne(where).populate(this._populateOnFind).lean();
+      const user: T = await this._repository
+        .findOne(where)
+        .session(session || null)
+        .populate(this._populateOnFind)
+        .lean();
       if (!user) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(user);
     } catch (e) {
@@ -220,7 +234,7 @@ export abstract class MongoGenericRepository<T> {
   ): Promise<Resp<UpdateResponse>> {
     try {
       const updated: UpdateResponse = await this._repository
-        .updateOne(filter, input, { new: true, upsert: true, session })
+        .updateOne(filter, input, { upsert: true, session })
         .lean();
       return Succeed(updated);
     } catch (e) {
@@ -267,7 +281,9 @@ export abstract class MongoGenericRepository<T> {
     session?: ClientSession,
   ): Promise<Resp<T>> {
     try {
-      const updated: T = await this._repository.findOneAndUpdate(filter, input, { session }).lean();
+      const updated: T = await this._repository
+        .findOneAndUpdate(filter, input, { new: true, session })
+        .lean();
       if (!updated) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(updated);
     } catch (e) {
@@ -279,7 +295,7 @@ export abstract class MongoGenericRepository<T> {
   public async updateMany(filter: FilterQuery<T>, input: UpdateQuery<T>, session?: ClientSession) {
     try {
       const updated: UpdateResponse = await this._repository
-        .updateMany(filter, input, { new: true })
+        .updateMany(filter, input, { session })
         .lean();
       return Succeed(updated);
     } catch (e) {
@@ -292,7 +308,7 @@ export abstract class MongoGenericRepository<T> {
   public async findByIdAndDelete(_id: string, session?: ClientSession): Promise<Resp<T>> {
     try {
       if (!_id) return FAIL('Id Is Required', 400);
-      const deleted: T = await this._repository.findByIdAndDelete(_id).lean();
+      const deleted: T = await this._repository.findByIdAndDelete(_id, { session }).lean();
       if (!deleted) return FAIL(ErrConst.NOT_FOUND, 404);
       // logTrace('Deleted ONE >===>> ', deleted, ColorEnums.BgMagenta);
 
@@ -305,7 +321,7 @@ export abstract class MongoGenericRepository<T> {
 
   async deleteOne(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<RemovedModel>> {
     try {
-      const deleted: RemovedModel = await this._repository.deleteOne(filter);
+      const deleted: RemovedModel = await this._repository.deleteOne(filter, { session });
       return Succeed(deleted);
     } catch (e) {
       logTrace(`${this._repository.modelName}--DeleteOneError =`, e.message, ColorEnums.FgRed);
@@ -315,7 +331,7 @@ export abstract class MongoGenericRepository<T> {
 
   async findOneAndRemove(filter: FilterQuery<T>, session?: ClientSession): Promise<Resp<T>> {
     try {
-      const deleted = await this._repository.findOneAndRemove(filter);
+      const deleted = (await this._repository.findOneAndDelete(filter, { session }).lean()) as T;
       if (!deleted) return FAIL(ErrConst.NOT_FOUND, 404);
       return Succeed(deleted);
     } catch (e) {
@@ -324,9 +340,12 @@ export abstract class MongoGenericRepository<T> {
     }
   }
 
-  public async deleteMany(filter: FilterQuery<T>): Promise<Resp<RemovedModel>> {
+  public async deleteMany(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+  ): Promise<Resp<RemovedModel>> {
     try {
-      const deleted: RemovedModel = await this._repository.deleteMany(filter);
+      const deleted: RemovedModel = await this._repository.deleteMany(filter, { session });
       return Succeed(deleted);
     } catch (e) {
       logTrace(`${this._repository.modelName}--DeleteManyError =`, e.message, ColorEnums.FgRed);

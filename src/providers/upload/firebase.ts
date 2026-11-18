@@ -4,6 +4,7 @@ import admin from 'firebase-admin';
 import { EnvVar } from '../../common/config/config.instances';
 import { FAIL, Resp, Succeed } from '../../common/constants/return.consts';
 import { ColorEnums, logTrace } from '../../common/logger';
+import { FileServiceInterface } from './file-service.interface';
 
 const fbConfig = {
   type: EnvVar.getInstance.FIREBASE_TYPE,
@@ -101,14 +102,7 @@ export class FirebaseService implements FileServiceInterface {
   }
 }
 
-export interface FileServiceInterface {
-  // firebaseVerifyToken(token: string): Promise<Resp<any>>;
-
-  deleteFileByPrefix(id: string): Promise<Resp<boolean>>;
-  deleteFileByName(id: string): Promise<Resp<boolean>>;
-
-  UploadOne(fName: string, file: Buffer): Promise<Resp<UploadDto>>;
-}
+export type { FileServiceInterface } from './file-service.interface';
 
 @Injectable()
 export class MockFile implements FileServiceInterface {

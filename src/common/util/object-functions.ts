@@ -36,3 +36,22 @@ export function pickKeys(obj: Record<string, any>, keysToKeep: string[]): Record
 
   return newObj;
 }
+
+/**
+ * parses booleans coming from query strings (`'false'` is truthy in JS)
+ * returns `undefined` when the value is absent/unknown so callers can apply their own default
+ */
+export function parseBool(value: unknown): boolean | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value === 'boolean') return value;
+  const str = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes'].includes(str)) return true;
+  if (['false', '0', 'no'].includes(str)) return false;
+  return undefined;
+}
+
+/** class-transformer `@Transform` callback for boolean query params */
+export const toBoolTransform = ({ value }: { value: unknown }) => {
+  const parsed = parseBool(value);
+  return parsed === undefined ? value : parsed;
+};

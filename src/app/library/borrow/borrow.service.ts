@@ -8,379 +8,346 @@ import {
   BorrowAccept,
   BorrowDocument,
   BorrowStatus,
+  OpenBorrowStatuses,
 } from './entities/borrow.entity';
 
 import { ACCOUNT_STATUS } from '@/app/account/profile/dto/profile.dto';
 import { UserService } from '@/app/account/users';
 import { NotificationEnum } from '@/app/extra/notification/entities/notification.entity';
 import { NotificationService } from '@/app/extra/notification/notification.service';
-import { errCode } from '@/common/constants/response.consts';
-import { FAIL, Resp, Succeed } from '@/common/constants/return.consts';
+import { Resp } from '@/common/constants/return.consts';
+import { ItemStatus } from '@/common/types/enums';
 import { MongoGenericRepository } from '@/providers/database/base/mongo.base.repo';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { ClientSession, Model } from 'mongoose';
 import { BookService } from '../book/book.service';
-import { DonationService } from '../donation/donation.service';
-import { bookStatus } from '../donation/entities/donation.entity';
+import { DonationService, reject, runInTransaction } from '../donation/donation.service';
+import { availableStatusFilter, bookStatus } from '../donation/entities/donation.entity';
 import { CreateBorrowInput } from './entities/borrow.dto';
 
+/** parses a date input, returns null for invalid values */
+function toDate(value: unknown): Date | null {
+  if (value === undefined || value === null || value === '') return null;
+  const d = new Date(value as any);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Borrow workflow (state machine):
+ *   WAITLIST --accept(instance)--> ACCEPTED --markTaken--> BORROWED --markReturned--> RETURNED
+ *   WAITLIST --cancel (owner) / remove (admin)--> deleted
+ *   ACCEPTED --remove (admin)--> deleted, the reserved copy is released
+ */
 @Injectable()
 export class BorrowService extends MongoGenericRepository<Borrow> {
   constructor(
-    @InjectModel(Borrow.name) private tagModel: Model<BorrowDocument>,
+    @InjectModel(Borrow.name) private borrowModel: Model<BorrowDocument>,
     @InjectConnection() private readonly connection: mongoose.Connection,
     private readonly bookService: BookService,
     private readonly userService: UserService,
     private readonly notificationService: NotificationService,
     private readonly donationService: DonationService,
   ) {
-    super(tagModel);
+    super(borrowModel);
   }
 
-  //accept a users request to borrow
-  async RequestBorrow(id: string, userId: string): Promise<Resp<Borrow>> {
-    const session = await this.connection.startSession();
-    try {
-      let result: Borrow;
-      await session.withTransaction(
-        async () => {
-          const usr = await this.userService.findById(userId);
-          if (!usr.ok) return Promise.reject(FAIL(usr.errMessage, errCode.USER_NOT_FOUND));
-          if (usr.body.accountStatus != ACCOUNT_STATUS.ACTIVE)
-            return Promise.reject(FAIL('Your Account is not Active', HttpStatus.FORBIDDEN));
-          const book = await this.bookService.findById(id);
-          if (!book.ok) return Promise.reject(FAIL(usr.errMessage, errCode.NOT_FOUND));
-          const createDto: CreateBorrowInput = {
-            status: BorrowStatus.WaitList,
-            userId: userId,
-            bookId: id,
-            bookName: book.body.title,
-            userName: `${usr.body.firstName} ${usr.body.lastName}`,
-            imgUrl: book.body.upload.url,
-          };
-          const resp = await this.createOne(createDto, session);
-          if (!resp.ok) Promise.reject(FAIL(resp.errMessage, resp.code));
-
-          const userUpdate = await this.userService.updateById(
-            resp.body.userId,
-            {
-              $addToSet: { requestedBooks: id },
-            },
-            session,
-          );
-          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
-
-          result = resp.body;
-        },
-        {
-          readConcern: { level: 'snapshot' },
-          writeConcern: { w: 'majority' },
-          maxTimeMS: 5000,
-        },
+  private async getBorrowInState(
+    id: string,
+    expected: BorrowStatus,
+    action: string,
+    session: ClientSession,
+  ): Promise<Borrow> {
+    const borrow = await this.findById(id, session);
+    if (!borrow.ok) reject(borrow.errMessage, borrow.code);
+    if (borrow.body.status !== expected) {
+      reject(
+        `Can't ${action}: the borrow is ${borrow.body.status}, it must be ${expected}`,
+        HttpStatus.CONFLICT,
       );
-      return Succeed(result);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
-      }
-      if (e && 'ok' in e && e.ok === false) {
-        return e as Resp<Borrow>;
-      }
-      // Handle unexpected errors (e.g., database connection issues)
-      return FAIL('An unexpected error occurred during the transaction', 500);
-    } finally {
-      await session.endSession();
     }
+    return borrow.body;
   }
 
+  /** conditional update: fails with 409 if another request changed the status meanwhile */
+  private async transition(
+    id: string,
+    from: BorrowStatus,
+    update: Record<string, any>,
+    session: ClientSession,
+  ): Promise<Borrow> {
+    const res = await this.findOneAndUpdate({ _id: id, status: from }, update, session);
+    if (!res.ok) reject(`The borrow is no longer ${from}`, HttpStatus.CONFLICT);
+    return res.body;
+  }
+
+  private async updateUser(userId: string, update: Record<string, any>, session: ClientSession) {
+    const res = await this.userService.updateById(userId, update, session);
+    if (!res.ok) reject(res.errMessage, res.code);
+  }
+
+  private async notify(userId: string, title: string, body: string, session: ClientSession) {
+    const res = await this.notificationService.createOne(
+      { title, body: body || title, type: NotificationEnum.Individual, userId },
+      session,
+    );
+    if (!res.ok) reject(res.errMessage, res.code);
+  }
+
+  //a user requests to borrow a book
+  async RequestBorrow(bookId: string, userId: string): Promise<Resp<Borrow>> {
+    return runInTransaction(this.connection, async (session) => {
+      const usr = await this.userService.findById(userId, session);
+      if (!usr.ok) reject(usr.errMessage, HttpStatus.NOT_FOUND);
+      if (usr.body.accountStatus != ACCOUNT_STATUS.ACTIVE)
+        reject('Your Account is not Active', HttpStatus.FORBIDDEN);
+
+      const book = await this.bookService.findById(bookId, session);
+      if (!book.ok) reject(book.errMessage, HttpStatus.NOT_FOUND);
+      if (book.body.status !== ItemStatus.Active)
+        reject('This book is not available for borrowing', HttpStatus.BAD_REQUEST);
+
+      // only one open (waitlisted/accepted/borrowed) borrow per user & book
+      const open = await this.countDoc(
+        { userId, bookId, status: { $in: OpenBorrowStatuses } },
+        session,
+      );
+      if (!open.ok) reject(open.errMessage, open.code);
+      if (open.body > 0)
+        reject('You already have an open request for this book', HttpStatus.CONFLICT);
+
+      const createDto: CreateBorrowInput = {
+        status: BorrowStatus.WaitList,
+        userId: userId,
+        bookId: bookId,
+        bookName: book.body.title,
+        userName: `${usr.body.firstName} ${usr.body.lastName}`,
+        // books without an image used to crash here
+        imgUrl: book.body.upload?.url,
+      };
+      const resp = await this.createOne(createDto, session);
+      if (!resp.ok) reject(resp.errMessage, resp.code);
+
+      await this.updateUser(userId, { $addToSet: { requestedBooks: bookId } }, session);
+      return resp.body;
+    });
+  }
+
+  // the owner cancels his own WAITLIST request
   async cancleRequest(id: string, userId: string): Promise<Resp<Borrow>> {
-    const session = await this.connection.startSession();
-    try {
-      let result: Borrow;
-      await session.withTransaction(
-        async () => {
-          const res = await this.findOneAndRemove(
-            {
-              userId: userId,
-              _id: id,
-              status: BorrowStatus.WaitList,
-            },
-            session,
-          );
-          if (!res.ok) return Promise.reject(FAIL(res.errMessage, res.code));
+    return runInTransaction(this.connection, async (session) => {
+      const borrow = await this.findById(id, session);
+      if (!borrow.ok || String(borrow.body.userId) !== String(userId))
+        reject('Borrow request not found', HttpStatus.NOT_FOUND);
+      if (borrow.body.status !== BorrowStatus.WaitList)
+        reject(
+          `Only waitlisted requests can be cancelled (this one is ${borrow.body.status})`,
+          HttpStatus.CONFLICT,
+        );
 
-          const userUpdate = await this.userService.updateById(
-            res.body.userId,
-            {
-              $pull: { requestedBooks: res.body.bookId },
-            },
-            session,
-          );
-          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
-
-          result = res.body;
-        },
-        {
-          readConcern: { level: 'snapshot' },
-          writeConcern: { w: 'majority' },
-          maxTimeMS: 5000,
-        },
+      const res = await this.findOneAndRemove(
+        { _id: id, userId, status: BorrowStatus.WaitList },
+        session,
       );
-      return Succeed(result);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
+      if (!res.ok) reject('The request is no longer waitlisted', HttpStatus.CONFLICT);
+
+      await this.updateUser(userId, { $pull: { requestedBooks: res.body.bookId } }, session);
+      return res.body;
+    });
+  }
+
+  /**
+   * admin removes/rejects a borrow:
+   * - WAITLIST: rejected, pulled from user.requestedBooks, user notified
+   * - ACCEPTED: the reserved copy is released (AVAILABLE again), pulled from user.approvedBooks
+   * - RETURNED: history record is deleted
+   * - BORROWED: refused (mark it returned first)
+   */
+  async RemoveBorrow(id: string, note?: string): Promise<Resp<Borrow>> {
+    return runInTransaction(this.connection, async (session) => {
+      const borrow = await this.findById(id, session);
+      if (!borrow.ok) reject(borrow.errMessage, borrow.code);
+      const b = borrow.body;
+      if (b.status === BorrowStatus.Borrowed)
+        reject("A borrowed book can't be deleted, mark it as returned first", HttpStatus.CONFLICT);
+
+      const res = await this.findOneAndRemove({ _id: id, status: b.status }, session);
+      if (!res.ok) reject('The borrow changed meanwhile, try again', HttpStatus.CONFLICT);
+
+      if (b.status === BorrowStatus.WaitList) {
+        await this.updateUser(b.userId, { $pull: { requestedBooks: b.bookId } }, session);
+        await this.notify(
+          b.userId,
+          `Your request to borrow ${b.bookName} has been rejected`,
+          note,
+          session,
+        );
+      } else if (b.status === BorrowStatus.Accepted) {
+        if (b.instanceId) {
+          const inst = await this.donationService.findOneAndUpdate(
+            { _id: b.instanceId, status: bookStatus.Reserved },
+            { status: bookStatus.Available, $unset: { borrowerId: 1, borrowerName: 1 } },
+            session,
+          );
+          if (!inst.ok) reject(inst.errMessage, inst.code);
+          await this.donationService.recomputeBookCounts(b.bookId, session);
+        }
+        await this.updateUser(b.userId, { $pull: { approvedBooks: b.bookId } }, session);
+        await this.notify(
+          b.userId,
+          `Your reservation of ${b.bookName} has been cancelled`,
+          note,
+          session,
+        );
       }
-      if (e && 'ok' in e && e.ok === false) {
-        return e as Resp<Borrow>;
-      }
-      // Handle unexpected errors (e.g., database connection issues)
-      return FAIL('An unexpected error occurred during the transaction', 500);
-    } finally {
-      await session.endSession();
-    }
+      return res.body;
+    });
   }
 
   async AcceptBorrow(id: string, message: BorrowAccept): Promise<Resp<Borrow>> {
-    const session = await this.connection.startSession();
-    try {
-      let result: Borrow;
-      await session.withTransaction(
-        async () => {
-          //Get the specific instance
-          const instance = await this.donationService.findById(message.instanceId, session);
-          if (!instance.ok) return Promise.reject(FAIL(instance.errMessage, instance.code));
-          //mark the request as accepted
-          const resp = await this.updateById(
-            id,
-            {
-              status: BorrowStatus.Accepted,
-              instanceUid: instance.body.uid,
-              instanceId: message.instanceId,
-              acceptedDate: new Date(),
-              note: message.note,
-            },
-            session,
-          );
-          if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
-          /**
-           * ======  mark the instance book as reserved and update the id of the user who have taken it
-           */
-          const instanceUpdate = await this.donationService.updateById(message.instanceId, {
-            status: bookStatus.Reserved,
-            borrowerId: resp.body.userId,
-            borrowerName: resp.body.userName,
-          });
-          if (!instanceUpdate.ok)
-            return Promise.reject(FAIL(instanceUpdate.errMessage, instanceUpdate.code));
-          //count the available items for this book
-          const instanceCnt = await this.countDoc(
-            {
-              bookId: resp.body.bookId,
-              status: bookStatus.Available,
-            },
-            session,
-          );
-          if (!instanceCnt.ok)
-            return Promise.reject(FAIL(instanceCnt.errMessage, instanceCnt.code));
-          //update the books available items
-          const bookUpdate = await this.bookService.updateById(
-            resp.body.bookId,
-            {
-              availableCnt: instanceCnt.body,
-            },
-            session,
-          );
-          if (!bookUpdate.ok) Promise.reject(FAIL(bookUpdate.errMessage, bookUpdate.code));
-          //update the users requested and accepted books
-          const userUpdate = await this.userService.updateById(
-            resp.body.userId,
-            {
-              $pull: { requestedBooks: resp.body.bookId },
-              $addToSet: { approvedBooks: resp.body.bookId },
-            },
-            session,
-          );
-          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
+    return runInTransaction(this.connection, async (session) => {
+      const borrow = await this.getBorrowInState(id, BorrowStatus.WaitList, 'accept', session);
 
-          await this.notificationService.createOne({
-            title: `Your request to borrow ${resp.body.bookName} have been accepted`,
-            body: message.note,
-            type: NotificationEnum.Individual,
-            userId: resp.body.userId,
-          });
-          //TODO: add email notifications
+      //Get the specific instance (donation / physical copy)
+      if (!message?.instanceId) reject('instanceId is required', HttpStatus.BAD_REQUEST);
+      const instance = await this.donationService.findById(message.instanceId, session);
+      if (!instance.ok) reject(instance.errMessage, instance.code);
+      if (String(instance.body.bookId) !== String(borrow.bookId))
+        reject('The selected copy belongs to another book', HttpStatus.BAD_REQUEST);
 
-          result = resp.body;
-        },
+      // reserve the copy, only if it is still available
+      const instanceUpdate = await this.donationService.findOneAndUpdate(
+        { _id: message.instanceId, status: availableStatusFilter },
         {
-          readConcern: { level: 'snapshot' },
-          writeConcern: { w: 'majority' },
-          maxTimeMS: 5000,
+          status: bookStatus.Reserved,
+          borrowerId: borrow.userId,
+          borrowerName: borrow.userName,
         },
+        session,
       );
-      return Succeed(result);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
-      }
-      if (e && 'ok' in e && e.ok === false) {
-        return e as Resp<Borrow>;
-      }
-      // Handle unexpected errors (e.g., database connection issues)
-      return FAIL('An unexpected error occurred during the transaction', 500);
-    } finally {
-      await session.endSession();
-    }
+      if (!instanceUpdate.ok)
+        reject(
+          `The selected copy is not available (it is ${instance.body.status})`,
+          HttpStatus.CONFLICT,
+        );
+
+      //mark the request as accepted
+      const update: Record<string, any> = {
+        status: BorrowStatus.Accepted,
+        instanceUid: instance.body.uid,
+        instanceId: message.instanceId,
+        acceptedDate: new Date(),
+      };
+      if (message.note) update.note = message.note;
+      const accepted = await this.transition(id, BorrowStatus.WaitList, update, session);
+
+      //update the books available count (it used to count Borrow documents)
+      await this.donationService.recomputeBookCounts(accepted.bookId, session);
+
+      await this.updateUser(
+        accepted.userId,
+        {
+          $pull: { requestedBooks: accepted.bookId },
+          $addToSet: { approvedBooks: accepted.bookId },
+        },
+        session,
+      );
+      await this.notify(
+        accepted.userId,
+        `Your request to borrow ${accepted.bookName} have been accepted`,
+        message.note,
+        session,
+      );
+      return accepted;
+    });
   }
 
   async MarkTaken(id: string, body: BookTaken): Promise<Resp<Borrow>> {
-    const session = await this.connection.startSession();
-    try {
-      let result: Borrow;
-      await session.withTransaction(
-        async () => {
-          //update the borrow model
-          const resp = await this.updateById(
-            id,
-            {
-              status: BorrowStatus.Borrowed,
-              takenDate: body.takenDate,
-              dueDate: body.dueDate,
-              note: body.note,
-            },
-            session,
-          );
-          if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
-          //update the book instance
-          const updateInstance = await this.donationService.updateById(
-            resp.body.instanceId,
-            {
-              status: bookStatus.Taken,
-            },
-            session,
-          );
-          if (!updateInstance.ok)
-            return Promise.reject(FAIL(updateInstance.errMessage, updateInstance.code));
-          //Update the users list of borrowed books
-          const userUpdate = await this.userService.updateById(
-            resp.body.userId,
-            {
-              $pull: { approvedBooks: resp.body.bookId },
-              $addToSet: { borrowedBooks: resp.body.bookId },
-            },
-            session,
-          );
-          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
-          await this.notificationService.createOne({
-            title: `The book ${resp.body.bookName} is marked as taken by you`,
-            body: `You have taken The book ${resp.body.bookName}, if it is a mistake, contact us`,
-            type: NotificationEnum.Individual,
-            userId: resp.body.userId,
-          });
-          //TODO: add email notifications
+    return runInTransaction(this.connection, async (session) => {
+      const takenDate = body?.takenDate ? toDate(body.takenDate) : new Date();
+      const dueDate = toDate(body?.dueDate);
+      if (!takenDate) reject('takenDate is not a valid date', HttpStatus.BAD_REQUEST);
+      if (!dueDate) reject('dueDate is required and must be a valid date', HttpStatus.BAD_REQUEST);
+      if (dueDate <= takenDate) reject('dueDate must be after takenDate', HttpStatus.BAD_REQUEST);
 
-          result = resp.body;
-        },
-        {
-          readConcern: { level: 'snapshot' },
-          writeConcern: { w: 'majority' },
-          maxTimeMS: 5000,
-        },
+      const borrow = await this.getBorrowInState(
+        id,
+        BorrowStatus.Accepted,
+        'mark as taken',
+        session,
       );
-      return Succeed(result);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
-      }
-      if (e && 'ok' in e && e.ok === false) {
-        return e as Resp<Borrow>;
-      }
-      // Handle unexpected errors (e.g., database connection issues)
-      return FAIL('An unexpected error occurred during the transaction', 500);
-    } finally {
-      await session.endSession();
-    }
+
+      const update: Record<string, any> = { status: BorrowStatus.Borrowed, takenDate, dueDate };
+      if (body?.note) update.note = body.note;
+      const taken = await this.transition(id, BorrowStatus.Accepted, update, session);
+
+      //update the book instance
+      const updateInstance = await this.donationService.updateById(
+        borrow.instanceId,
+        { status: bookStatus.Taken, borrowerId: borrow.userId, borrowerName: borrow.userName },
+        session,
+      );
+      if (!updateInstance.ok) reject(updateInstance.errMessage, updateInstance.code);
+      await this.donationService.recomputeBookCounts(borrow.bookId, session);
+
+      //Update the users list of borrowed books
+      await this.updateUser(
+        taken.userId,
+        {
+          $pull: { approvedBooks: taken.bookId },
+          $addToSet: { borrowedBooks: taken.bookId },
+        },
+        session,
+      );
+      await this.notify(
+        taken.userId,
+        `The book ${taken.bookName} is marked as taken by you`,
+        `You have taken The book ${taken.bookName}, if it is a mistake, contact us`,
+        session,
+      );
+      return taken;
+    });
   }
 
   async MarkReturned(id: string, body: BookReturned): Promise<Resp<Borrow>> {
-    const session = await this.connection.startSession();
-    try {
-      let result: Borrow;
-      await session.withTransaction(
-        async () => {
-          const resp = await this.updateById(
-            id,
-            {
-              status: BorrowStatus.Returned,
-              returnedDate: body.returnedDate,
-            },
-            session,
-          );
-          if (!resp.ok) return Promise.reject(FAIL(resp.errMessage, resp.code));
+    return runInTransaction(this.connection, async (session) => {
+      const returnedDate = body?.returnedDate ? toDate(body.returnedDate) : new Date();
+      if (!returnedDate) reject('returnedDate is not a valid date', HttpStatus.BAD_REQUEST);
 
-          const updateInstance = await this.donationService.updateById(
-            resp.body.instanceId,
-            {
-              status: bookStatus.Available,
-            },
-            session,
-          );
-          if (!updateInstance.ok)
-            return Promise.reject(FAIL(updateInstance.errMessage, updateInstance.code));
-
-          const instanceCnt = await this.donationService.countDoc(
-            {
-              bookId: resp.body.bookId,
-              status: bookStatus.Available,
-            },
-            session,
-          );
-          if (!instanceCnt.ok)
-            return Promise.reject(FAIL(instanceCnt.errMessage, instanceCnt.code));
-          const updateBook = await this.bookService.updateById(
-            resp.body.bookId,
-            {
-              availableCnt: instanceCnt.body,
-            },
-            session,
-          );
-          if (!updateBook.ok) return Promise.reject(FAIL(updateBook.errMessage, updateBook.code));
-          const userUpdate = await this.userService.updateById(
-            resp.body.userId,
-            {
-              $pull: { borrowedBooks: resp.body.bookId },
-              $addToSet: { returnedBooks: resp.body.bookId },
-            },
-            session,
-          );
-          if (!userUpdate.ok) return Promise.reject(FAIL(userUpdate.errMessage, userUpdate.code));
-
-          result = resp.body;
-        },
-        {
-          readConcern: { level: 'snapshot' },
-          writeConcern: { w: 'majority' },
-          maxTimeMS: 5000,
-        },
+      const borrow = await this.getBorrowInState(
+        id,
+        BorrowStatus.Borrowed,
+        'mark as returned',
+        session,
       );
-      await this.notificationService.createOne({
-        title: `The book ${result.bookName} is marked as Returned`,
-        body: `You have Returned The book ${result.bookName}, if it is a mistake, contact us`,
-        type: NotificationEnum.Individual,
-        userId: result.userId,
-      });
-      return Succeed(result);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        return FAIL(e?.message, 500); // Type assertion since we know it's a Resp<T>
-      }
-      if (e && 'ok' in e && e.ok === false) {
-        return e as Resp<Borrow>;
-      }
-      // Handle unexpected errors (e.g., database connection issues)
-      return FAIL('An unexpected error occurred during the transaction', 500);
-    } finally {
-      await session.endSession();
-    }
+      const returned = await this.transition(
+        id,
+        BorrowStatus.Borrowed,
+        { status: BorrowStatus.Returned, returnedDate },
+        session,
+      );
+
+      const updateInstance = await this.donationService.updateById(
+        borrow.instanceId,
+        { status: bookStatus.Available, $unset: { borrowerId: 1, borrowerName: 1 } },
+        session,
+      );
+      if (!updateInstance.ok) reject(updateInstance.errMessage, updateInstance.code);
+      await this.donationService.recomputeBookCounts(borrow.bookId, session);
+
+      await this.updateUser(
+        returned.userId,
+        {
+          $pull: { borrowedBooks: returned.bookId },
+          $addToSet: { returnedBooks: returned.bookId },
+        },
+        session,
+      );
+      await this.notify(
+        returned.userId,
+        `The book ${returned.bookName} is marked as Returned`,
+        `You have Returned The book ${returned.bookName}, if it is a mistake, contact us`,
+        session,
+      );
+      return returned;
+    });
   }
 }

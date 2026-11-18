@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IncomingMessage } from 'http';
 //crypto
@@ -15,14 +15,19 @@ export class JwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = this.getRequest<IncomingMessage & { user?: Record<string, unknown> }>(context); // you could use FastifyRequest here too
+    // ==============================     Authentication (401)  ==============
+    let user: UserFromToken;
     try {
-      // ==============================     Authentication  ==============
       const token = this.getToken(request);
+      user = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
+    } catch (e) {
+      throw new UnauthorizedException(e?.message || 'Invalid or expired token');
+    }
+    if (!user || !user._id) throw new UnauthorizedException('Invalid token payload');
+    request.user = user as any;
 
-      const user: UserFromToken = (await this.jwtService.verifyAccessToken(token)) as UserFromToken;
-      if (!user) return false;
-      request.user = user as any;
-
+    // ==============================     Authorization (403)  ==============
+    try {
       // ========================================= Authorization =======================
 
       //                      ********  Getting the roles from the handler
@@ -46,9 +51,9 @@ export class JwtGuard implements CanActivate {
       allowedRoles.push(RoleType.ADMIN);
 
       // User must have role & the value of role must match with @RoleGuard('value_role')
-      return user.role && allowedRoles.includes(user.role);
+      return Boolean(user.role && allowedRoles.includes(user.role));
     } catch (e) {
-      // return false or throw a specific error if desired
+      // returning false makes nest respond with 403
       return false;
     }
   }
@@ -60,7 +65,7 @@ export class JwtGuard implements CanActivate {
   protected getToken(request: { headers: Record<string, string | string[]> }): string {
     const authorization = request.headers['authorization'];
     if (!authorization || Array.isArray(authorization)) {
-      throw new Error('Invalid Authorization Header');
+      throw new Error('Missing or invalid Authorization header');
     }
 
     return authorization;

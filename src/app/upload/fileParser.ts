@@ -4,7 +4,7 @@ import {
   HttpException,
   Injectable,
   PipeTransform,
-  UseInterceptors
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -109,7 +109,8 @@ export const createFilter =
     callback: (error: Error, acceptFile: boolean) => void,
   ) => {
     if (!validate(allowedTypes, file.mimetype)) {
-      callback(
+      // `return`: the callback used to be called a second time with (null, true)
+      return callback(
         new UnsupportedMediaTypeException(`File type is not matching: allowed, Images`),
         false,
       );

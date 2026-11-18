@@ -26,7 +26,7 @@ export class Book {
    * this is an auto increment id for books for easy identification & tracking;
    */
   @IsOptional()
-  @Prop({ type: String, unique: true, spares: true })
+  @Prop({ type: String, unique: true, sparse: true })
   uid?: number;
 
   @IsNotEmpty()

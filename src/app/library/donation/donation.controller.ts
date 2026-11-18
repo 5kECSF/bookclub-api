@@ -24,10 +24,7 @@ import {
 import { JwtGuard } from '@/providers/guards/guard.rest';
 import { Roles } from '@/providers/guards/roles.decorators';
 import { Request } from 'express';
-import { BookService } from '../book/book.service';
 import { Donation } from './entities/donation.entity';
-
-import { UserService } from '../../account/users';
 
 import { Endpoint } from '@/common/constants/model.names';
 import { ApiTags } from '@nestjs/swagger';
@@ -35,11 +32,7 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller(Endpoint.Donation)
 @ApiTags(Endpoint.Donation)
 export class DonationController {
-  constructor(
-    private readonly donationService: DonationService,
-    private readonly bookService: BookService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly donationService: DonationService) {}
 
   @Post()
   @UseGuards(JwtGuard)
@@ -54,17 +47,9 @@ export class DonationController {
   @Patch(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async update(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body() updateDonationDto: UpdateDonationDto,
-  ) {
-    /**
-     * TODO
-     * if book id is updated, update books instance count
-     * if user id is updated update users donated count
-     */
-    const res = await this.donationService.findOneAndUpdate({ _id: id }, updateDonationDto);
+  async update(@Param('id') id: string, @Body() updateDonationDto: UpdateDonationDto) {
+    // book instance/available counts and donor counts are recomputed
+    const res = await this.donationService.UpdateDonation(id, updateDonationDto);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
@@ -72,22 +57,10 @@ export class DonationController {
   @Delete(':id')
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
-  async removeOne(@Req() req: Request, @Param('id') id: string):Promise<Donation> {
-    const res = await this.donationService.findOneAndRemove({ _id: id });
+  async removeOne(@Param('id') id: string): Promise<Donation> {
+    // refuses RESERVED/TAKEN copies (409); recomputes book & donor counts
+    const res = await this.donationService.RemoveDonation(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
-
-    const donationCnt= await this.donationService.countDoc({bookId: res.body.bookId})
-    if (res.ok) throw new HttpException(donationCnt.errMessage, donationCnt.code);
-
-    const ctg = await this.bookService.updateOneAndReturnCount(
-      { _id: res.body.bookId },
-      { instanceCnt: res.body},
-    );
-    const donor = await this.userService.updateOneAndReturnCount(
-      { _id: res.body.donorId },
-      { $inc: { donatedCount: -1 } },
-    );
-
     return res.body;
   }
 

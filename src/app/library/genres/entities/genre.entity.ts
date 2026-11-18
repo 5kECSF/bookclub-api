@@ -108,7 +108,7 @@ export class GenreQuery extends PaginationInputs {
   searchText?: string;
 
   @IsOptional()
-  restricted?: boolean = false;
+  restricted?: boolean;
 
   // ======== Pagination fields
   @IsOptional()

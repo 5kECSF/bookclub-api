@@ -4,7 +4,6 @@ import { UploadController } from './upload.controller';
 
 import { GuardsModule } from '@/providers/guards/guards.module';
 import { EmailModule } from '@/providers/email';
-import { FileUploadProvider } from '../../providers/upload';
 import { Upload, UploadSchema } from '@/app/upload/upload.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UploadService } from '@/app/upload/upload.service';
@@ -16,7 +15,7 @@ import { UploadService } from '@/app/upload/upload.service';
     EmailModule,
   ],
   controllers: [UploadController],
-  providers: [FileProviderService, FileUploadProvider, UploadService],
+  providers: [FileProviderService, UploadService],
   exports: [FileProviderService, UploadService],
 })
 export class UploadModule {}

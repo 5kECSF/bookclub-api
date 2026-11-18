@@ -2,6 +2,8 @@ import { ApiHideProperty, OmitType, PartialType, PickType } from '@nestjs/swagge
 
 import { EmbedUpload } from '@/app/upload/upload.entity';
 import { PaginationInputs } from '@/common/types/common.types.dto';
+import { toBoolTransform } from '@/common/util/object-functions';
+import { Transform } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 import { Book, BookLanguage } from './book.entity';
 
@@ -42,9 +44,10 @@ export class ActivateBookInput {
   fileId: string;
 }
 
-export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug'])) {
+export class UpdateBookDto extends PartialType(OmitType(CreateBookInput, ['slug', 'uid'])) {
   @IsOptional()
-  fileUpdated = false;
+  @Transform(toBoolTransform)
+  fileUpdated?: boolean;
 }
 
 export class BookQuery extends PaginationInputs {
@@ -63,6 +66,13 @@ export class BookQuery extends PaginationInputs {
   @IsOptional()
   authorId?: string;
 
+  /**
+   * true  -> only books with available copies (availableCnt > 0)
+   * false / absent -> no availability filter
+   * (it used to default to `true` and the string "false" was truthy, so books without
+   * available copies -e.g. new ones- could never be listed, not even by admins)
+   */
   @IsOptional()
-  inStore?: boolean= true;
+  @Transform(toBoolTransform)
+  inStore?: boolean;
 }

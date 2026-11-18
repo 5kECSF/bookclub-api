@@ -1,10 +1,10 @@
-// import { RoleType } from '@/common/types/enums';
-import { Controller, Get, HttpException, Query } from '@nestjs/common';
+import { RoleType } from '@/common/types/enums';
+import { JwtGuard } from '@/providers/guards/guard.rest';
+import { Roles } from '@/providers/guards/roles.decorators';
+import { Controller, Get, HttpException, Query, UseGuards } from '@nestjs/common';
 import { BorrowService } from './../borrow/borrow.service';
 
 import { Endpoint } from '@/common/constants/model.names';
-// import { JwtGuard } from '@/providers/guards/guard.rest';
-// import { Roles } from '@/providers/guards/roles.decorators';
 import { FilterUser, UserFilter } from '@/app/account/users/entities/user.dto';
 import { PaginatedRes } from '@/common/types/common.types.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -46,16 +46,18 @@ export class StatsController {
       totalUsers: usersCnt.body,
       activeBorrows: borrowCnt.body,
     };
-    if (!borrowCnt.ok && !bookCnt.ok && !donationCnt.ok)
-      throw new HttpException(borrowCnt.errMessage, borrowCnt.code);
+    const failed = [borrowCnt, bookCnt, usersCnt, donationCnt].find((r) => !r.ok);
+    if (failed) throw new HttpException(failed.errMessage, failed.code);
     return allstatus;
   }
 
+  // returns user records (emails, names...) so it is admin only
   @Get('/donors')
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async findMany(@Query() inputQuery: FilterUser): Promise<PaginatedRes<User>> {
-    const additionalQuery = { donatedCount: { $gt: 1 } };
+    // donors are users with at least one donation (was `> 1`)
+    const additionalQuery = { donatedCount: { $gte: 1 } };
     const res = await this.userService.searchManyAndPaginate(
       ['email', 'firstName', 'lastName'],
       inputQuery,

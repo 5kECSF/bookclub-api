@@ -1,3 +1,4 @@
+import { logTrace } from '@/common/logger';
 import { EmbedUpload, UploadModel, UploadStatus } from '@/app/upload/upload.entity';
 import { UploadService } from '@/app/upload/upload.service';
 import { Endpoint } from '@/common/constants/model.names';
@@ -39,7 +40,7 @@ export class GenreController {
 
   //================createDraft is P1:  for  New Ones where the draft is created first
   @Post('draft')
-  @Roles(RoleType.USER)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
     const user: UserFromToken = req['user'];
@@ -77,13 +78,13 @@ export class GenreController {
       fileName: updateImg.body.fileName,
       pathId: updateImg.body.pathId,
       uid: updateImg.body.uid,
-      url: updateImg.body.url
+      url: updateImg.body.url,
     };
     const resp = await this.service.updateById(id, {
       status: ItemStatus.Active,
       upload: upload,
     });
-    if (!resp.ok) ThrowRes(updateImg);
+    if (!resp.ok) ThrowRes(resp);
     return resp.body;
   }
 
@@ -109,9 +110,13 @@ export class GenreController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id', ReqParamPipe) id: string) {
-    const query = { refId: id };
-    const result = await this.uploadService.deleteFileByQuery(query);
-    if (!result.ok) ThrowRes(result);
+    const existing = await this.service.findById(id);
+    if (!existing.ok) ThrowRes(existing);
+    if (existing.body.fileId) {
+      // a missing/never uploaded file must not block deleting the record
+      const result = await this.uploadService.deleteFileByIdPrefix(existing.body.fileId);
+      if (!result.ok) logTrace('failed deleting file', result.errMessage);
+    }
     const deleteResp = await this.service.findByIdAndDelete(id);
     if (!deleteResp.ok) ThrowRes(deleteResp);
     return deleteResp.body;
@@ -136,8 +141,8 @@ export class GenreController {
   // ===============Depricated
   //================createOne is for  Old one's Where Image is uploaded first
   @Post()
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async createOne(@Req() req: Request, @Body() createDto: CreateGenreInput): Promise<Genre> {
     const user: UserFromToken = req['user'];
     //find the image

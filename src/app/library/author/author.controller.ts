@@ -36,7 +36,7 @@ export class AuthorController {
   //================  createDraft is P1:  for  New Ones where the draft is created first ============
   //====================================================================================================
   @Post('draft')
-  @Roles(RoleType.USER)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createDraft(@Req() req: Request, @Body() createDto: CreateAuthorInput): Promise<Author> {
     const user: UserFromToken = req['user'];
@@ -55,7 +55,7 @@ export class AuthorController {
   //====================================================================================================
 
   @Post(':id')
-  // @Roles(RoleType.ADMIN)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async activateDraft(@Param('id') id: string): Promise<Author> {
     const data = await this.service.findById(id);
@@ -82,7 +82,7 @@ export class AuthorController {
       status: ItemStatus.Active,
       upload: upload,
     });
-    if (!resp.ok) ThrowRes(updateImg);
+    if (!resp.ok) ThrowRes(resp);
     return resp.body;
   }
 
@@ -109,9 +109,13 @@ export class AuthorController {
   @UseGuards(JwtGuard)
   @Roles(RoleType.ADMIN)
   async remove(@Param('id', ReqParamPipe) id: string) {
-    const query = { refId: id };
-    const result = await this.uploadService.deleteFileByQuery(query);
-    if (!result.ok) ThrowRes(result);
+    const existing = await this.service.findById(id);
+    if (!existing.ok) ThrowRes(existing);
+    if (existing.body.fileId) {
+      // a missing/never uploaded file must not block deleting the record
+      const result = await this.uploadService.deleteFileByIdPrefix(existing.body.fileId);
+      if (!result.ok) logTrace('failed deleting file', result.errMessage);
+    }
     const deleteResp = await this.service.findByIdAndDelete(id);
     if (!deleteResp.ok) ThrowRes(deleteResp);
     return deleteResp.body;

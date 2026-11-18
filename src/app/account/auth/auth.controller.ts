@@ -90,7 +90,7 @@ export class AuthController {
     const resp = await this.authService.SERV_logOut(token);
     if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
 
-    response.cookie(SystemConst.REFRESH_COOKIE, '');
+    response.clearCookie(SystemConst.REFRESH_COOKIE);
     return resp.body;
   }
 
@@ -104,7 +104,6 @@ export class AuthController {
     let token;
     // logTrace('input', input, ColorEnums.FgYellow);
     if (input.isCookie) {
-      console.log('it is cookie');
       token = request.cookies[SystemConst.REFRESH_COOKIE];
     } else {
       token = input.refreshToken;
@@ -138,7 +137,9 @@ export class AuthController {
   @Post('resetPassword')
   async resetPassword(@Body() input: ResetPasswordInput): Promise<boolean> {
     const resp = await this.authService.SERV_resetPassword(input);
-    return resp.ok;
+    // used to answer `false` with a 2xx status on failure
+    if (!resp.ok) throw new HttpException(resp.errMessage, resp.code);
+    return true;
   }
 
   //AuC-9 change Email

@@ -1,0 +1,8 @@
+allowBuilds:
+  '@compodoc/compodoc': false
+  '@nestjs/core': true
+  argon2: true
+  cpu-features: false
+  protobufjs: true
+  sharp: true
+  ssh2: false

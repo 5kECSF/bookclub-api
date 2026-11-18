@@ -17,7 +17,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateUserDto, FilterUser, UpdateUserWithRole, UserFilter } from './entities/user.dto';
+import { removeKeys } from '@/common/util/object-functions';
+import {
+  AdminUpdateForbiddenKeys,
+  CreateUserDto,
+  FilterUser,
+  UpdateUserWithRole,
+  UserFilter,
+} from './entities/user.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './users.service';
 
@@ -26,9 +33,9 @@ import { UserService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UserService) {}
 
-  //FIXME this function is used by admins to add other admins and also users
+  // used by admins to add other admins and also users
   @Post()
-  // @Roles(RoleType.ADMIN)
+  @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async createUser(@Body() createDto: CreateUserDto): Promise<User> {
     /**
@@ -41,8 +48,8 @@ export class UsersController {
   }
 
   @Get()
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async findMany(@Query() inputQuery: FilterUser): Promise<PaginatedRes<User>> {
     const res = await this.usersService.searchManyAndPaginate(
       ['email', 'firstName', 'lastName'],
@@ -54,8 +61,8 @@ export class UsersController {
   }
 
   @Get(':id')
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async findOne(@Param('id') id: string): Promise<User> {
     const res = await this.usersService.findById(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
@@ -66,21 +73,24 @@ export class UsersController {
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserWithRole): Promise<User> {
-    const res = await this.usersService.updateById(id, updateUserDto);
+    // credentials/verification fields can never be written through this endpoint
+    const safeUpdate = removeKeys(updateUserDto, AdminUpdateForbiddenKeys);
+    const res = await this.usersService.updateById(id, safeUpdate);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
 
   @Delete(':id')
-  // @Roles(RoleType.ADMIN)
-  // @UseGuards(JwtGuard)
+  @Roles(RoleType.ADMIN)
+  @UseGuards(JwtGuard)
   async remove(@Param('id') id: string): Promise<User> {
     const res = await this.usersService.findByIdAndDelete(id);
     if (!res.ok) throw new HttpException(res.errMessage, res.code);
     return res.body;
   }
 
-  @Patch(':id')
+  // was a second `@Patch(':id')` that could never be reached (shadowed by `update`)
+  @Patch(':id/resetPassword')
   @Roles(RoleType.ADMIN)
   @UseGuards(JwtGuard)
   async resetPwd(@Param('id') id: string): Promise<string> {

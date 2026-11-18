@@ -20,9 +20,9 @@ export class BorrowQuery extends PaginationInputs {
   @IsOptional()
   overDue?: boolean;
 
-  // ======== Pagination fields
+  // ======== Pagination fields (borrows have no `count` field)
   @IsOptional()
-  sort?: string = 'count';
+  sort?: string = 'createdAt';
 }
 export const BorrowFilter: (keyof Borrow)[] = [
   'bookId',

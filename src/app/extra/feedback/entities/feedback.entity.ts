@@ -2,8 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document } from 'mongoose';
 
-
-@Schema()
+@Schema({ timestamps: true })
 export class FeedBack {
   @ApiProperty({ name: 'id' })
   readonly _id: string;
@@ -26,8 +25,12 @@ export class FeedBack {
   @Prop({ type: Number, required: false, default: 0 })
   count: number;
 
-  @Prop({ type: String, required: false, default: false })
+  @Prop({ type: Boolean, required: false, default: false })
   read: boolean;
+
+  // `seen` is what UpdateFeedbackDto/FeedbackQuery use; it was silently dropped (not in the schema)
+  @Prop({ type: Boolean, required: false, default: false })
+  seen: boolean;
 }
 
 export type FeedBackDocument = FeedBack & Document;
