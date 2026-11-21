@@ -24,8 +24,6 @@ lerna-debug.log*
 #env files
 .env.dev
 .env.prod
-.env.test
-.env*
 !.env.example
 
 #keys
@@ -51,4 +49,4 @@ serviceKey.json
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
-.gitignore
+config.bat
